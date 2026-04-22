@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Canlı Yayın Ekranı</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&family=Merriweather:wght@400;700&family=Montserrat:wght@400;700;800&family=Nunito:wght@400;700&family=Open+Sans:wght@400;700&family=Oswald:wght@400;700&family=Pacifico&family=Playfair+Display:wght@400;700&family=Poppins:wght@400;700&family=Raleway:wght@400;700&family=Roboto:wght@400;700&family=Ubuntu:wght@400;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100vh;
+            background-color: #000;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            perspective: 1200px; /* 3D Efektler için şart */
+        }
+        
+        #viewer-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1); /* Tüm animasyonlar 0.8s */
+            transform-style: preserve-3d; /* 3D Efektler için şart */
+        }
+
+        #viewer-container svg {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        /* 1. YUMUŞAK GEÇİŞ (FADE) */
+        .out-fade { opacity: 0; }
+        .in-fade { opacity: 0; }
+        
+        /* 2. SOLA KAYMA */
+        .out-slide-left { transform: translateX(-100%); opacity: 0; }
+        .in-slide-left { transform: translateX(100%); opacity: 0; }
+        
+        /* 3. YUKARI KAYMA */
+        .out-slide-up { transform: translateY(-100%); opacity: 0; }
+        .in-slide-up { transform: translateY(100%); opacity: 0; }
+        
+        /* 4. YAKINLAŞTIRMA (ZOOM) */
+        .out-zoom { transform: scale(0.3); opacity: 0; }
+        .in-zoom { transform: scale(1.5); opacity: 0; }
+        
+        /* 5. 3D YATAY DÖNME (FLIP Y) */
+        .out-flip-y { transform: rotateY(90deg); opacity: 0; }
+        .in-flip-y { transform: rotateY(-90deg); opacity: 0; }
+
+        /* 6. 3D DİKEY DÖNME (FLIP X) */
+        .out-flip-x { transform: rotateX(90deg); opacity: 0; }
+        .in-flip-x { transform: rotateX(-90deg); opacity: 0; }
+        
+        /* 7. 3D KÜP (CUBE) */
+        .out-cube { transform: rotateY(90deg) translateZ(300px); opacity: 0; }
+        .in-cube { transform: rotateY(-90deg) translateZ(300px); opacity: 0; }
+        
+        /* 8. DÖNEREK GELME (SPIN) */
+        .out-spin { transform: rotate(180deg) scale(0.2); opacity: 0; }
+        .in-spin { transform: rotate(-180deg) scale(0.2); opacity: 0; }
+        
+        /* 9. KATLANMA (FOLD) */
+        .out-fold { transform: rotateX(-90deg); transform-origin: bottom; opacity: 0; }
+        .in-fold { transform: rotateX(90deg); transform-origin: top; opacity: 0; }
+        
+        /* 10. BULANIK GEÇİŞ (BLUR) */
+        .out-blur { filter: blur(30px); opacity: 0; }
+        .in-blur { filter: blur(30px); opacity: 0; }
+    </style>
+</head>
+<body>
+
+    <div id="viewer-container"></div>
+
+    <script type="module" src="/src/yayin.js"></script>
+
+</body>
+</html>

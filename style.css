@@ -24,7 +24,30 @@ body {
 
 #sidebar { width: 300px; background: var(--panel); border-right: 1px solid var(--border); }
 
-#main-view { flex: 1; position: relative; background: #020617; overflow: hidden; }
+#main-view { 
+  flex: 1; 
+  position: relative; 
+  background: #020617; 
+  display: flex; 
+  align-items: center; 
+  justify-content: center; 
+  padding: 20px; /* Kenarlardan biraz boşluk bırakır */
+  overflow: hidden;
+}
+
+#svg-wrapper { 
+  background: #1e293b; 
+  box-shadow: 0 0 30px rgba(0,0,0,0.5); 
+  width: 100%;
+  max-width: 1920px; 
+  aspect-ratio: 16 / 9; /* BÜYÜK SIR BURADA: Kutuyu her cihazda TV oranında tutar */
+  display: flex;
+}
+
+#main-svg {
+  width: 100%;
+  height: 100%;
+}
 
 .layer-item {
   padding: 10px; border-bottom: 1px solid var(--border); 
