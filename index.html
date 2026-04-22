@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>SVG Pro Studio | V42 Premium</title>
+  
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;800&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+
+  <div id="login-screen">
+    <div class="login-card">
+      <h2>SVG Pro Studio</h2>
+      <input type="password" id="access-key" placeholder="Erişim Anahtarı">
+      <button id="login-btn">Giriş Yap</button>
+    </div>
+  </div>
+
+  <div id="app-container" style="display:none;">
+    <aside id="sidebar">
+      <div class="sidebar-scroll-area">
+        <div class="prop-group">
+          <div class="prop-group-title">ARAÇLAR</div>
+          <div class="action-row">
+            <button class="action-btn" id="btn-add-text"><i class="ph ph-text-t"></i> Metin</button>
+            <button class="action-btn" id="btn-add-rect"><i class="ph ph-square"></i> Kutu</button>
+          </div>
+        </div>
+        
+        <div id="layers-wrapper">
+          <div id="layers-header">KATMANLAR</div>
+          <div id="layers-list"></div>
+        </div>
+      </div>
+    </aside>
+
+    <main id="main-view">
+      <div id="zoom-container">
+        <div id="svg-wrapper">
+          <svg id="main-svg" viewBox="0 0 800 600" xmlns="http://www.w3.org/2000/svg"></svg>
+        </div>
+      </div>
+
+      <div class="floating-tools">
+        <button class="tool-btn active" id="tool-select"><i class="ph ph-cursor"></i></button>
+        <button class="tool-btn" id="tool-hand"><i class="ph ph-hand-palm"></i></button>
+      </div>
+
+      <div id="video-overlay" style="position:absolute; bottom:20px; right:20px; width:200px;">
+        <video id="videoSol" style="width:100%; border-radius:8px; border:1px solid var(--border);" muted></video>
+      </div>
+    </main>
+  </div>
+
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>
