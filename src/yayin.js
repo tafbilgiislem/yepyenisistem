@@ -1,7 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-// ⚠️ DİKKAT: EDİTÖRDEKİ AYNI FIREBASE BİLGİLERİNİ BURAYA YAPIŞTIR
+// ⚠️ DİKKAT: KENDİ FIREBASE BİLGİLERİNİ BURAYA YAPIŞTIR
 const firebaseConfig = {
     apiKey: "AIzaSyCFBrHqXdRVdbtaqyKCQAgJ4U8no9cDIF8",
   authDomain: "svg-pro-studio.firebaseapp.com",
@@ -24,9 +24,7 @@ const container = document.getElementById('viewer-container');
 
 // 1. Ayarları Dinle
 onValue(ref(db, 'sahne/ayarlar'), (snapshot) => {
-    if (snapshot.exists()) {
-        settingsData = snapshot.val();
-    }
+    if (snapshot.exists()) { settingsData = snapshot.val(); }
 });
 
 // 2. Slaytları ve YAYIN AKIŞINI Dinle
@@ -34,25 +32,10 @@ onValue(ref(db, 'sahne/slaytlar'), (snapshot) => {
     if (snapshot.exists()) {
         slidesData = snapshot.val();
         
-        // 🌟 İŞTE SİHRİN OLDUĞU YER: YAYIN AKIŞI LİSTESİ 🌟
-        // Sıralamayı istediğin gibi değiştirebilir, aynı slaytı defalarca yazabilirsin.
-        const yayinAkisi = [
-            'slayt_svg',     // 1. Önce Ana Slayt çıksın
-            'kampanya_svg',  // 2. Sonra Kampanya çıksın
-            'slayt_svg',     // 3. Sonra TEKRAR Ana Slayt çıksın
-            'duyuru_svg'     // 4. En son Duyuru çıksın ve başa (1. adıma) dönsün
-        ];
-
-        // Sadece Firebase'e "Yayına Gönder"ilmiş (içi dolu) slaytları filtrele 
-        // (Böylece boş bir slayt sırası gelince siyah ekranda takılıp kalmaz)
+        const yayinAkisi = [ 'slayt_svg', 'kampanya_svg', 'slayt_svg', 'duyuru_svg' ];
         slideKeys = yayinAkisi.filter(anahtar => slidesData[anahtar]);
-
-        // Eğer yukarıdaki listeden hiçbir şey henüz veritabanında yoksa, olan ne varsa onu çal (Yedek plan)
-        if (slideKeys.length === 0) {
-            slideKeys = Object.keys(slidesData);
-        }
+        if (slideKeys.length === 0) { slideKeys = Object.keys(slidesData); }
         
-        // Döngüyü başlat veya güncelle
         if (!rotationTimer && slideKeys.length > 0) {
             showSlide(0);
         } else if (slideKeys.length > 0) {
@@ -66,11 +49,9 @@ onValue(ref(db, 'sahne/slaytlar'), (snapshot) => {
 function showSlide(index) {
     if (slideKeys.length === 0) return;
     
-    // Sıradaki slaytı hesapla
     currentIndex = index % slideKeys.length;
     const currentKey = slideKeys[currentIndex];
     
-    // Slaytın özel süresi ve efekti var mı? Yoksa varsayılan 5 sn ve Fade efekti kullan.
     const slideConfig = settingsData[currentKey] || { time: 5000, effect: 'fade' };
     const beklemeSuresi = slideConfig.time || 5000;
     const effect = slideConfig.effect || 'fade';
@@ -78,7 +59,6 @@ function showSlide(index) {
     applyTransitionOut(effect, () => {
         container.innerHTML = slidesData[currentKey];
         applyTransitionIn(effect);
-        updateClock();
     });
 
     clearTimeout(rotationTimer);
@@ -91,69 +71,39 @@ function renderCurrentSlideAnlik() {
     if (slideKeys.length === 0) return;
     const currentKey = slideKeys[currentIndex];
     container.innerHTML = slidesData[currentKey];
-    updateClock();
 }
 
 function applyTransitionOut(effect, callback) {
     container.classList.add(`out-${effect}`);
-    setTimeout(() => {
-        container.classList.remove(`out-${effect}`);
-        callback();
-    }, 800); 
+    setTimeout(() => { container.classList.remove(`out-${effect}`); callback(); }, 500); 
 }
 
 function applyTransitionIn(effect) {
     container.classList.add(`in-${effect}`);
-    requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-            container.classList.remove(`in-${effect}`);
-        });
-    });
+    setTimeout(() => { container.classList.remove(`in-${effect}`); }, 50); 
 }
 
-// --- CANLI SAAT VE TARİH SİSTEMİ ---
-function updateClock() {
-    const dateText = document.getElementById("dateText");
-    const timeText = document.getElementById("timeText");
-    
-    if (!dateText && !timeText) return;
-
-    const now = new Date();
-    const hours = now.getHours().toString().padStart(2, '0');
-    const minutes = now.getMinutes().toString().padStart(2, '0');
-    const seconds = now.getSeconds().toString().padStart(2, '0');
-    const date = now.toLocaleDateString('tr-TR');
-    
-    if (dateText) dateText.textContent = date;
-    if (timeText) timeText.textContent = hours + ":" + minutes + ":" + seconds;
-}
-setInterval(updateClock, 1000);
-
-// --- İÇ RESİM SLAYT (ÇOKLU RESİM) SİSTEMİ ---
+// --- İÇ RESİM SLAYT SİSTEMİ ---
 function startInnerSliders() {
     setInterval(() => {
         const svg = document.querySelector('#viewer-container svg');
         if(!svg) return;
-        
         const images = svg.querySelectorAll('image[data-image-list]');
         images.forEach(img => {
-            const list = img.getAttribute('data-image-list');
-            if(!list) return;
-            
+            const list = img.getAttribute('data-image-list'); if(!list) return;
             const urls = list.split(',').map(s => s.trim()).filter(s => s !== "");
             if(urls.length < 2) return; 
-            
             let idx = parseInt(img.getAttribute('data-slider-idx') || '0');
             idx = (idx + 1) % urls.length;
             img.setAttribute('data-slider-idx', idx);
-            
-            img.style.transition = "opacity 0.5s ease-in-out";
-            img.style.opacity = 0;
-            
-            setTimeout(() => {
-                img.setAttribute('href', urls[idx]); 
-                img.style.opacity = 1; 
-            }, 500);
+            const newUrl = urls[idx];
+            const clone = img.cloneNode(true);
+            clone.removeAttribute('data-image-list'); clone.id = 'clone_' + Date.now();
+            clone.style.transition = "opacity 0.8s ease-in-out"; clone.style.opacity = 1;
+            img.setAttribute('href', newUrl);
+            img.parentNode.insertBefore(clone, img.nextSibling);
+            requestAnimationFrame(() => { requestAnimationFrame(() => { clone.style.opacity = 0; }); });
+            setTimeout(() => { clone.remove(); }, 800);
         });
     }, 3000); 
 }

@@ -8,74 +8,57 @@
     <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&family=Merriweather:wght@400;700&family=Montserrat:wght@400;700;800&family=Nunito:wght@400;700&family=Open+Sans:wght@400;700&family=Oswald:wght@400;700&family=Pacifico&family=Playfair+Display:wght@400;700&family=Poppins:wght@400;700&family=Raleway:wght@400;700&family=Roboto:wght@400;700&family=Ubuntu:wght@400;700&display=swap" rel="stylesheet">
     
     <style>
+        /* 🛡️ 1. Adım: Esnemeleri tamamen iptal et, ekranı beton gibi sabitle */
         body, html {
             margin: 0;
             padding: 0;
-            width: 100%;
+            width: 100vw;
             height: 100vh;
             background-color: #000;
             overflow: hidden;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            perspective: 1200px; /* 3D Efektler için şart */
+            font-family: 'Montserrat', sans-serif;
+            position: fixed; /* Kiosk browser kayma kalkanı */
         }
         
         #viewer-container {
-            width: 100%;
-            height: 100%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1); /* Tüm animasyonlar 0.8s */
-            transform-style: preserve-3d; /* 3D Efektler için şart */
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            /* GPU hızlandırmayı zorla aç, işlemciyi devre dışı bırak */
+            transform: translateZ(0);
+            backface-visibility: hidden;
+            transition: all 0.5s ease-in-out;
+            transform-style: preserve-3d;
+            perspective: 1000px;
         }
 
+        /* 🛡️ 2. Adım: Android TV'de kaymaya sebep olan flex ve object-fit kodlarını silip mutlak sabitleme getirdik */
         #viewer-container svg {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            display: block;
         }
 
-        /* 1. YUMUŞAK GEÇİŞ (FADE) */
-        .out-fade { opacity: 0; }
-        .in-fade { opacity: 0; }
-        
-        /* 2. SOLA KAYMA */
-        .out-slide-left { transform: translateX(-100%); opacity: 0; }
-        .in-slide-left { transform: translateX(100%); opacity: 0; }
-        
-        /* 3. YUKARI KAYMA */
-        .out-slide-up { transform: translateY(-100%); opacity: 0; }
-        .in-slide-up { transform: translateY(100%); opacity: 0; }
-        
-        /* 4. YAKINLAŞTIRMA (ZOOM) */
-        .out-zoom { transform: scale(0.3); opacity: 0; }
-        .in-zoom { transform: scale(1.5); opacity: 0; }
-        
-        /* 5. 3D YATAY DÖNME (FLIP Y) */
-        .out-flip-y { transform: rotateY(90deg); opacity: 0; }
-        .in-flip-y { transform: rotateY(-90deg); opacity: 0; }
+        /* 🛡️ 3. Adım: Sadece yazıların yukarı kaymasını önleyen özel SVG Text kalkanı */
+        #viewer-container text {
+            text-rendering: geometricPrecision;
+            transform: translateZ(0); /* Yazıyı donanıma kilitle */
+        }
 
-        /* 6. 3D DİKEY DÖNME (FLIP X) */
-        .out-flip-x { transform: rotateX(90deg); opacity: 0; }
-        .in-flip-x { transform: rotateX(-90deg); opacity: 0; }
-        
-        /* 7. 3D KÜP (CUBE) */
-        .out-cube { transform: rotateY(90deg) translateZ(300px); opacity: 0; }
-        .in-cube { transform: rotateY(-90deg) translateZ(300px); opacity: 0; }
-        
-        /* 8. DÖNEREK GELME (SPIN) */
-        .out-spin { transform: rotate(180deg) scale(0.2); opacity: 0; }
-        .in-spin { transform: rotate(-180deg) scale(0.2); opacity: 0; }
-        
-        /* 9. KATLANMA (FOLD) */
-        .out-fold { transform: rotateX(-90deg); transform-origin: bottom; opacity: 0; }
-        .in-fold { transform: rotateX(90deg); transform-origin: top; opacity: 0; }
-        
-        /* 10. BULANIK GEÇİŞ (BLUR) */
-        .out-blur { filter: blur(30px); opacity: 0; }
-        .in-blur { filter: blur(30px); opacity: 0; }
+        /* --- STABİL ÇALIŞAN EFEKTLER (Yüzde yerine VW/VH kullanıldı) --- */
+        .out-fade { opacity: 0; } .in-fade { opacity: 0; }
+        .out-slide { transform: translateX(-100vw); opacity: 0; } .in-slide { transform: translateX(100vw); opacity: 0; }
+        .out-zoom { transform: scale(0); opacity: 0; } .in-zoom { transform: scale(2); opacity: 0; }
+        .out-flip { transform: rotateY(-90deg); opacity: 0; } .in-flip { transform: rotateY(90deg); opacity: 0; }
+        .out-spin { transform: rotate(180deg) scale(0); opacity: 0; } .in-spin { transform: rotate(-180deg) scale(0); opacity: 0; }
+        .out-cube { transform: rotateY(-90deg) translateZ(500px); opacity: 0; } .in-cube { transform: rotateY(90deg) translateZ(500px); opacity: 0; }
+        .out-fold { transform: rotateX(-90deg); opacity: 0; } .in-fold { transform: rotateX(90deg); opacity: 0; }
     </style>
 </head>
 <body>
