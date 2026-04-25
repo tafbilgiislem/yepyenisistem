@@ -24,9 +24,7 @@ const container = document.getElementById('viewer-container');
 
 // 1. Ayarları Dinle
 onValue(ref(db, 'sahne/ayarlar'), (snapshot) => {
-    if (snapshot.exists()) {
-        settingsData = snapshot.val();
-    }
+    if (snapshot.exists()) { settingsData = snapshot.val(); }
 });
 
 // 2. Slaytları ve YAYIN AKIŞINI Dinle
@@ -34,19 +32,9 @@ onValue(ref(db, 'sahne/slaytlar'), (snapshot) => {
     if (snapshot.exists()) {
         slidesData = snapshot.val();
         
-        // YAYIN AKIŞI LİSTESİ
-        const yayinAkisi = [
-            'slayt_svg',
-            'kampanya_svg',
-            'slayt_svg',
-            'duyuru_svg'
-        ];
-
+        const yayinAkisi = [ 'slayt_svg', 'kampanya_svg', 'slayt_svg', 'duyuru_svg' ];
         slideKeys = yayinAkisi.filter(anahtar => slidesData[anahtar]);
-
-        if (slideKeys.length === 0) {
-            slideKeys = Object.keys(slidesData);
-        }
+        if (slideKeys.length === 0) { slideKeys = Object.keys(slidesData); }
         
         if (!rotationTimer && slideKeys.length > 0) {
             showSlide(0);
@@ -71,7 +59,6 @@ function showSlide(index) {
     applyTransitionOut(effect, () => {
         container.innerHTML = slidesData[currentKey];
         applyTransitionIn(effect);
-        updateClock();
     });
 
     clearTimeout(rotationTimer);
@@ -84,83 +71,41 @@ function renderCurrentSlideAnlik() {
     if (slideKeys.length === 0) return;
     const currentKey = slideKeys[currentIndex];
     container.innerHTML = slidesData[currentKey];
-    updateClock();
 }
 
 function applyTransitionOut(effect, callback) {
     container.classList.add(`out-${effect}`);
-    setTimeout(() => {
-        container.classList.remove(`out-${effect}`);
-        callback();
-    }, 500); // Eski ve stabil hız
+    // 🌟 Yeni uzun süreli efektlerin tam oynatılması için süre 1200ms (1.2 Saniye) yapıldı 🌟
+    setTimeout(() => { container.classList.remove(`out-${effect}`); callback(); }, 1200); 
 }
 
 function applyTransitionIn(effect) {
     container.classList.add(`in-${effect}`);
-    setTimeout(() => {
-        container.classList.remove(`in-${effect}`);
-    }, 50); // Eski ve stabil hız
+    setTimeout(() => { container.classList.remove(`in-${effect}`); }, 50); 
 }
 
-// --- CANLI SAAT VE TARİH SİSTEMİ ---
-function updateClock() {
-    const dateText = document.getElementById("dateText");
-    const timeText = document.getElementById("timeText");
-    
-    if (!dateText && !timeText) return;
-
-    const now = new Date();
-    const hours = now.getHours().toString().padStart(2, '0');
-    const minutes = now.getMinutes().toString().padStart(2, '0');
-    const seconds = now.getSeconds().toString().padStart(2, '0');
-    const date = now.toLocaleDateString('tr-TR');
-    
-    if (dateText) dateText.textContent = date;
-    if (timeText) timeText.textContent = hours + ":" + minutes + ":" + seconds;
-}
-setInterval(updateClock, 1000);
-
-// --- İÇ RESİM SLAYT (ÇOKLU RESİM) SİSTEMİ (Kusursuz Geçiş) ---
+// --- İÇ RESİM SLAYT SİSTEMİ ---
 function startInnerSliders() {
     setInterval(() => {
         const svg = document.querySelector('#viewer-container svg');
         if(!svg) return;
-        
         const images = svg.querySelectorAll('image[data-image-list]');
         images.forEach(img => {
-            const list = img.getAttribute('data-image-list');
-            if(!list) return;
-            
+            const list = img.getAttribute('data-image-list'); if(!list) return;
             const urls = list.split(',').map(s => s.trim()).filter(s => s !== "");
             if(urls.length < 2) return; 
-            
             let idx = parseInt(img.getAttribute('data-slider-idx') || '0');
             idx = (idx + 1) % urls.length;
             img.setAttribute('data-slider-idx', idx);
-            
             const newUrl = urls[idx];
-            
             const clone = img.cloneNode(true);
-            clone.removeAttribute('data-image-list'); 
-            clone.id = 'clone_' + Date.now();
-            clone.style.transition = "opacity 0.8s ease-in-out"; 
-            clone.style.opacity = 1;
-            
+            clone.removeAttribute('data-image-list'); clone.id = 'clone_' + Date.now();
+            clone.style.transition = "opacity 0.8s ease-in-out"; clone.style.opacity = 1;
             img.setAttribute('href', newUrl);
             img.parentNode.insertBefore(clone, img.nextSibling);
-            
-            requestAnimationFrame(() => {
-                requestAnimationFrame(() => {
-                    clone.style.opacity = 0;
-                });
-            });
-            
-            setTimeout(() => {
-                clone.remove();
-            }, 800);
-            
+            requestAnimationFrame(() => { requestAnimationFrame(() => { clone.style.opacity = 0; }); });
+            setTimeout(() => { clone.remove(); }, 800);
         });
     }, 3000); 
 }
-
 startInnerSliders();

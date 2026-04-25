@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>SVG Pro Studio | Ultimate Sürüm V46</title>
+    <title>SVG Pro Studio | Mega Efekt V47</title>
     <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&family=Merriweather:wght@400;700&family=Montserrat:wght@400;700;800&family=Nunito:wght@400;700&family=Open+Sans:wght@400;700&family=Oswald:wght@400;700&family=Pacifico&family=Playfair+Display:wght@400;700&family=Poppins:wght@400;700&family=Raleway:wght@400;700&family=Roboto:wght@400;700&family=Ubuntu:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <style>
@@ -167,7 +167,7 @@
         </div>
         <div id="status-bar">
             <div id="status-count">Nesne Sayısı: 0</div>
-            <div>SVG Pro Studio Ultimate V46 (Mıknatıs + İndirme)</div>
+            <div>SVG Pro Studio | Mega Efekt V47</div>
             <div id="status-time">Son Kayıt: Bekleniyor...</div>
         </div>
     </div>
@@ -193,18 +193,27 @@
                         <span class="label-text">Ekranda Kalma Süresi (ms)</span>
                         <input type="number" id="slide-time" value="5000">
                     </div>
+                    
                     <div class="input-group" style="margin-bottom:10px;">
-                        <span class="label-text">Geçiş Efekti</span>
+                        <span class="label-text">Süper Geçiş Efektleri</span>
                         <select id="slide-effect" class="font-select">
                             <option value="fade">Yumuşak Geçiş (Fade)</option>
-                            <option value="slide">Sola Kayma (Slide)</option>
-                            <option value="zoom">Yakınlaşma (Zoom)</option>
-                            <option value="flip">Takla Atma (Flip)</option>
-                            <option value="spin">Dönme (Spin)</option>
-                            <option value="cube">Küp (Cube)</option>
+                            <option value="slide-left">Sola Kayma (Slide Left)</option>
+                            <option value="slide-up">Yukarı Çıkma (Slide Up)</option>
+                            <option value="zoom">Merkezden Büyüme (Zoom)</option>
+                            <option value="rotate-zoom">Dönerek Büyüme (Rotate Zoom)</option>
+                            <option value="circle">Daire Açılışı (Circle)</option>
+                            <option value="wave">Dalgalı Geliş (Wave)</option>
+                            <option value="curtain">Sinema Perdesi (Curtain)</option>
+                            <option value="spin-zoom">Girdap Çıkışı (Spin Zoom)</option>
+                            <option value="rotate3d">Gerçek 3D Dönüş (Rotate 3D)</option>
+                            <option value="cinematic-cube">Sinematik Takla (Cinematic Flip)</option>
+                            <option value="cube">Kübik Dönüş (3D Cube)</option>
+                            <option value="flip">Klasik Takla (Flip)</option>
                             <option value="fold">Katlanma (Fold)</option>
                         </select>
                     </div>
+                    
                     <button class="action-btn" style="width:100%; background:#f59e0b; color:black;" onclick="window.saveSlideSettings()"><i class="ph ph-database"></i> AYARLARI KAYDET</button>
                 </div>
             </details>
@@ -265,18 +274,17 @@
     // ⚠️ DİKKAT: KENDİ FIREBASE BİLGİLERİNİ BURAYA YAPIŞTIR
     const firebaseConfig = {
       apiKey: "AIzaSyCFBrHqXdRVdbtaqyKCQAgJ4U8no9cDIF8",
-      authDomain: "svg-pro-studio.firebaseapp.com",
-      databaseURL: "https://svg-pro-studio-default-rtdb.europe-west1.firebasedatabase.app",
-      projectId: "svg-pro-studio",
-      storageBucket: "svg-pro-studio.firebasestorage.app",
-      messagingSenderId: "1085012043931",
-      appId: "1:1085012043931:web:fb6f9fb2e79f4a2607fe3e"
+  authDomain: "svg-pro-studio.firebaseapp.com",
+  databaseURL: "https://svg-pro-studio-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "svg-pro-studio",
+  storageBucket: "svg-pro-studio.firebasestorage.app",
+  messagingSenderId: "1085012043931",
+  appId: "1:1085012043931:web:fb6f9fb2e79f4a2607fe3e"
     };
 
     let db = null;
     try { const app = initializeApp(firebaseConfig); db = getDatabase(app); } catch(e) { console.error("Firebase Hatası", e); }
 
-    // 🔒 ŞİFRE SİSTEMİ
     window.checkPin = function() {
         const pin = document.getElementById('pin-input').value;
         if(pin === '1234') { 
@@ -311,7 +319,7 @@
     let resizingEl = null, rotatingEl = null, radiusingEl = null, activeHandle = null, offset = {x:0, y:0}, startP = {x:0, y:0}, startData = {}, isModified = false;
     let clipboard = null, currentZoom = 1, panX = 0, panY = 0, historyStack = [], historyIndex = -1, isDraggingElement = false, isSpacePressed = false, isPanning = false, panStart = {x:0, y:0}, panOffsetStart = {x:0, y:0};
     let isDrawingMode = false, isDrawing = false, currentPath = null, pathData = "", isDraggingGuide = false, currentGuide = null;
-    let draggedLayerId = null; // Katman sürükleme için
+    let draggedLayerId = null;
 
     const googleFonts = [{ name: "Varsayılan", val: "sans-serif" }, { name: "Roboto", val: "'Roboto', sans-serif" }, { name: "Montserrat", val: "'Montserrat', sans-serif" }, { name: "Poppins", val: "'Poppins', sans-serif" }, { name: "Oswald", val: "'Oswald', sans-serif" }, { name: "Pacifico", val: "'Pacifico', cursive" }];
 
@@ -351,23 +359,16 @@
         } catch(e) { window.showToast("Veritabanı Hatası!", "error"); }
     };
 
-    // 🌟 SVG İNDİRME FONKSİYONU 🌟
     window.downloadSVG = function() {
         const svg = document.querySelector('#canvas-inner svg');
         if(!svg) return;
-        
-        // Tasarımın orijinalini bozmamak için kopyasını alıyoruz
         const clone = svg.cloneNode(true);
-        
-        // Editöre ait çöp kodları (kılavuzlar, kontrol noktaları vs) temizle
         clone.querySelectorAll('.duzenlenebilir, .locked, .guide-line, .snap-line').forEach(el => {
             el.classList.remove('duzenlenebilir', 'locked');
             if (el.classList.length === 0) el.removeAttribute('class');
         });
         const ctrl = clone.querySelector('#control-layer');
         if (ctrl) clone.removeChild(ctrl);
-
-        // SVG'yi dosyaya çevir
         const data = new XMLSerializer().serializeToString(clone);
         const blob = new Blob([data], {type: "image/svg+xml;charset=utf-8"});
         const url = URL.createObjectURL(blob);
@@ -747,7 +748,7 @@
         else { const ef = document.getElementById('editor-fields'); if(ef) ef.innerHTML = `<div style="text-align:center; color:#64748b; margin-top:50px; font-style:italic; font-size:13px;"><i class="ph ph-cursor-click" style="font-size:32px; display:block; margin-bottom:15px; color:var(--accent); opacity:0.5;"></i> 👆 Düzenlemek için sahneden veya katmanlardan bir nesne seçin.</div>`; } 
     };
 
-    // 🌟 SÜRÜKLE BIRAK (DRAG & DROP) KATMAN MOTORU 🌟
+    // 🌟 SÜRÜKLE BIRAK (DRAG-DROP) KATMAN MOTORU 🌟
     window.renderLayers = function() {
         const list = document.getElementById('layers-list'); if(!list) return; list.innerHTML = ""; 
         const domElements = Array.from(document.querySelectorAll('.duzenlenebilir'));
@@ -947,7 +948,6 @@
                     let newX = p.x - offset.x;
                     let newY = p.y - offset.y;
                     
-                    // 🌟 MANYETİK YAKALAMA SİSTEMİ 🌟
                     let snapX = null, snapY = null;
                     const snapTolerance = 12;
                     const dim = window.getSvgDim(); 
@@ -960,7 +960,6 @@
                     let objCX = isText ? newX : newX + bbox.width / 2;
                     let objCY = isText ? newY : newY + bbox.height / 2;
 
-                    // Mıknatıs Sadece SHIFT tuşuna basılı değilken çalışır
                     if (!e.shiftKey) {
                         if (Math.abs(objCX - cw/2) < snapTolerance) { objCX = cw/2; snapX = cw/2; }
                         if (Math.abs(objCY - ch/2) < snapTolerance) { objCY = ch/2; snapY = ch/2; }
@@ -1061,7 +1060,7 @@
         if(isModified && e.key.startsWith('Arrow')) { window.saveState(); isModified = false; } 
     });
 
-    // 🌟 SAĞ TIK MENÜSÜ SİSTEMİ 🌟
+    // 🌟 YENİ: SAĞ TIK (CONTEXT MENU) MOTORU 🌟
     document.addEventListener('contextmenu', function(e) {
         const el = e.target.closest('.duzenlenebilir');
         if (el) {
@@ -1077,7 +1076,6 @@
                 ctx.style.left = e.pageX + 'px';
                 ctx.style.top = e.pageY + 'px';
                 
-                // Kilit yazısını güncelle
                 const isLocked = window.getD(el, 'locked') === "true";
                 document.getElementById('ctx-lock-icon').className = isLocked ? "ph ph-lock-key-open" : "ph ph-lock-key";
                 document.getElementById('ctx-lock-text').innerText = isLocked ? "Kilidi Aç" : "Kilitle";

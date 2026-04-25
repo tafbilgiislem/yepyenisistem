@@ -11,53 +11,71 @@
         body, html {
             margin: 0;
             padding: 0;
-            width: 100%;
+            width: 100vw;
             height: 100vh;
             background-color: #000;
             overflow: hidden;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            font-family: 'Montserrat', sans-serif;
+            position: fixed; 
         }
         
         #viewer-container {
-            width: 100%;
-            height: 100%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            transition: all 0.5s ease-in-out;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            transform: translateZ(0);
+            backface-visibility: hidden;
+            /* 🌟 EFEKTLERİN HAKKINI VERMESİ İÇİN 1.2 SANİYE SİNETMATİK GEÇİŞ EKLENDİ 🌟 */
+            transition: all 1.2s cubic-bezier(0.25, 1, 0.5, 1);
             transform-style: preserve-3d;
             perspective: 1000px;
         }
 
         #viewer-container svg {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            display: block;
         }
 
-        /* --- STABİL ÇALIŞAN EFEKTLER --- */
-        .out-fade { opacity: 0; }
-        .in-fade { opacity: 0; }
+        #viewer-container text {
+            text-rendering: geometricPrecision;
+            transform: translateZ(0); 
+        }
 
-        .out-slide { transform: translateX(-100%); opacity: 0; }
-        .in-slide { transform: translateX(100%); opacity: 0; }
+        /* --- 🌟 SÜPER EFEKTLER (YENİ VE ESKİ) 🌟 --- */
+        .out-fade { opacity: 0; } .in-fade { opacity: 0; }
+        
+        .out-slide-left { transform: translateX(-100vw); opacity: 0; } .in-slide-left { transform: translateX(100vw); opacity: 0; }
+        .out-slide-up { transform: translateY(-100vh); opacity: 0; } .in-slide-up { transform: translateY(100vh); opacity: 0; }
+        
+        .out-zoom { transform: scale(1.5); opacity: 0; } .in-zoom { transform: scale(0.5); opacity: 0; }
+        
+        .out-rotate-zoom { transform: rotate(180deg) scale(1.5); opacity: 0; } .in-rotate-zoom { transform: rotate(-180deg) scale(0.5); opacity: 0; }
+        
+        .out-circle { clip-path: circle(0% at 50% 50%); opacity: 0; } .in-circle { clip-path: circle(0% at 50% 50%); opacity: 0; }
+        
+        .out-wave { transform: translateY(-100vh) rotate(-10deg); opacity: 0; } .in-wave { transform: translateY(100vh) rotate(10deg); opacity: 0; }
+        
+        .out-curtain { clip-path: inset(0 50% 0 50%); opacity: 0; } .in-curtain { clip-path: inset(0 50% 0 50%); opacity: 0; }
+        
+        .out-spin-zoom { transform: scale(2) rotate(360deg); opacity: 0; } .in-spin-zoom { transform: scale(0.2) rotate(-360deg); opacity: 0; }
+        
+        .out-rotate3d { transform: rotate3d(1,1,0,-90deg); opacity: 0; } .in-rotate3d { transform: rotate3d(1,1,0,90deg); opacity: 0; }
+        
+        .out-cinematic-cube { transform: rotateY(-180deg) scale(.5); opacity: 0; } .in-cinematic-cube { transform: rotateY(180deg) scale(.5); opacity: 0; }
 
-        .out-zoom { transform: scale(0); opacity: 0; }
-        .in-zoom { transform: scale(2); opacity: 0; }
-
-        .out-flip { transform: rotateY(-90deg); opacity: 0; }
-        .in-flip { transform: rotateY(90deg); opacity: 0; }
-
-        .out-spin { transform: rotate(180deg) scale(0); opacity: 0; }
-        .in-spin { transform: rotate(-180deg) scale(0); opacity: 0; }
-
-        .out-cube { transform: rotateY(-90deg) translateZ(500px); opacity: 0; }
-        .in-cube { transform: rotateY(90deg) translateZ(500px); opacity: 0; }
-
-        .out-fold { transform: rotateX(-90deg); opacity: 0; }
-        .in-fold { transform: rotateX(90deg); opacity: 0; }
+        /* ESKİLER */
+        .out-slide { transform: translateX(-100vw); opacity: 0; } .in-slide { transform: translateX(100vw); opacity: 0; }
+        .out-flip { transform: rotateY(-90deg); opacity: 0; } .in-flip { transform: rotateY(90deg); opacity: 0; }
+        .out-spin { transform: rotate(180deg) scale(0); opacity: 0; } .in-spin { transform: rotate(-180deg) scale(0); opacity: 0; }
+        .out-cube { transform: rotateY(-90deg) translateZ(500px); opacity: 0; } .in-cube { transform: rotateY(90deg) translateZ(500px); opacity: 0; }
+        .out-fold { transform: rotateX(-90deg); opacity: 0; } .in-fold { transform: rotateX(90deg); opacity: 0; }
     </style>
 </head>
 <body>
