@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>SVG Pro Studio | Mega Efekt V47</title>
+    <title>SVG Pro Studio | Ultimate Sürüm V48</title>
     <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&family=Merriweather:wght@400;700&family=Montserrat:wght@400;700;800&family=Nunito:wght@400;700&family=Open+Sans:wght@400;700&family=Oswald:wght@400;700&family=Pacifico&family=Playfair+Display:wght@400;700&family=Poppins:wght@400;700&family=Raleway:wght@400;700&family=Roboto:wght@400;700&family=Ubuntu:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <style>
-        :root{--accent:#10b981;--bg:#0f172a;--panel:#1e293b;--border:#334155;--handle-move:#3b82f6;--handle-rotate:#f59e0b;--handle-radius:#ec4899}
+        :root{--accent:#10b981;--bg:#0f172a;--panel:#1e293b;--border:#334155;--handle-move:#3b82f6;--handle-rotate:#f59e0b;--handle-radius:#ec4899;--error:#ef4444}
         *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
         html,body{margin:0;padding:0;width:100%;height:100vh;height:100dvh;overflow:hidden;background:var(--bg);color:#fff;font-family:'Inter', 'Roboto', sans-serif;overscroll-behavior-y:none}
         
@@ -59,9 +59,9 @@
         .guide-line{stroke:#06b6d4;stroke-width:3;stroke-dasharray:8,4;cursor:grab;pointer-events:all}
         
         input[type="range"]{width:100%;accent-color:var(--accent);height:6px;cursor:pointer;margin:0}
-        input[type="text"],input[type="number"],textarea{width:100%;padding:12px;border-radius:8px;border:1px solid var(--border);background:#000;color:#fff;outline:none;font-size:13px}
+        input[type="text"],input[type="number"],input[type="time"],textarea{width:100%;padding:12px;border-radius:8px;border:1px solid var(--border);background:#000;color:#fff;outline:none;font-size:13px; margin-bottom:5px;}
         input[type="password"]{width:100%;padding:12px;border-radius:8px;border:1px solid var(--border);background:#000;color:#fff;outline:none;font-size:16px; letter-spacing: 5px; text-align: center;}
-        input[type="text"]:focus,input[type="number"]:focus,textarea:focus,input[type="password"]:focus{border-color:var(--accent)}
+        input[type="text"]:focus,input[type="number"]:focus,input[type="time"]:focus,textarea:focus,input[type="password"]:focus{border-color:var(--accent)}
         .font-select{width:100%;padding:12px;border-radius:8px;border:1px solid var(--border);background:#000;color:#fff;margin-bottom:5px;outline:none;font-size:13px;cursor:pointer}
         
         .action-row{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap}
@@ -101,6 +101,12 @@
         
         .swatch-container{display:flex;gap:6px;margin-top:5px;flex-wrap:wrap}
         .color-swatch{width:26px;height:26px;border-radius:6px;cursor:pointer;border:1px solid var(--border);transition:transform .1s} .color-swatch:hover{transform:scale(1.2);border-color:#fff; z-index:2;}
+
+        .day-btn { padding: 6px; font-size: 10px; border: 1px solid var(--border); background: #0f172a; color: #fff; cursor: pointer; border-radius: 4px; transition: 0.2s;}
+        .day-btn.active { background: var(--accent); border-color: var(--accent); color: white; font-weight: bold;}
+        .device-card { background: #0f172a; padding: 10px; border-radius: 8px; margin-bottom: 8px; border-left: 4px solid #64748b; font-size: 12px; }
+        .device-card.online { border-left-color: var(--accent); }
+        .device-card.offline { border-left-color: var(--error); }
     </style>
 </head>
 <body>
@@ -167,54 +173,88 @@
         </div>
         <div id="status-bar">
             <div id="status-count">Nesne Sayısı: 0</div>
-            <div>SVG Pro Studio | Mega Efekt V47</div>
+            <div>SVG Pro Studio Ultimate V48 (Zamanlama + RSS)</div>
             <div id="status-time">Son Kayıt: Bekleniyor...</div>
         </div>
     </div>
     
     <div id="sidebar">
         <div class="sidebar-scroll-area">
+            
             <div style="display:flex; gap:5px; margin-bottom: 10px;">
                 <button onclick="window.saveData()" class="action-btn active" style="flex:2; font-size:12px;"><i class="ph ph-floppy-disk"></i> YAYINA GÖNDER</button>
                 <button onclick="window.downloadSVG()" class="action-btn" style="flex:1; font-size:12px; background:#0ea5e9;" title="SVG Olarak İndir"><i class="ph ph-download-simple"></i> İNDİR</button>
             </div>
             
-            <select id="file-selector" style="width:100%; padding:10px; background:#000; color:#fff; border-radius:8px; margin-bottom:10px; border:1px solid #334155; outline:none;">
-                <option value="slayt.svg">Ana Slayt (slayt.svg)</option>
-                <option value="kampanya.svg">Kampanya (kampanya.svg)</option>
-                <option value="duyuru.svg">Duyuru (duyuru.svg)</option>
+            <select id="file-selector" style="width:100%; padding:10px; background:#000; color:#fff; border-radius:8px; margin-bottom:10px; border:1px solid #334155; outline:none;" onchange="window.loadSlide()">
+                <option value="slayt.svg">Ana Slayt (Sabah)</option>
+                <option value="kampanya.svg">Kampanya (Hafta Sonu)</option>
+                <option value="duyuru.svg">Duyuru (Genel)</option>
             </select>
             
             <details style="margin-bottom: 10px;" open>
-                <summary style="font-size:11px; font-weight:bold; color:#f59e0b; cursor:pointer; margin-bottom:5px; display:flex; align-items:center; gap:6px;"><i class="ph ph-film-script" style="font-size:14px;"></i> SEÇİLİ SLAYT AYARLARI</summary>
+                <summary style="font-size:11px; font-weight:bold; color:#f59e0b; cursor:pointer; margin-bottom:5px; display:flex; align-items:center; gap:6px;"><i class="ph ph-clock" style="font-size:14px;"></i> AKILLI ZAMANLAMA & EFEKT</summary>
                 <div class="group-box" style="margin-top:5px;">
-                    <div style="font-size:10px; color:#94a3b8; margin-bottom:10px; font-style:italic;">Yayın ekranı slaytlar arasında otomatik döner.</div>
-                    <div class="input-group" style="margin-bottom:10px;">
-                        <span class="label-text">Ekranda Kalma Süresi (ms)</span>
-                        <input type="number" id="slide-time" value="5000">
+                    <div style="font-size:10px; color:#94a3b8; margin-bottom:10px; font-style:italic;">Bu slaytın ne zaman çıkacağını ve nasıl geçeceğini ayarlayın.</div>
+                    
+                    <span class="label-text">Ekranda Kalma Süresi (ms)</span>
+                    <input type="number" id="slide-time" value="5000">
+                    
+                    <span class="label-text">Yayın Saat Aralığı</span>
+                    <div style="display:flex; gap:5px;">
+                        <input type="time" id="start-time" value="00:00" style="flex:1;">
+                        <input type="time" id="end-time" value="23:59" style="flex:1;">
                     </div>
                     
-                    <div class="input-group" style="margin-bottom:10px;">
-                        <span class="label-text">Süper Geçiş Efektleri</span>
-                        <select id="slide-effect" class="font-select">
-                            <option value="fade">Yumuşak Geçiş (Fade)</option>
-                            <option value="slide-left">Sola Kayma (Slide Left)</option>
-                            <option value="slide-up">Yukarı Çıkma (Slide Up)</option>
-                            <option value="zoom">Merkezden Büyüme (Zoom)</option>
-                            <option value="rotate-zoom">Dönerek Büyüme (Rotate Zoom)</option>
-                            <option value="circle">Daire Açılışı (Circle)</option>
-                            <option value="wave">Dalgalı Geliş (Wave)</option>
-                            <option value="curtain">Sinema Perdesi (Curtain)</option>
-                            <option value="spin-zoom">Girdap Çıkışı (Spin Zoom)</option>
-                            <option value="rotate3d">Gerçek 3D Dönüş (Rotate 3D)</option>
-                            <option value="cinematic-cube">Sinematik Takla (Cinematic Flip)</option>
-                            <option value="cube">Kübik Dönüş (3D Cube)</option>
-                            <option value="flip">Klasik Takla (Flip)</option>
-                            <option value="fold">Katlanma (Fold)</option>
-                        </select>
+                    <span class="label-text">Yayın Günleri</span>
+                    <div id="day-selector" style="display:grid; grid-template-columns:repeat(4, 1fr); gap:4px; margin-bottom:10px;">
+                        <button class="day-btn active" data-day="1">Pzt</button>
+                        <button class="day-btn active" data-day="2">Sal</button>
+                        <button class="day-btn active" data-day="3">Çar</button>
+                        <button class="day-btn active" data-day="4">Per</button>
+                        <button class="day-btn active" data-day="5">Cum</button>
+                        <button class="day-btn active" data-day="6">Cmt</button>
+                        <button class="day-btn active" data-day="0">Paz</button>
                     </div>
+
+                    <span class="label-text">Geçiş Efekti</span>
+                    <select id="slide-effect" class="font-select">
+                        <option value="fade">Yumuşak Geçiş (Fade)</option>
+                        <option value="slide-left">Sola Kayma (Slide Left)</option>
+                        <option value="slide-up">Yukarı Çıkma (Slide Up)</option>
+                        <option value="zoom">Merkezden Büyüme (Zoom)</option>
+                        <option value="rotate-zoom">Dönerek Büyüme (Rotate Zoom)</option>
+                        <option value="circle">Daire Açılışı (Circle)</option>
+                        <option value="wave">Dalgalı Geliş (Wave)</option>
+                        <option value="curtain">Sinema Perdesi (Curtain)</option>
+                        <option value="spin-zoom">Girdap Çıkışı (Spin Zoom)</option>
+                        <option value="rotate3d">Gerçek 3D Dönüş (Rotate 3D)</option>
+                        <option value="cinematic-cube">Sinematik Takla (Cinematic Flip)</option>
+                        <option value="cube">Kübik Dönüş (3D Cube)</option>
+                        <option value="flip">Klasik Takla (Flip)</option>
+                        <option value="fold">Katlanma (Fold)</option>
+                    </select>
                     
                     <button class="action-btn" style="width:100%; background:#f59e0b; color:black;" onclick="window.saveSlideSettings()"><i class="ph ph-database"></i> AYARLARI KAYDET</button>
+                </div>
+            </details>
+
+            <details style="margin-bottom: 10px;">
+                <summary style="font-size:11px; font-weight:bold; color:var(--error); cursor:pointer; margin-bottom:5px; display:flex; align-items:center; gap:6px;"><i class="ph ph-rss" style="font-size:14px;"></i> CANLI RSS HABER BAĞLANTISI</summary>
+                <div class="group-box" style="margin-top:5px; border-color:var(--error);">
+                    <div class="label-text" style="color:var(--error);">RSS XML LİNKİ GİRİN</div>
+                    <input type="text" id="rss-url" placeholder="Örn: https://www.cnnturk.com/feed/rss/all/news">
+                    <div style="font-size:10px; color:#94a3b8; margin-bottom:10px; font-style:italic;">Bu linki girerseniz alt bantta son dakika haberleri otomatik akar. İptal etmek için boş bırakıp kaydedin.</div>
+                    <button class="action-btn" style="width:100%; background:var(--error); color:white;" onclick="window.saveRss()"><i class="ph ph-link"></i> HABERLERİ BAĞLA</button>
+                </div>
+            </details>
+
+            <details style="margin-bottom: 10px;">
+                <summary style="font-size:11px; font-weight:bold; color:#0ea5e9; cursor:pointer; margin-bottom:5px; display:flex; align-items:center; gap:6px;"><i class="ph ph-monitor-play" style="font-size:14px;"></i> AKTİF CİHAZLAR (TAKİP)</summary>
+                <div class="group-box" style="margin-top:5px; padding:0; background:transparent; border:none;">
+                    <div id="device-list">
+                        <div style="font-size:11px; color:#64748b; text-align:center; margin-top:10px;">Bağlı cihaz bekleniyor...</div>
+                    </div>
                 </div>
             </details>
 
@@ -241,13 +281,6 @@
                 </div>
             </details>
 
-            <details style="margin-bottom: 10px;" open id="auto-text-panel">
-                <summary style="font-size:11px; font-weight:bold; color:#f472b6; cursor:pointer; margin-bottom:5px; display:flex; align-items:center; gap:6px;"><i class="ph ph-lightning" style="font-size:14px;"></i> OTOMATİK METİN YERLEŞTİRME</summary>
-                <div class="group-box" style="margin-top:5px; margin-bottom:5px; padding: 12px; border: 1px solid var(--border);">
-                    <div id="auto-fields-list"></div>
-                </div>
-            </details>
-
             <details style="margin-bottom: 5px;" open>
                 <summary style="font-size:11px; font-weight:bold; color:#06b6d4; cursor:pointer; margin-bottom:5px; display:flex; align-items:center; gap:6px;"><i class="ph ph-layers" style="font-size:14px;"></i> KATMANLAR</summary>
                 <div class="group-box" style="margin-top:5px; margin-bottom:5px; padding: 0; overflow: hidden; border: 1px solid var(--border);">
@@ -269,7 +302,7 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getDatabase, ref, set, get } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+    import { getDatabase, ref, set, get, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
     // ⚠️ DİKKAT: KENDİ FIREBASE BİLGİLERİNİ BURAYA YAPIŞTIR
     const firebaseConfig = {
@@ -285,9 +318,10 @@
     let db = null;
     try { const app = initializeApp(firebaseConfig); db = getDatabase(app); } catch(e) { console.error("Firebase Hatası", e); }
 
+    // 🔒 ŞİFRE SİSTEMİ
     window.checkPin = function() {
         const pin = document.getElementById('pin-input').value;
-        if(pin === '36863686') { 
+        if(pin === '1234') { 
             document.getElementById('login-overlay').style.display = 'none';
             document.getElementById('app-container').style.filter = 'blur(0px)';
             window.showToast("Giriş Başarılı!", "success");
@@ -330,8 +364,12 @@
     };
     window.getCanvasCenter = function() { const dim = window.getSvgDim(); return { cx: dim.w / 2, cy: dim.h / 2 }; };
 
-    window.onload = function() { window.loadSlide(); }
-    document.getElementById('file-selector')?.addEventListener('change', () => { window.loadSlide(); });
+    // 🌟 ZAMANLAMA GÜN SEÇİMİ BUTONLARI 🌟
+    document.querySelectorAll('.day-btn').forEach(btn => {
+        btn.onclick = () => btn.classList.toggle('active');
+    });
+
+    window.onload = function() { window.loadSlide(); window.loadRss(); window.listenDevices(); }
 
     window.loadSlide = async function() {
         window.showToast("Slayt Yükleniyor...", "success");
@@ -347,9 +385,17 @@
                 
                 const ayarSnap = await get(ref(db, 'sahne/ayarlar/' + safeKey));
                 if(ayarSnap.exists()) {
-                    const ayarlar = ayarSnap.val();
-                    if(document.getElementById('slide-time')) document.getElementById('slide-time').value = ayarlar.time || 5000;
-                    if(document.getElementById('slide-effect')) document.getElementById('slide-effect').value = ayarlar.effect || 'fade';
+                    const s = ayarSnap.val();
+                    if(document.getElementById('slide-time')) document.getElementById('slide-time').value = s.time || 5000;
+                    if(document.getElementById('slide-effect')) document.getElementById('slide-effect').value = s.effect || 'fade';
+                    if(document.getElementById('start-time')) document.getElementById('start-time').value = s.startTime || '00:00';
+                    if(document.getElementById('end-time')) document.getElementById('end-time').value = s.endTime || '23:59';
+                    if(s.days) {
+                        document.querySelectorAll('.day-btn').forEach(b => {
+                            if(s.days.includes(parseInt(b.dataset.day))) b.classList.add('active');
+                            else b.classList.remove('active');
+                        });
+                    }
                 }
             } else {
                  ci.innerHTML = `<svg width="1920" height="1080" viewBox="0 0 1920 1080" xmlns="http://www.w3.org/2000/svg"><rect id="canvas-background" x="0" y="0" width="1920" height="1080" fill="#020617"></rect></svg>`;
@@ -357,6 +403,45 @@
             historyStack = []; historyIndex = -1; window.selectedEl = null;
             setTimeout(() => { window.setupLayers(); window.initCanvasSettings(); window.resetZoom(); window.saveState(); }, 200);
         } catch(e) { window.showToast("Veritabanı Hatası!", "error"); }
+    };
+
+    // 🌟 RSS SİSTEMİ 🌟
+    window.loadRss = async function() {
+        if(!db) return;
+        const snap = await get(ref(db, 'sahne/rss'));
+        if(snap.exists() && document.getElementById('rss-url')) {
+            document.getElementById('rss-url').value = snap.val().url || "";
+        }
+    };
+    window.saveRss = function() {
+        if(!db) return;
+        const url = document.getElementById('rss-url').value;
+        set(ref(db, 'sahne/rss'), { url: url });
+        window.showToast("Haber Kaynağı Kaydedildi!");
+    };
+
+    // 🌟 CİHAZ TAKİP SİSTEMİ 🌟
+    window.listenDevices = function() {
+        if(!db) return;
+        onValue(ref(db, 'sahne/cihazlar'), (snapshot) => {
+            const list = document.getElementById('device-list');
+            if(!list) return;
+            list.innerHTML = "";
+            if(snapshot.exists()) {
+                const devices = snapshot.val();
+                const now = Date.now();
+                Object.keys(devices).forEach(id => {
+                    const dev = devices[id];
+                    const isOnline = (now - dev.lastSeen) < 15000; // 15 saniye sinyal yoksa offline
+                    const card = document.createElement('div');
+                    card.className = `device-card ${isOnline ? 'online' : 'offline'}`;
+                    card.innerHTML = `<div style="display:flex;justify-content:space-between;"><strong>📺 ${id}</strong><span>${isOnline ? '🟢 Çevrimiçi' : '🔴 Koptu'}</span></div><div style="color:#94a3b8;margin-top:4px;">Sürüm: ${dev.version || 'Bilinmiyor'}</div>`;
+                    list.appendChild(card);
+                });
+            } else {
+                list.innerHTML = '<div style="font-size:11px;color:#64748b;text-align:center;padding:10px;">Cihazlar bekleniyor...</div>';
+            }
+        });
     };
 
     window.downloadSVG = function() {
@@ -398,7 +483,7 @@
         const now = new Date(); if(st) st.innerText = `Son Kayıt: ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`; 
     };
 
-    window.saveData = function() { window.syncToFirebase(); window.showToast("Yayına Gönderildi!"); };
+    window.saveData = function() { window.syncToFirebase(); window.showToast("Tasarım Yayına Gönderildi!"); };
     
     window.saveSlideSettings = function() {
         if(!db) return;
@@ -406,8 +491,18 @@
         const safeKey = file.replace(/\./g, '_');
         const time = document.getElementById('slide-time')?.value || 5000;
         const effect = document.getElementById('slide-effect')?.value || 'fade';
-        set(ref(db, 'sahne/ayarlar/' + safeKey), { time: parseInt(time), effect: effect });
-        window.showToast("Ayar Kaydedildi!");
+        const startTime = document.getElementById('start-time')?.value || '00:00';
+        const endTime = document.getElementById('end-time')?.value || '23:59';
+        const activeDays = Array.from(document.querySelectorAll('.day-btn.active')).map(b => parseInt(b.dataset.day));
+        
+        set(ref(db, 'sahne/ayarlar/' + safeKey), { 
+            time: parseInt(time), 
+            effect: effect,
+            startTime: startTime,
+            endTime: endTime,
+            days: activeDays
+        });
+        window.showToast("Ayarlar Kaydedildi!");
     };
 
     window.saveState = function() {
@@ -573,18 +668,6 @@
 
     window.applyRecentColor = function(id, color) { const el = document.getElementById(id); if(!el) return; const fillType = window.getD(el, 'fill-type') || 'solid'; if(fillType === 'solid') { window.setD(el, 'solid-color', color); window.applyFill(el); } else { window.setD(el, 'color1', color); window.applyFill(el); } window.saveState(); window.renderProperties(); };
 
-    window.refreshAutoTextFields = function() {
-        const list = document.getElementById('auto-fields-list'); const svg = document.querySelector('#canvas-inner svg'); if(!svg || !list) return;
-        const varElements = svg.querySelectorAll('[data-var-name]'); list.innerHTML = ""; let hasVars = false;
-        varElements.forEach(el => {
-            const varName = el.getAttribute('data-var-name'); if(!varName || varName.trim() === "") return; hasVars = true;
-            const currentVal = window.getD(el, 'raw-text') || el.textContent; const row = document.createElement('div'); row.style.marginBottom = "8px";
-            row.innerHTML = `<div class="label-row"><span class="label-text" style="color:#f472b6;"><i class="ph ph-text-aa"></i> ${varName}</span></div><input type="text" value="${currentVal.replace(/"/g, '&quot;')}" oninput="window.updateVarValue('${el.id}', this.value)" onchange="window.saveState()" style="border-color:rgba(244,114,182,0.3);">`; list.appendChild(row);
-        });
-        if(!hasVars) list.innerHTML = `<div style="font-size:11px; color:#64748b; text-align:center;">Henüz değişken tanımlanmadı.</div>`;
-    };
-    window.updateVarValue = function(id, val) { const el = document.getElementById(id); if(!el) return; window.changeSetting(id, 'raw-text', val); if(window.selectedEl && window.selectedEl.id === id) { document.querySelectorAll('input[oninput*="raw-text"]').forEach(input => { if(!input.getAttribute('oninput').includes('updateVarValue')) input.value = val; }); } };
-
     window.changeProp = function(id, prop, val, elUI) {
         const el = document.getElementById(id); if(!el) return;
         if(prop === 'x') el.setAttribute('x', val); if(prop === 'y') el.setAttribute('y', val);
@@ -632,6 +715,7 @@
     };
 
     window.toggleFlip = function(id, dir) { const el = document.getElementById(id); if(!el) return; if(dir === 'x') window.setD(el, 'flip-x', window.getD(el, 'flip-x') === "-1" ? "1" : "-1"); else window.setD(el, 'flip-y', window.getD(el, 'flip-y') === "-1" ? "1" : "-1"); window.applyTransforms(el); window.saveState(); };
+    
     window.applyTransforms = function(el) {
         let cx = 0, cy = 0; if(el.tagName === 'text') { cx = parseFloat(el.getAttribute('x')) || 0; cy = parseFloat(el.getAttribute('y')) || 0; } else if(el.tagName !== 'path') { cx = (parseFloat(el.getAttribute('x')) || 0) + (parseFloat(el.getAttribute('width')) || 0) / 2; cy = (parseFloat(el.getAttribute('y')) || 0) + (parseFloat(el.getAttribute('height')) || 0) / 2; }
         const angle = parseFloat(window.getD(el, 'angle')) || 0; const fx = parseFloat(window.getD(el, 'flip-x')) || 1; const fy = parseFloat(window.getD(el, 'flip-y')) || 1;
@@ -651,28 +735,16 @@
         if(el.tagName === 'image') return;
         const type = window.getD(el, 'fill-type') || 'solid';
         let fillVal = '';
-        
         if (type === 'gradient') {
             const c1 = window.getD(el, 'color1') || '#10b981'; const c2 = window.getD(el, 'color2') || '#3b82f6';
             const svg = document.querySelector('#canvas-inner svg'); let defs = svg.querySelector('defs'); if (!defs) { defs = document.createElementNS("http://www.w3.org/2000/svg", "defs"); svg.prepend(defs); }
             let gradId = "grad_" + el.id; let grad = defs.querySelector("#" + gradId);
             if (!grad) { grad = document.createElementNS("http://www.w3.org/2000/svg", "linearGradient"); grad.id = gradId; grad.setAttribute("x1", "0%"); grad.setAttribute("y1", "0%"); grad.setAttribute("x2", "100%"); grad.setAttribute("y2", "100%"); const stop1 = document.createElementNS("http://www.w3.org/2000/svg", "stop"); stop1.setAttribute("offset", "0%"); stop1.className = "stop1"; const stop2 = document.createElementNS("http://www.w3.org/2000/svg", "stop"); stop2.setAttribute("offset", "100%"); stop2.className = "stop2"; grad.appendChild(stop1); grad.appendChild(stop2); defs.appendChild(grad); }
             grad.querySelector(".stop1").setAttribute("stop-color", c1); grad.querySelector(".stop2").setAttribute("stop-color", c2); fillVal = `url(#${gradId})`;
-        } else { 
-            fillVal = window.getD(el, 'solid-color'); 
-        }
-
+        } else { fillVal = window.getD(el, 'solid-color'); }
         if (!fillVal && type !== 'gradient') return;
-
-        el.setAttribute("fill", fillVal); 
-        if(el.tagName !== 'path') el.style.fill = fillVal;
-        
-        if(el.tagName === 'g' || el.tagName === 'svg') { 
-            el.querySelectorAll('path, circle, rect, polygon').forEach(child => { 
-                child.style.fill = fillVal; 
-                child.setAttribute('fill', fillVal); 
-            }); 
-        }
+        el.setAttribute("fill", fillVal); if(el.tagName !== 'path') el.style.fill = fillVal;
+        if(el.tagName === 'g' || el.tagName === 'svg') { el.querySelectorAll('path, circle, rect, polygon').forEach(child => { child.style.fill = fillVal; child.setAttribute('fill', fillVal); }); }
     };
 
     window.autoFitText = function(el) { 
@@ -748,7 +820,6 @@
         else { const ef = document.getElementById('editor-fields'); if(ef) ef.innerHTML = `<div style="text-align:center; color:#64748b; margin-top:50px; font-style:italic; font-size:13px;"><i class="ph ph-cursor-click" style="font-size:32px; display:block; margin-bottom:15px; color:var(--accent); opacity:0.5;"></i> 👆 Düzenlemek için sahneden veya katmanlardan bir nesne seçin.</div>`; } 
     };
 
-    // 🌟 SÜRÜKLE BIRAK (DRAG-DROP) KATMAN MOTORU 🌟
     window.renderLayers = function() {
         const list = document.getElementById('layers-list'); if(!list) return; list.innerHTML = ""; 
         const domElements = Array.from(document.querySelectorAll('.duzenlenebilir'));
@@ -764,45 +835,18 @@
             item.draggable = true; 
             item.dataset.id = el.id;
 
-            item.addEventListener('dragstart', (e) => {
-                draggedLayerId = el.id;
-                e.dataTransfer.effectAllowed = 'move';
-                setTimeout(() => item.style.opacity = '0.5', 0);
-            });
-            item.addEventListener('dragend', () => {
-                item.style.opacity = '1';
-                document.querySelectorAll('.layer-item').forEach(i => { i.style.borderTop = ''; i.style.borderBottom = ''; });
-                draggedLayerId = null;
-            });
-            item.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                if (draggedLayerId === el.id) return;
-                const rect = item.getBoundingClientRect();
-                const midY = rect.top + rect.height / 2;
-                if (e.clientY < midY) { item.style.borderTop = '2px solid var(--accent)'; item.style.borderBottom = ''; } 
-                else { item.style.borderBottom = '2px solid var(--accent)'; item.style.borderTop = ''; }
-            });
+            item.addEventListener('dragstart', (e) => { draggedLayerId = el.id; e.dataTransfer.effectAllowed = 'move'; setTimeout(() => item.style.opacity = '0.5', 0); });
+            item.addEventListener('dragend', () => { item.style.opacity = '1'; document.querySelectorAll('.layer-item').forEach(i => { i.style.borderTop = ''; i.style.borderBottom = ''; }); draggedLayerId = null; });
+            item.addEventListener('dragover', (e) => { e.preventDefault(); if (draggedLayerId === el.id) return; const rect = item.getBoundingClientRect(); const midY = rect.top + rect.height / 2; if (e.clientY < midY) { item.style.borderTop = '2px solid var(--accent)'; item.style.borderBottom = ''; } else { item.style.borderBottom = '2px solid var(--accent)'; item.style.borderTop = ''; } });
             item.addEventListener('dragleave', () => { item.style.borderTop = ''; item.style.borderBottom = ''; });
             item.addEventListener('drop', (e) => {
-                e.preventDefault();
-                item.style.borderTop = ''; item.style.borderBottom = '';
+                e.preventDefault(); item.style.borderTop = ''; item.style.borderBottom = '';
                 if (!draggedLayerId || draggedLayerId === el.id) return;
-
-                const draggedEl = document.getElementById(draggedLayerId);
-                const targetEl = document.getElementById(el.id);
+                const draggedEl = document.getElementById(draggedLayerId); const targetEl = document.getElementById(el.id);
                 if(!draggedEl || !targetEl) return;
-
-                const rect = item.getBoundingClientRect();
-                const midY = rect.top + rect.height / 2;
-                const dropBeforeVisual = e.clientY < midY; 
-
+                const rect = item.getBoundingClientRect(); const dropBeforeVisual = e.clientY < (rect.top + rect.height / 2); 
                 const parent = targetEl.parentNode;
-                if (dropBeforeVisual) {
-                     if (targetEl.nextSibling) parent.insertBefore(draggedEl, targetEl.nextSibling);
-                     else parent.appendChild(draggedEl);
-                } else {
-                     parent.insertBefore(draggedEl, targetEl);
-                }
+                if (dropBeforeVisual) { if (targetEl.nextSibling) parent.insertBefore(draggedEl, targetEl.nextSibling); else parent.appendChild(draggedEl); } else { parent.insertBefore(draggedEl, targetEl); }
                 window.saveState(); window.renderEditor();
             });
 
@@ -881,7 +925,7 @@
                 `<div id="tab-style" class="tab-content ${window.activeTabId === 'tab-style' ? 'active' : ''}">${styleHtml}</div>` + 
                 (isText ? `<div id="tab-text" class="tab-content ${window.activeTabId === 'tab-text' ? 'active' : ''}">${textHtml}</div>` : '') + 
                 `<div id="tab-code" class="tab-content ${window.activeTabId === 'tab-code' ? 'active' : ''}">${codeHtml}</div>`;
-        } catch(err) { f.innerHTML = `<div style="color:#ef4444; padding:20px; font-size:12px; text-align:center;"><i class="ph ph-warning-circle" style="font-size:32px; display:block; margin-bottom:10px;"></i> Özellikler yüklenemedi.</div>`; }
+        } catch(err) { f.innerHTML = `<div style="color:var(--error); padding:20px; font-size:12px; text-align:center;"><i class="ph ph-warning-circle" style="font-size:32px; display:block; margin-bottom:10px;"></i> Özellikler yüklenemedi.</div>`; }
     };
 
     window.applyRawCode = function(id) {
@@ -945,60 +989,37 @@
                     isModified = true; window.setD(radiusingEl, 'rx', Math.max(0, Math.min(startData.w/2, startData.h/2, startData.rx + dy))); window.applyShapeMask(radiusingEl); window.updateUI(radiusingEl);
                 } else if (window.selectedEl && isDraggingElement) {
                     isModified = true; 
-                    let newX = p.x - offset.x;
-                    let newY = p.y - offset.y;
-                    
-                    let snapX = null, snapY = null;
-                    const snapTolerance = 12;
-                    const dim = window.getSvgDim(); 
-                    const cw = dim.w, ch = dim.h;
-                    
-                    let bbox = {width:0, height:0}; 
-                    try { bbox = window.selectedEl.getBBox(); } catch(e){}
-                    
+                    let newX = p.x - offset.x; let newY = p.y - offset.y;
+                    let snapX = null, snapY = null; const snapTolerance = 12;
+                    const dim = window.getSvgDim(); const cw = dim.w, ch = dim.h;
+                    let bbox = {width:0, height:0}; try { bbox = window.selectedEl.getBBox(); } catch(e){}
                     const isText = window.selectedEl.tagName === 'text';
-                    let objCX = isText ? newX : newX + bbox.width / 2;
-                    let objCY = isText ? newY : newY + bbox.height / 2;
+                    let objCX = isText ? newX : newX + bbox.width / 2; let objCY = isText ? newY : newY + bbox.height / 2;
 
                     if (!e.shiftKey) {
                         if (Math.abs(objCX - cw/2) < snapTolerance) { objCX = cw/2; snapX = cw/2; }
                         if (Math.abs(objCY - ch/2) < snapTolerance) { objCY = ch/2; snapY = ch/2; }
-                        
                         if (!isText) {
                             if (Math.abs(newX) < snapTolerance) { newX = 0; objCX = bbox.width/2; snapX = 0; }
                             if (Math.abs(newX + bbox.width - cw) < snapTolerance) { newX = cw - bbox.width; objCX = cw - bbox.width/2; snapX = cw; }
                             if (Math.abs(newY) < snapTolerance) { newY = 0; objCY = bbox.height/2; snapY = 0; }
                             if (Math.abs(newY + bbox.height - ch) < snapTolerance) { newY = ch - bbox.height; objCY = ch - bbox.height/2; snapY = ch; }
                         }
-
                         document.querySelectorAll('.duzenlenebilir').forEach(other => {
                             if (other.id === window.selectedEl.id || window.getD(other, 'locked') === 'true') return;
                             try {
-                                let ob = other.getBBox();
-                                let oIsText = other.tagName === 'text';
-                                let oCX = oIsText ? parseFloat(other.getAttribute('x'))||0 : ob.x + ob.width/2;
-                                let oCY = oIsText ? parseFloat(other.getAttribute('y'))||0 : ob.y + ob.height/2;
-
+                                let ob = other.getBBox(); let oIsText = other.tagName === 'text';
+                                let oCX = oIsText ? parseFloat(other.getAttribute('x'))||0 : ob.x + ob.width/2; let oCY = oIsText ? parseFloat(other.getAttribute('y'))||0 : ob.y + ob.height/2;
                                 if (Math.abs(objCX - oCX) < snapTolerance) { objCX = oCX; snapX = oCX; }
                                 if (Math.abs(objCY - oCY) < snapTolerance) { objCY = oCY; snapY = oCY; }
                             } catch(err){}
                         });
-
-                        if (isText) {
-                            newX = objCX; newY = objCY;
-                        } else {
-                            newX = objCX - bbox.width / 2; newY = objCY - bbox.height / 2;
-                        }
+                        if (isText) { newX = objCX; newY = objCY; } else { newX = objCX - bbox.width / 2; newY = objCY - bbox.height / 2; }
                     }
-                    
-                    window.selectedEl.setAttribute("x", newX); 
-                    window.selectedEl.setAttribute("y", newY);
-                    
+                    window.selectedEl.setAttribute("x", newX); window.selectedEl.setAttribute("y", newY);
                     if((window.selectedEl.tagName === 'image' || window.selectedEl.tagName === 'rect') && window.getD(window.selectedEl, 'mask-shape') && window.getD(window.selectedEl, 'mask-shape') !== "none") window.applyShapeMask(window.selectedEl); 
                     if(window.selectedEl.tagName === 'text' && window.getD(window.selectedEl, 'curve')) window.applyTextCurve(window.selectedEl); 
-                    
                     window.updateUI(window.selectedEl, snapX, snapY);
-                    
                     if(window.selectedEl.tagName === 'rect' || window.selectedEl.tagName === 'image') { document.querySelectorAll(`text[data-bound-rect="${window.selectedEl.id}"]`).forEach(txt => { window.autoFitText(txt); }); }
                 }
             };
@@ -1006,7 +1027,7 @@
             const release = (e) => { 
                 try { wrapper.releasePointerCapture(e.pointerId); } catch(err){} isDraggingElement = false; 
                 if (isPanning) { isPanning = false; document.getElementById('svg-wrapper')?.classList.remove('panning'); return; }
-                if (isDrawing) { isDrawing = false; window.selectedEl = currentPath; currentPath = null; isDrawingMode = false; const bd = document.getElementById('btn-draw'); if(bd) bd.classList.remove('active'); document.getElementById('svg-wrapper')?.classList.remove('draw-mode'); window.saveState(); window.renderEditor(); window.updateUI(window.selectedEl); return; }
+                if (isDrawing) { isDrawing = false; window.selectedEl = currentPath; currentPath = null; isDrawingMode = false; document.getElementById('svg-wrapper')?.classList.remove('draw-mode'); window.saveState(); window.renderEditor(); window.updateUI(window.selectedEl); return; }
                 if (isDraggingGuide) { isDraggingGuide = false; currentGuide = null; window.saveState(); return; }
                 if (isModified) { window.saveState(); if(window.selectedEl) window.renderProperties(); }
                 resizingEl = null; rotatingEl = null; radiusingEl = null; activeHandle = null; isModified = false; document.querySelectorAll('.snap-line').forEach(l=>l.remove()); 
@@ -1032,9 +1053,7 @@
         corners.forEach(c => { const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect"); rect.setAttribute("x", c.x - s/2); rect.setAttribute("y", c.y - s/2); rect.setAttribute("width", s); rect.setAttribute("height", s); rect.setAttribute("class", "handle handle-resize"); rect.dataset.id = el.id; rect.dataset.handle = c.id; rect.style.cursor = c.cur; g.appendChild(rect); });
         const rotY = b.y - 40; const line = document.createElementNS("http://www.w3.org/2000/svg", "line"); line.setAttribute("x1", b.x + b.width/2); line.setAttribute("y1", b.y); line.setAttribute("x2", b.x + b.width/2); line.setAttribute("y2", rotY); line.setAttribute("stroke", "var(--handle-rotate)"); line.setAttribute("stroke-width", "2"); g.appendChild(line);
         const rotH = document.createElementNS("http://www.w3.org/2000/svg", "circle"); rotH.setAttribute("cx", b.x + b.width/2); rotH.setAttribute("cy", rotY); rotH.setAttribute("r", s/2.5); rotH.setAttribute("class", "handle handle-rotate"); rotH.dataset.id = el.id; g.appendChild(rotH);
-        if ((el.tagName === "image" || el.tagName === "rect") && window.getD(el, 'mask-shape') && window.getD(el, 'mask-shape') === 'squircle') { const radH = document.createElementNS("http://www.w3.org/2000/svg", "circle"); radH.setAttribute("cx", b.x + b.width); radH.setAttribute("cy", b.y + (parseFloat(window.getD(el, 'rx')) || 0)); radH.setAttribute("r", s/2.5); radH.setAttribute("class", "handle handle-radius"); radH.dataset.id = el.id; g.appendChild(radH); }
     };
-    window.updateEditorUI = window.updateUI; 
     
     document.addEventListener('keydown', (e) => {
         if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA') return;
@@ -1051,42 +1070,25 @@
     });
     
     document.addEventListener('keyup', (e) => { 
-        if (e.code === 'Space') { 
-            isSpacePressed = false; isPanning = false; 
-            const sw = document.getElementById('svg-wrapper'); 
-            if(sw) { sw.classList.remove('pan-mode'); sw.classList.remove('panning'); } 
-            return; 
-        } 
+        if (e.code === 'Space') { isSpacePressed = false; isPanning = false; const sw = document.getElementById('svg-wrapper'); if(sw) { sw.classList.remove('pan-mode'); sw.classList.remove('panning'); } return; } 
         if(isModified && e.key.startsWith('Arrow')) { window.saveState(); isModified = false; } 
     });
 
-    // 🌟 YENİ: SAĞ TIK (CONTEXT MENU) MOTORU 🌟
     document.addEventListener('contextmenu', function(e) {
         const el = e.target.closest('.duzenlenebilir');
         if (el) {
-            e.preventDefault();
-            window.selectedEl = el;
-            isDraggingElement = false;
-            window.updateUI(el);
-            window.renderEditor();
-            
+            e.preventDefault(); window.selectedEl = el; isDraggingElement = false; window.updateUI(el); window.renderEditor();
             const ctx = document.getElementById('context-menu');
             if (ctx) {
-                ctx.style.display = 'block';
-                ctx.style.left = e.pageX + 'px';
-                ctx.style.top = e.pageY + 'px';
-                
+                ctx.style.display = 'block'; ctx.style.left = e.pageX + 'px'; ctx.style.top = e.pageY + 'px';
                 const isLocked = window.getD(el, 'locked') === "true";
                 document.getElementById('ctx-lock-icon').className = isLocked ? "ph ph-lock-key-open" : "ph ph-lock-key";
                 document.getElementById('ctx-lock-text').innerText = isLocked ? "Kilidi Aç" : "Kilitle";
             }
-        } else if (e.target.closest('#svg-wrapper')) {
-            e.preventDefault();
-            window.closeCtx();
-        }
+        } else if (e.target.closest('#svg-wrapper')) { e.preventDefault(); window.closeCtx(); }
     });
-
     window.closeCtx = function() { const ctx = document.getElementById('context-menu'); if(ctx) { ctx.style.display = 'none'; } }; document.addEventListener('click', window.closeCtx);
+
 </script>
 </body>
 </html>
