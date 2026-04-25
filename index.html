@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>SVG Pro Studio | Kusursuz CMS V42 (Şifre + Mıknatıs)</title>
+    <title>SVG Pro Studio | Ultimate Sürüm V46</title>
     <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&family=Merriweather:wght@400;700&family=Montserrat:wght@400;700;800&family=Nunito:wght@400;700&family=Open+Sans:wght@400;700&family=Oswald:wght@400;700&family=Pacifico&family=Playfair+Display:wght@400;700&family=Poppins:wght@400;700&family=Raleway:wght@400;700&family=Roboto:wght@400;700&family=Ubuntu:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <style>
@@ -27,8 +27,9 @@
         #layers-header{padding:12px 15px;font-size:11px;font-weight:700;color:var(--accent);background:#111827;cursor:pointer;text-transform:uppercase;letter-spacing:1px;outline:none;user-select:none}
         #layers-list{flex:1;overflow-y:auto}
         
-        .layer-item{display:flex;align-items:center;justify-content:space-between;padding:10px 15px;border-bottom:1px solid var(--border);cursor:pointer;font-size:12px;transition:.2s;background:#1e293b;color:#cbd5e1}
+        .layer-item{display:flex;align-items:center;justify-content:space-between;padding:10px 15px;border-bottom:1px solid var(--border);cursor:grab;font-size:12px;transition:.2s;background:#1e293b;color:#cbd5e1}
         .layer-item:hover{background:#334155} .layer-item.active{border-left:4px solid var(--accent);background:rgba(16,185,129,.15);color:#fff;font-weight:700}
+        .layer-item:active{cursor:grabbing}
         .layer-actions{display:flex;gap:4px;align-items:center}
         .layer-btn{background:none;border:none;color:#94a3b8;cursor:pointer;font-size:16px;padding:2px;transition:.2s; display:flex; align-items:center; justify-content:center;}
         .layer-btn:hover{color:#fff;transform:scale(1.1)}
@@ -137,6 +138,7 @@
         <div class="shortcut-row"><span>Hassas Taşıma</span><span class="kbd">Ok Tuşları</span></div>
         <div class="shortcut-row"><span style="color:#f472b6;">Serbest Taşıma (Hizalamayı Kapat)</span><span class="kbd">Shift + Sürükle</span></div>
         <div class="shortcut-row"><span>Geri Al</span><span class="kbd">Ctrl + Z</span></div>
+        <div class="shortcut-row"><span>Sağ Tık Menüsü</span><span class="kbd">Mause Sağ Tık</span></div>
         <div class="shortcut-row"><span>Sil</span><span class="kbd">Del / Backspace</span></div>
     </div>
 </div>
@@ -165,7 +167,7 @@
         </div>
         <div id="status-bar">
             <div id="status-count">Nesne Sayısı: 0</div>
-            <div>SVG Pro Studio Ultimate V42</div>
+            <div>SVG Pro Studio Ultimate V46 (Mıknatıs + İndirme)</div>
             <div id="status-time">Son Kayıt: Bekleniyor...</div>
         </div>
     </div>
@@ -174,6 +176,7 @@
         <div class="sidebar-scroll-area">
             <div style="display:flex; gap:5px; margin-bottom: 10px;">
                 <button onclick="window.saveData()" class="action-btn active" style="flex:2; font-size:12px;"><i class="ph ph-floppy-disk"></i> YAYINA GÖNDER</button>
+                <button onclick="window.downloadSVG()" class="action-btn" style="flex:1; font-size:12px; background:#0ea5e9;" title="SVG Olarak İndir"><i class="ph ph-download-simple"></i> İNDİR</button>
             </div>
             
             <select id="file-selector" style="width:100%; padding:10px; background:#000; color:#fff; border-radius:8px; margin-bottom:10px; border:1px solid #334155; outline:none;">
@@ -273,7 +276,7 @@
     let db = null;
     try { const app = initializeApp(firebaseConfig); db = getDatabase(app); } catch(e) { console.error("Firebase Hatası", e); }
 
-    // 🔒 GÜVENLİK KONTROLÜ (VARSAYILAN ŞİFRE: 1234)
+    // 🔒 ŞİFRE SİSTEMİ
     window.checkPin = function() {
         const pin = document.getElementById('pin-input').value;
         if(pin === '1234') { 
@@ -285,7 +288,7 @@
             document.getElementById('pin-input').value = "";
         }
     };
-    document.getElementById('app-container').style.filter = 'blur(10px)';
+    document.getElementById('app-container').style.filter = 'blur(10px)'; 
 
     window.showToast = function(msg, type = 'success') {
         const container = document.getElementById('toast-container'); if(!container) return;
@@ -308,6 +311,7 @@
     let resizingEl = null, rotatingEl = null, radiusingEl = null, activeHandle = null, offset = {x:0, y:0}, startP = {x:0, y:0}, startData = {}, isModified = false;
     let clipboard = null, currentZoom = 1, panX = 0, panY = 0, historyStack = [], historyIndex = -1, isDraggingElement = false, isSpacePressed = false, isPanning = false, panStart = {x:0, y:0}, panOffsetStart = {x:0, y:0};
     let isDrawingMode = false, isDrawing = false, currentPath = null, pathData = "", isDraggingGuide = false, currentGuide = null;
+    let draggedLayerId = null; // Katman sürükleme için
 
     const googleFonts = [{ name: "Varsayılan", val: "sans-serif" }, { name: "Roboto", val: "'Roboto', sans-serif" }, { name: "Montserrat", val: "'Montserrat', sans-serif" }, { name: "Poppins", val: "'Poppins', sans-serif" }, { name: "Oswald", val: "'Oswald', sans-serif" }, { name: "Pacifico", val: "'Pacifico', cursive" }];
 
@@ -345,6 +349,36 @@
             historyStack = []; historyIndex = -1; window.selectedEl = null;
             setTimeout(() => { window.setupLayers(); window.initCanvasSettings(); window.resetZoom(); window.saveState(); }, 200);
         } catch(e) { window.showToast("Veritabanı Hatası!", "error"); }
+    };
+
+    // 🌟 SVG İNDİRME FONKSİYONU 🌟
+    window.downloadSVG = function() {
+        const svg = document.querySelector('#canvas-inner svg');
+        if(!svg) return;
+        
+        // Tasarımın orijinalini bozmamak için kopyasını alıyoruz
+        const clone = svg.cloneNode(true);
+        
+        // Editöre ait çöp kodları (kılavuzlar, kontrol noktaları vs) temizle
+        clone.querySelectorAll('.duzenlenebilir, .locked, .guide-line, .snap-line').forEach(el => {
+            el.classList.remove('duzenlenebilir', 'locked');
+            if (el.classList.length === 0) el.removeAttribute('class');
+        });
+        const ctrl = clone.querySelector('#control-layer');
+        if (ctrl) clone.removeChild(ctrl);
+
+        // SVG'yi dosyaya çevir
+        const data = new XMLSerializer().serializeToString(clone);
+        const blob = new Blob([data], {type: "image/svg+xml;charset=utf-8"});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        const fileName = document.getElementById('file-selector')?.value || 'tasarim.svg';
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.showToast("SVG Dosyası İndirildi!", "success");
     };
 
     window.syncToFirebase = function() {
@@ -713,15 +747,66 @@
         else { const ef = document.getElementById('editor-fields'); if(ef) ef.innerHTML = `<div style="text-align:center; color:#64748b; margin-top:50px; font-style:italic; font-size:13px;"><i class="ph ph-cursor-click" style="font-size:32px; display:block; margin-bottom:15px; color:var(--accent); opacity:0.5;"></i> 👆 Düzenlemek için sahneden veya katmanlardan bir nesne seçin.</div>`; } 
     };
 
+    // 🌟 SÜRÜKLE BIRAK (DRAG & DROP) KATMAN MOTORU 🌟
     window.renderLayers = function() {
-        const list = document.getElementById('layers-list'); if(!list) return; list.innerHTML = ""; const elements = Array.from(document.querySelectorAll('.duzenlenebilir')).reverse(); 
+        const list = document.getElementById('layers-list'); if(!list) return; list.innerHTML = ""; 
+        const domElements = Array.from(document.querySelectorAll('.duzenlenebilir'));
+        const elements = [...domElements].reverse(); 
         const sc = document.getElementById('status-count'); if(sc) sc.innerText = `Nesne Sayısı: ${elements.length}`;
+        
         elements.forEach((el) => {
             const isLocked = window.getD(el, 'locked') === "true"; const isActive = window.selectedEl === el; const isHidden = el.getAttribute('visibility') === 'hidden'; let typeName = el.tagName.toUpperCase(); let icon = 'ph-square';
             if (typeName === 'RECT') { typeName = 'ŞEKİL'; icon = 'ph-square'; } if (typeName === 'G' || typeName === 'SVG') { typeName = 'VEKTÖR'; icon = 'ph-shapes'; } if (typeName === 'PATH') { typeName = 'ÇİZİM'; icon = 'ph-scribble-loop'; } if (typeName === 'IMAGE') { typeName = 'RESİM'; icon = 'ph-image'; } if (el.tagName === 'text') { let txt = window.getD(el, 'raw-text') || el.textContent; typeName = `T: ${txt.substring(0,10)}${txt.length>10?'...':''}`; icon = 'ph-text-t'; }
-            const item = document.createElement('div'); item.className = `layer-item ${isActive ? 'active' : ''}`;
+            
+            const item = document.createElement('div'); 
+            item.className = `layer-item ${isActive ? 'active' : ''}`;
+            item.draggable = true; 
+            item.dataset.id = el.id;
+
+            item.addEventListener('dragstart', (e) => {
+                draggedLayerId = el.id;
+                e.dataTransfer.effectAllowed = 'move';
+                setTimeout(() => item.style.opacity = '0.5', 0);
+            });
+            item.addEventListener('dragend', () => {
+                item.style.opacity = '1';
+                document.querySelectorAll('.layer-item').forEach(i => { i.style.borderTop = ''; i.style.borderBottom = ''; });
+                draggedLayerId = null;
+            });
+            item.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                if (draggedLayerId === el.id) return;
+                const rect = item.getBoundingClientRect();
+                const midY = rect.top + rect.height / 2;
+                if (e.clientY < midY) { item.style.borderTop = '2px solid var(--accent)'; item.style.borderBottom = ''; } 
+                else { item.style.borderBottom = '2px solid var(--accent)'; item.style.borderTop = ''; }
+            });
+            item.addEventListener('dragleave', () => { item.style.borderTop = ''; item.style.borderBottom = ''; });
+            item.addEventListener('drop', (e) => {
+                e.preventDefault();
+                item.style.borderTop = ''; item.style.borderBottom = '';
+                if (!draggedLayerId || draggedLayerId === el.id) return;
+
+                const draggedEl = document.getElementById(draggedLayerId);
+                const targetEl = document.getElementById(el.id);
+                if(!draggedEl || !targetEl) return;
+
+                const rect = item.getBoundingClientRect();
+                const midY = rect.top + rect.height / 2;
+                const dropBeforeVisual = e.clientY < midY; 
+
+                const parent = targetEl.parentNode;
+                if (dropBeforeVisual) {
+                     if (targetEl.nextSibling) parent.insertBefore(draggedEl, targetEl.nextSibling);
+                     else parent.appendChild(draggedEl);
+                } else {
+                     parent.insertBefore(draggedEl, targetEl);
+                }
+                window.saveState(); window.renderEditor();
+            });
+
             item.onclick = (e) => { if(e.target.closest('.layer-btn')) return; window.selectedEl = el; isDraggingElement = false; window.updateUI(el); window.renderEditor(); };
-            item.innerHTML = `<div style="display:flex; align-items:center; gap:8px; flex:1; overflow:hidden;"><i class="ph ${icon}" style="color:var(--accent);"></i><span style="flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; ${isLocked ? 'text-decoration:line-through; opacity:0.5;' : ''} ${isHidden ? 'opacity:0.3;' : ''}">${typeName}</span></div><div class="layer-actions"><button class="layer-btn" onclick="window.toggleVisibility('${el.id}')" title="Göster/Gizle"><i class="ph ${isHidden ? 'ph-eye-closed' : 'ph-eye'}"></i></button><button class="layer-btn" onclick="window.moveLayer('${el.id}', 'top')" title="En Üste"><i class="ph ph-caret-double-up"></i></button><button class="layer-btn" onclick="window.moveLayer('${el.id}', 1)" title="Yukarı"><i class="ph ph-caret-up"></i></button><button class="layer-btn" onclick="window.moveLayer('${el.id}', -1)" title="Aşağı"><i class="ph ph-caret-down"></i></button><button class="layer-btn" onclick="window.moveLayer('${el.id}', 'bottom')" title="En Alta"><i class="ph ph-caret-double-down"></i></button><button class="layer-btn" onclick="window.toggleLock('${el.id}')" title="Kilit"><i class="ph ${isLocked ? 'ph-lock-key' : 'ph-lock-key-open'}"></i></button><button class="layer-btn" style="color:#ef4444;" onclick="if(confirm('Silinecek?')){ const delId='${el.id}'; if(window.selectedEl && window.selectedEl.id===delId) window.selectedEl=null; document.getElementById(delId).remove(); window.saveState(); window.renderEditor(); const cl=document.getElementById('control-layer'); if(cl) cl.innerHTML=''; event.stopPropagation(); }"><i class="ph ph-trash"></i></button></div>`; list.appendChild(item);
+            item.innerHTML = `<div style="display:flex; align-items:center; gap:8px; flex:1; overflow:hidden; pointer-events:none;"><i class="ph ph-dots-six-vertical" style="color:#64748b;"></i><i class="ph ${icon}" style="color:var(--accent);"></i><span style="flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; ${isLocked ? 'text-decoration:line-through; opacity:0.5;' : ''} ${isHidden ? 'opacity:0.3;' : ''}">${typeName}</span></div><div class="layer-actions"><button class="layer-btn" onclick="window.toggleVisibility('${el.id}')" title="Göster/Gizle"><i class="ph ${isHidden ? 'ph-eye-closed' : 'ph-eye'}"></i></button><button class="layer-btn" onclick="window.moveLayer('${el.id}', 'top')" title="En Üste"><i class="ph ph-caret-double-up"></i></button><button class="layer-btn" onclick="window.moveLayer('${el.id}', 1)" title="Yukarı"><i class="ph ph-caret-up"></i></button><button class="layer-btn" onclick="window.moveLayer('${el.id}', -1)" title="Aşağı"><i class="ph ph-caret-down"></i></button><button class="layer-btn" onclick="window.moveLayer('${el.id}', 'bottom')" title="En Alta"><i class="ph ph-caret-double-down"></i></button><button class="layer-btn" onclick="window.toggleLock('${el.id}')" title="Kilit"><i class="ph ${isLocked ? 'ph-lock-key' : 'ph-lock-key-open'}"></i></button><button class="layer-btn" style="color:#ef4444;" onclick="if(confirm('Silinecek?')){ const delId='${el.id}'; if(window.selectedEl && window.selectedEl.id===delId) window.selectedEl=null; document.getElementById(delId).remove(); window.saveState(); window.renderEditor(); const cl=document.getElementById('control-layer'); if(cl) cl.innerHTML=''; event.stopPropagation(); }"><i class="ph ph-trash"></i></button></div>`; list.appendChild(item);
         });
     };
 
@@ -862,6 +947,7 @@
                     let newX = p.x - offset.x;
                     let newY = p.y - offset.y;
                     
+                    // 🌟 MANYETİK YAKALAMA SİSTEMİ 🌟
                     let snapX = null, snapY = null;
                     const snapTolerance = 12;
                     const dim = window.getSvgDim(); 
@@ -874,6 +960,7 @@
                     let objCX = isText ? newX : newX + bbox.width / 2;
                     let objCY = isText ? newY : newY + bbox.height / 2;
 
+                    // Mıknatıs Sadece SHIFT tuşuna basılı değilken çalışır
                     if (!e.shiftKey) {
                         if (Math.abs(objCX - cw/2) < snapTolerance) { objCX = cw/2; snapX = cw/2; }
                         if (Math.abs(objCY - ch/2) < snapTolerance) { objCY = ch/2; snapY = ch/2; }
@@ -972,6 +1059,33 @@
             return; 
         } 
         if(isModified && e.key.startsWith('Arrow')) { window.saveState(); isModified = false; } 
+    });
+
+    // 🌟 SAĞ TIK MENÜSÜ SİSTEMİ 🌟
+    document.addEventListener('contextmenu', function(e) {
+        const el = e.target.closest('.duzenlenebilir');
+        if (el) {
+            e.preventDefault();
+            window.selectedEl = el;
+            isDraggingElement = false;
+            window.updateUI(el);
+            window.renderEditor();
+            
+            const ctx = document.getElementById('context-menu');
+            if (ctx) {
+                ctx.style.display = 'block';
+                ctx.style.left = e.pageX + 'px';
+                ctx.style.top = e.pageY + 'px';
+                
+                // Kilit yazısını güncelle
+                const isLocked = window.getD(el, 'locked') === "true";
+                document.getElementById('ctx-lock-icon').className = isLocked ? "ph ph-lock-key-open" : "ph ph-lock-key";
+                document.getElementById('ctx-lock-text').innerText = isLocked ? "Kilidi Aç" : "Kilitle";
+            }
+        } else if (e.target.closest('#svg-wrapper')) {
+            e.preventDefault();
+            window.closeCtx();
+        }
     });
 
     window.closeCtx = function() { const ctx = document.getElementById('context-menu'); if(ctx) { ctx.style.display = 'none'; } }; document.addEventListener('click', window.closeCtx);
