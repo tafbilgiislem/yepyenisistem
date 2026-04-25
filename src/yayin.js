@@ -73,15 +73,32 @@ function renderCurrentSlideAnlik() {
     container.innerHTML = slidesData[currentKey];
 }
 
+// 🌟 EFEKT DÜZELTME MOTORU (REFLOW EKLENDİ) 🌟
 function applyTransitionOut(effect, callback) {
+    // Çıkış yaparken animasyonu aç
+    container.style.transition = 'all 1.2s cubic-bezier(0.25, 1, 0.5, 1)';
     container.classList.add(`out-${effect}`);
-    // 🌟 Yeni uzun süreli efektlerin tam oynatılması için süre 1200ms (1.2 Saniye) yapıldı 🌟
-    setTimeout(() => { container.classList.remove(`out-${effect}`); callback(); }, 1200); 
+    
+    setTimeout(() => { 
+        container.classList.remove(`out-${effect}`); 
+        callback(); 
+    }, 1200); 
 }
 
 function applyTransitionIn(effect) {
+    // 1. Animasyonu kapat ki ekran gizlice giriş pozisyonuna ışınlanabilsin (Çakışmayı önler)
+    container.style.transition = 'none';
     container.classList.add(`in-${effect}`);
-    setTimeout(() => { container.classList.remove(`in-${effect}`); }, 50); 
+    
+    // 2. Tarayıcıya "Hemen pozisyonu hesapla" komutu ver (Reflow / Force Repaint)
+    void container.offsetWidth;
+    
+    // 3. Işınlanma bitti, şimdi animasyonu tekrar açarak ekrana muazzam bir giriş yaptır
+    container.style.transition = 'all 1.2s cubic-bezier(0.25, 1, 0.5, 1)';
+    
+    setTimeout(() => { 
+        container.classList.remove(`in-${effect}`); 
+    }, 50); 
 }
 
 // --- İÇ RESİM SLAYT SİSTEMİ ---
