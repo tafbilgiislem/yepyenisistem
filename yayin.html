@@ -3,12 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Canlı Yayın Ekranı</title>
+    <title>Canlı Yayın Ekranı (Performans ve Katman Sürümü)</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&family=Merriweather:wght@400;700&family=Montserrat:wght@400;700;800&family=Nunito:wght@400;700&family=Open+Sans:wght@400;700&family=Oswald:wght@400;700&family=Pacifico&family=Playfair+Display:wght@400;700&family=Poppins:wght@400;700&family=Raleway:wght@400;700&family=Ubuntu:wght@400;700&display=swap" rel="stylesheet">
     
     <style>
-        /* 🛡️ ANDROID TV KAYMA KALKANI */
         body, html {
             margin: 0;
             padding: 0;
@@ -27,75 +26,82 @@
             width: 100vw;
             height: 100vh;
             overflow: hidden;
-            /* İŞTE SORUN BURADAYDI! Bu kod efektleri eziyordu */
-            transform: translateZ(0); 
-            backface-visibility: hidden;
-            transition: all 1.2s cubic-bezier(0.25, 1, 0.5, 1);
-            transform-style: preserve-3d;
-            perspective: 1000px;
         }
 
-        #viewer-container svg {
+        /* 🌟 YENİ PERFORMANS MİMARİSİ: KATMANLAR 🌟 */
+        .slide-layer {
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            display: block;
-        }
-
-        #viewer-container text {
-            text-rendering: geometricPrecision;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            opacity: 0; /* Başlangıçta hepsi gizli ve arka planda hazır */
+            pointer-events: none;
+            backface-visibility: hidden;
+            perspective: 1000px;
             transform: translateZ(0); 
+            will-change: opacity, transform, clip-path;
+            /* Senin efsane sürelerinle harmanlanmış akıcı geçiş */
+            transition: all 1.2s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+        
+        .slide-layer.active {
+            opacity: 1;
+            pointer-events: all;
+            z-index: 10;
         }
 
-        /* --- 🌟 EFEKTLERİ !important İLE ZORLUYORUZ (KESİN ÇÖZÜM) 🌟 --- */
-        .out-fade { opacity: 0 !important; } .in-fade { opacity: 0 !important; }
+        .slide-layer svg {
+            width: 100vw; height: 100vh;
+            object-fit: contain; display: block;
+        }
         
-        .out-slide-left { transform: translateX(-100vw) !important; opacity: 0 !important; } 
-        .in-slide-left { transform: translateX(100vw) !important; opacity: 0 !important; }
-        
-        .out-slide-up { transform: translateY(-100vh) !important; opacity: 0 !important; } 
-        .in-slide-up { transform: translateY(100vh) !important; opacity: 0 !important; }
-        
-        .out-zoom { transform: scale(1.5) !important; opacity: 0 !important; } 
-        .in-zoom { transform: scale(0.5) !important; opacity: 0 !important; }
-        
-        .out-rotate-zoom { transform: rotate(180deg) scale(1.5) !important; opacity: 0 !important; } 
-        .in-rotate-zoom { transform: rotate(-180deg) scale(0.5) !important; opacity: 0 !important; }
-        
-        .out-circle { clip-path: circle(0% at 50% 50%) !important; opacity: 0 !important; } 
-        .in-circle { clip-path: circle(0% at 50% 50%) !important; opacity: 0 !important; }
-        
-        .out-wave { transform: translateY(-100vh) rotate(-10deg) !important; opacity: 0 !important; } 
-        .in-wave { transform: translateY(100vh) rotate(10deg) !important; opacity: 0 !important; }
-        
-        .out-curtain { clip-path: inset(0 50% 0 50%) !important; opacity: 0 !important; } 
-        .in-curtain { clip-path: inset(0 50% 0 50%) !important; opacity: 0 !important; }
-        
-        .out-spin-zoom { transform: scale(2) rotate(360deg) !important; opacity: 0 !important; } 
-        .in-spin-zoom { transform: scale(0.2) rotate(-360deg) !important; opacity: 0 !important; }
-        
-        .out-rotate3d { transform: rotate3d(1,1,0,-90deg) !important; opacity: 0 !important; } 
-        .in-rotate3d { transform: rotate3d(1,1,0,90deg) !important; opacity: 0 !important; }
-        
-        .out-cinematic-cube { transform: rotateY(-180deg) scale(.5) !important; opacity: 0 !important; } 
-        .in-cinematic-cube { transform: rotateY(180deg) scale(.5) !important; opacity: 0 !important; }
+        .slide-layer text { text-rendering: geometricPrecision; }
 
-        .out-slide { transform: translateX(-100vw) !important; opacity: 0 !important; } 
-        .in-slide { transform: translateX(100vw) !important; opacity: 0 !important; }
+        /* --- 🌟 SENİN EFSANE EFEKTLERİN (Active mantığına uyarlandı) 🌟 --- */
         
-        .out-flip { transform: rotateY(-90deg) !important; opacity: 0 !important; } 
-        .in-flip { transform: rotateY(90deg) !important; opacity: 0 !important; }
+        .fade { opacity: 0; } .fade.active { opacity: 1; }
         
-        .out-spin { transform: rotate(180deg) scale(0) !important; opacity: 0 !important; } 
-        .in-spin { transform: rotate(-180deg) scale(0) !important; opacity: 0 !important; }
+        .slide-left { transform: translateX(100vw); opacity: 0; } 
+        .slide-left.active { transform: translateX(0); opacity: 1; }
         
-        .out-cube { transform: rotateY(-90deg) translateZ(500px) !important; opacity: 0 !important; } 
-        .in-cube { transform: rotateY(90deg) translateZ(500px) !important; opacity: 0 !important; }
+        .slide-up { transform: translateY(100vh); opacity: 0; } 
+        .slide-up.active { transform: translateY(0); opacity: 1; }
         
-        .out-fold { transform: rotateX(-90deg) !important; opacity: 0 !important; } 
-        .in-fold { transform: rotateX(90deg) !important; opacity: 0 !important; }
+        .zoom { transform: scale(0.5); opacity: 0; } 
+        .zoom.active { transform: scale(1); opacity: 1; transition: all 2s ease-in-out; }
+        
+        .rotate-zoom { transform: rotate(-180deg) scale(0.5); opacity: 0; } 
+        .rotate-zoom.active { transform: rotate(0deg) scale(1); opacity: 1; transition: all 1.5s ease-in-out; }
+        
+        .circle { clip-path: circle(0% at 50% 50%); opacity: 0; } 
+        .circle.active { clip-path: circle(150% at 50% 50%); opacity: 1; transition: all 2s ease; }
+        
+        .wave { transform: translateY(100vh) rotate(10deg); opacity: 0; } 
+        .wave.active { transform: translateY(0) rotate(0); opacity: 1; transition: all 1.5s ease; }
+        
+        .curtain { clip-path: inset(0 50% 0 50%); opacity: 0; } 
+        .curtain.active { clip-path: inset(0 0 0 0); opacity: 1; transition: all 1.5s ease; }
+        
+        .spin-zoom { transform: scale(0.2) rotate(-360deg); opacity: 0; } 
+        .spin-zoom.active { transform: scale(1) rotate(0); opacity: 1; transition: all 1.5s ease; }
+        
+        .rotate3d { transform: rotate3d(1,1,0,90deg); opacity: 0; } 
+        .rotate3d.active { transform: rotate3d(0,0,0,0deg); opacity: 1; transition: all 1.5s ease; }
+        
+        .cinematic-cube { transform: rotateY(180deg) scale(.5); opacity: 0; } 
+        .cinematic-cube.active { transform: rotateY(0) scale(1); opacity: 1; transition: 1.5s; }
+        
+        /* Eski Sistem Klasikleri */
+        .cube { transform: rotateY(-90deg) translateZ(500px); opacity: 0; } 
+        .cube.active { transform: rotateY(0deg) translateZ(0); opacity: 1; }
+        
+        .flip { transform: rotateY(-90deg); opacity: 0; } 
+        .flip.active { transform: rotateY(0); opacity: 1; }
+        
+        .spin { transform: rotate(180deg) scale(0); opacity: 0; } 
+        .spin.active { transform: rotate(0) scale(1); opacity: 1; }
+        
+        .fold { transform: rotateX(-90deg); opacity: 0; } 
+        .fold.active { transform: rotateX(0); opacity: 1; }
     </style>
 </head>
 <body>
