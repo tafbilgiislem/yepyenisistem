@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>SVG Pro Studio | Stabil Sürüm V45</title>
+    <title>SVG Pro Studio | Kusursuz CMS V42 (Stabil)</title>
     <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&family=Merriweather:wght@400;700&family=Montserrat:wght@400;700;800&family=Nunito:wght@400;700&family=Open+Sans:wght@400;700&family=Oswald:wght@400;700&family=Pacifico&family=Playfair+Display:wght@400;700&family=Poppins:wght@400;700&family=Raleway:wght@400;700&family=Roboto:wght@400;700&family=Ubuntu:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <style>
@@ -16,7 +16,7 @@
         ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
 
-        #app-container{display:flex; height:100%; width:100%; flex-direction:row; filter: blur(0px); transition: filter 0.3s;}
+        #app-container{display:flex; height:100%; width:100%; flex-direction:row}
         
         #sidebar{width:480px;background:var(--panel);border-left:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;height:100%;z-index:100;position:relative}
         .sidebar-scroll-area{flex-shrink:0;max-height:60%;overflow-y:auto;background:#111827;padding:15px;border-bottom:2px solid var(--border)}
@@ -54,16 +54,12 @@
         .handle{fill:#fff;stroke-width:2;pointer-events:all;transition:fill .2s,stroke-width .2s}
         .handle:hover{fill:var(--accent);stroke-width:4}
         .handle-resize{stroke:var(--handle-move);cursor:nwse-resize} .handle-rotate{stroke:var(--handle-rotate);cursor:crosshair;fill:var(--handle-rotate)} .handle-radius{stroke:var(--handle-radius);cursor:ns-resize;fill:var(--handle-radius)}
-        
-        /* MIKNATIS ÇİZGİLERİ */
-        .snap-line{stroke:#ec4899;stroke-width:1.5;stroke-dasharray:4,4;pointer-events:none;z-index:60; opacity: 0.8;}
-        
+        .snap-line{stroke:#ec4899;stroke-width:1.5;stroke-dasharray:4,4;pointer-events:none;z-index:60}
         .guide-line{stroke:#06b6d4;stroke-width:3;stroke-dasharray:8,4;cursor:grab;pointer-events:all}
         
         input[type="range"]{width:100%;accent-color:var(--accent);height:6px;cursor:pointer;margin:0}
         input[type="text"],input[type="number"],textarea{width:100%;padding:12px;border-radius:8px;border:1px solid var(--border);background:#000;color:#fff;outline:none;font-size:13px}
-        input[type="password"]{width:100%;padding:12px;border-radius:8px;border:1px solid var(--border);background:#000;color:#fff;outline:none;font-size:16px; letter-spacing: 5px; text-align: center;}
-        input[type="text"]:focus,input[type="number"]:focus,textarea:focus,input[type="password"]:focus{border-color:var(--accent)}
+        input[type="text"]:focus,input[type="number"]:focus,textarea:focus{border-color:var(--accent)}
         .font-select{width:100%;padding:12px;border-radius:8px;border:1px solid var(--border);background:#000;color:#fff;margin-bottom:5px;outline:none;font-size:13px;cursor:pointer}
         
         .action-row{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap}
@@ -107,16 +103,6 @@
 </head>
 <body>
 
-<div id="login-overlay" style="position:fixed; inset:0; background:rgba(15,23,42,0.95); z-index:9999999; display:flex; flex-direction:column; align-items:center; justify-content:center; backdrop-filter: blur(10px);">
-    <i class="ph ph-shield-check" style="font-size: 64px; color: var(--accent); margin-bottom: 20px;"></i>
-    <h2 style="color:white; margin-top:0;">TV Yönetim Paneli</h2>
-    <p style="color:#94a3b8; font-size:13px; margin-bottom:20px;">Lütfen erişim şifrenizi girin.</p>
-    <div style="display:flex; gap:10px;">
-        <input type="password" id="pin-input" placeholder="****" style="width:200px;" onkeypress="if(event.key === 'Enter') window.checkPin()">
-        <button class="action-btn active" onclick="window.checkPin()" style="width:100px;">GİRİŞ</button>
-    </div>
-</div>
-
 <div id="toast-container"></div>
 
 <div id="context-menu">
@@ -138,7 +124,6 @@
         <div class="shortcut-row"><span>Gezinme (El Aracı)</span><span class="kbd">Space + Sürükle</span></div>
         <div class="shortcut-row"><span>Hızlı Kopyalama</span><span class="kbd">Alt + Sürükle</span></div>
         <div class="shortcut-row"><span>Hassas Taşıma</span><span class="kbd">Ok Tuşları</span></div>
-        <div class="shortcut-row"><span style="color:#f472b6;">Serbest Taşıma (Hizalamayı Kapat)</span><span class="kbd">Shift + Sürükle</span></div>
         <div class="shortcut-row"><span>Geri Al</span><span class="kbd">Ctrl + Z</span></div>
         <div class="shortcut-row"><span>Sil</span><span class="kbd">Del / Backspace</span></div>
     </div>
@@ -168,7 +153,7 @@
         </div>
         <div id="status-bar">
             <div id="status-count">Nesne Sayısı: 0</div>
-            <div>SVG Pro Studio | Sürüm V45 (Temiz, Stabil)</div>
+            <div>SVG Pro Studio Ultimate V42</div>
             <div id="status-time">Son Kayıt: Bekleniyor...</div>
         </div>
     </div>
@@ -275,19 +260,6 @@
 
     let db = null;
     try { const app = initializeApp(firebaseConfig); db = getDatabase(app); } catch(e) { console.error("Firebase Hatası", e); }
-
-    window.checkPin = function() {
-        const pin = document.getElementById('pin-input').value;
-        if(pin === '1234') { 
-            document.getElementById('login-overlay').style.display = 'none';
-            document.getElementById('app-container').style.filter = 'blur(0px)';
-            window.showToast("Giriş Başarılı!", "success");
-        } else {
-            window.showToast("Hatalı Şifre!", "error");
-            document.getElementById('pin-input').value = "";
-        }
-    };
-    document.getElementById('app-container').style.filter = 'blur(10px)'; 
 
     window.showToast = function(msg, type = 'success') {
         const container = document.getElementById('toast-container'); if(!container) return;
@@ -842,7 +814,8 @@
                 if (!window.selectedEl && !resizingEl && !rotatingEl && !radiusingEl) return;
                 if (window.selectedEl && window.getD(window.selectedEl, 'locked') === "true" && !resizingEl && !rotatingEl && !radiusingEl) return; 
                 if(isDraggingElement || resizingEl || rotatingEl || radiusingEl) e.preventDefault(); 
-                const dx = p.x - startP.x; const dy = p.y - startP.y; 
+                const dx = p.x - startP.x; const dy = p.y - startP.y; let snapX = null, snapY = null; const snapTolerance = 15; 
+                const dim = window.getSvgDim(); const w = dim.w, h = dim.h; const cx = w / 2, cy = h / 2;
 
                 if (resizingEl) {
                     isModified = true; let { x, y, w, h } = startData;
@@ -860,62 +833,10 @@
                 } else if (radiusingEl && (radiusingEl.tagName === "image" || radiusingEl.tagName === "rect")) {
                     isModified = true; window.setD(radiusingEl, 'rx', Math.max(0, Math.min(startData.w/2, startData.h/2, startData.rx + dy))); window.applyShapeMask(radiusingEl); window.updateUI(radiusingEl);
                 } else if (window.selectedEl && isDraggingElement) {
-                    isModified = true; 
-                    let newX = p.x - offset.x;
-                    let newY = p.y - offset.y;
-                    
-                    // 🌟 MANYETİK YAKALAMA 🌟
-                    let snapX = null, snapY = null;
-                    const snapTolerance = 12;
-                    const dim = window.getSvgDim(); 
-                    const cw = dim.w, ch = dim.h;
-                    
-                    let bbox = {width:0, height:0}; 
-                    try { bbox = window.selectedEl.getBBox(); } catch(e){}
-                    
-                    const isText = window.selectedEl.tagName === 'text';
-                    let objCX = isText ? newX : newX + bbox.width / 2;
-                    let objCY = isText ? newY : newY + bbox.height / 2;
-
-                    if (!e.shiftKey) {
-                        if (Math.abs(objCX - cw/2) < snapTolerance) { objCX = cw/2; snapX = cw/2; }
-                        if (Math.abs(objCY - ch/2) < snapTolerance) { objCY = ch/2; snapY = ch/2; }
-                        
-                        if (!isText) {
-                            if (Math.abs(newX) < snapTolerance) { newX = 0; objCX = bbox.width/2; snapX = 0; }
-                            if (Math.abs(newX + bbox.width - cw) < snapTolerance) { newX = cw - bbox.width; objCX = cw - bbox.width/2; snapX = cw; }
-                            if (Math.abs(newY) < snapTolerance) { newY = 0; objCY = bbox.height/2; snapY = 0; }
-                            if (Math.abs(newY + bbox.height - ch) < snapTolerance) { newY = ch - bbox.height; objCY = ch - bbox.height/2; snapY = ch; }
-                        }
-
-                        document.querySelectorAll('.duzenlenebilir').forEach(other => {
-                            if (other.id === window.selectedEl.id || window.getD(other, 'locked') === 'true') return;
-                            try {
-                                let ob = other.getBBox();
-                                let oIsText = other.tagName === 'text';
-                                let oCX = oIsText ? parseFloat(other.getAttribute('x'))||0 : ob.x + ob.width/2;
-                                let oCY = oIsText ? parseFloat(other.getAttribute('y'))||0 : ob.y + ob.height/2;
-
-                                if (Math.abs(objCX - oCX) < snapTolerance) { objCX = oCX; snapX = oCX; }
-                                if (Math.abs(objCY - oCY) < snapTolerance) { objCY = oCY; snapY = oCY; }
-                            } catch(err){}
-                        });
-
-                        if (isText) {
-                            newX = objCX; newY = objCY;
-                        } else {
-                            newX = objCX - bbox.width / 2; newY = objCY - bbox.height / 2;
-                        }
-                    }
-                    
-                    window.selectedEl.setAttribute("x", newX); 
-                    window.selectedEl.setAttribute("y", newY);
-                    
+                    isModified = true; let newX = p.x - offset.x, newY = p.y - offset.y; let bbox = {width:0, height:0}; try { bbox = window.selectedEl.getBBox(); }catch(e){}
+                    window.selectedEl.setAttribute("x", newX); window.selectedEl.setAttribute("y", newY);
                     if((window.selectedEl.tagName === 'image' || window.selectedEl.tagName === 'rect') && window.getD(window.selectedEl, 'mask-shape') && window.getD(window.selectedEl, 'mask-shape') !== "none") window.applyShapeMask(window.selectedEl); 
-                    if(window.selectedEl.tagName === 'text' && window.getD(window.selectedEl, 'curve')) window.applyTextCurve(window.selectedEl); 
-                    
-                    window.updateUI(window.selectedEl, snapX, snapY);
-                    
+                    if(window.selectedEl.tagName === 'text' && window.getD(window.selectedEl, 'curve')) window.applyTextCurve(window.selectedEl); window.updateUI(window.selectedEl, snapX, snapY);
                     if(window.selectedEl.tagName === 'rect' || window.selectedEl.tagName === 'image') { document.querySelectorAll(`text[data-bound-rect="${window.selectedEl.id}"]`).forEach(txt => { window.autoFitText(txt); }); }
                 }
             };
