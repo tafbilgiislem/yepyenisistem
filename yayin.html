@@ -3,39 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Canlı Yayın Ekranı Pro V49.5</title>
-    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&family=Montserrat:wght@400;700;800&display=swap" rel="stylesheet">
+    <title>Canlı Yayın Ekranı Pro V48.5</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&family=Merriweather:wght@400;700&family=Montserrat:wght@400;700;800&family=Nunito:wght@400;700&family=Open+Sans:wght@400;700&family=Oswald:wght@400;700&family=Pacifico&family=Playfair+Display:wght@400;700&family=Poppins:wght@400;700&family=Raleway:wght@400;700&family=Ubuntu:wght@400;700&display=swap" rel="stylesheet">
+    
     <style>
-        body, html { margin: 0; padding: 0; width: 100vw; height: 100vh; background: #000; overflow: hidden; font-family: 'Montserrat', sans-serif; position: fixed; }
-        #viewer-container { position: absolute; inset: 0; transform: translateZ(0); backface-visibility: hidden; transform-style: preserve-3d; perspective: 1000px; }
-        .slide-layer { position: absolute; inset: 0; opacity: 0; pointer-events: none; transition: all 1.2s cubic-bezier(0.25, 1, 0.5, 1); will-change: transform, opacity, clip-path; }
+        /* 🛡️ ANDROID TV SABİT KALKAN */
+        body, html { 
+            margin: 0; padding: 0; width: 100vw; height: 100vh; background: #000; overflow: hidden; font-family: 'Montserrat', sans-serif; position: fixed; 
+        }
+        
+        #viewer-container { 
+            position: absolute; inset: 0; transform: translateZ(0); backface-visibility: hidden; transform-style: preserve-3d; perspective: 1000px; 
+        }
+        
+        .slide-layer { 
+            position: absolute; inset: 0; opacity: 0; pointer-events: none; 
+            transition: all 1.2s cubic-bezier(0.25, 1, 0.5, 1); 
+            will-change: transform, opacity, clip-path;
+        }
+        
         .slide-layer.active { opacity: 1; pointer-events: all; z-index: 10; }
         .slide-layer svg { width: 100vw; height: 100vh; object-fit: contain; display: block; }
-        
-        /* 🌟 SAAT VE TARİH (SOL ÜST KÖŞE) 🌟 */
-        #clock-widget {
-            position: absolute; top: 25px; left: 30px; background: rgba(15, 23, 42, 0.75); color: #fff;
-            padding: 10px 20px; border-radius: 16px; display: flex; flex-direction: column; align-items: center;
-            justify-content: center; z-index: 2000; border: 1px solid rgba(255,255,255,0.15);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.6); backdrop-filter: blur(8px);
-        }
-        #timeText { font-size: 28px; font-weight: 800; letter-spacing: 2px;}
-        #dateText { font-size: 12px; font-weight: 600; color: #cbd5e1; text-transform: uppercase; letter-spacing: 1px;}
+        .slide-layer text { text-rendering: geometricPrecision; }
 
-        /* ⛅ HAVA DURUMU (SAĞ ÜST KÖŞE) ⛅ */
-        #weather-widget {
-            position: absolute; top: 25px; right: 30px; background: rgba(15, 23, 42, 0.75); color: #fff;
-            padding: 10px 20px; border-radius: 16px; font-weight: 800; font-size: 26px; display: flex;
-            align-items: center; gap: 12px; z-index: 2000; border: 1px solid rgba(255,255,255,0.15);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.6); backdrop-filter: blur(8px);
-        }
-        #w-desc { font-size: 13px; font-weight: 600; color: #cbd5e1; text-transform: uppercase; letter-spacing: 1px; display: block;}
-        #w-temp-box { display: flex; flex-direction: column; justify-content: center; }
-
+        /* 🌟 HABER BANDI ANİMASYONU 🌟 */
         @keyframes scrollNews { to { transform: translateX(-100%); } }
+
+        /* 🌟 NESNE ANİMASYONLARI 🌟 */
         .slide-layer.active .anim-pop-in { animation: popIn 1s cubic-bezier(0.17, 0.67, 0.83, 0.67) forwards; opacity: 0; }
         @keyframes popIn { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
+        /* --- 🌟 14 MEGA EFEKT 🌟 --- */
         .fade { opacity: 0; } .fade.active { opacity: 1; }
         .slide-left { transform: translateX(100vw); opacity: 0; } .slide-left.active { transform: translateX(0); opacity: 1; }
         .slide-up { transform: translateY(100vh); opacity: 0; } .slide-up.active { transform: translateY(0); opacity: 1; }
@@ -55,21 +54,7 @@
 </head>
 <body>
 
-    <div id="clock-widget">
-        <span id="timeText">--:--</span>
-        <span id="dateText">--.--.----</span>
-    </div>
-
-    <div id="weather-widget">
-        <span id="w-icon">⏳</span>
-        <div id="w-temp-box">
-            <span id="w-temp">--°C</span>
-            <span id="w-desc">Bekleniyor</span>
-        </div>
-    </div>
-
     <div id="viewer-container"></div>
-
     <script type="module" src="/src/yayin.js"></script>
 
 </body>
