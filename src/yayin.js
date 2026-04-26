@@ -1,7 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-// ⚠️ DİKKAT: KENDİ FIREBASE BİLGİLERİNİ BURAYA YAPIŞTIRMAYI UNUTMA
+// ⚠️ DİKKAT: KENDİ FIREBASE BİLGİLERİNİ BURAYA YAPIŞTIR
 const firebaseConfig = {
     apiKey: "AIzaSyCFBrHqXdRVdbtaqyKCQAgJ4U8no9cDIF8",
   authDomain: "svg-pro-studio.firebaseapp.com",
@@ -15,10 +15,8 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-// Her TV ekranı için rastgele bir ID oluştur
 const deviceId = "TV_" + Math.floor(Math.random() * 10000); 
 
-// Çevrimdışı durumlar için verileri LocalStorage'dan oku
 let slidesData = JSON.parse(localStorage.getItem('slidesData')) || {};
 let settingsData = JSON.parse(localStorage.getItem('settingsData')) || {};
 let rssCache = { url: "", data: "🔴 Haberler Bekleniyor...", time: 0 };
@@ -29,44 +27,68 @@ let rotationTimer = null;
 const container = document.getElementById('viewer-container');
 
 // 📡 HEARTBEAT (CİHAZ TAKİBİ)
-// Her 10 saniyede bir Editör'e "Ben yayındayım ve çalışıyorum" sinyali yollar
 setInterval(() => {
     set(ref(db, 'sahne/cihazlar/' + deviceId), {
         lastSeen: Date.now(),
-        version: "V49-CMS"
+        version: "V49.2-WEATHER"
     }).catch(e => console.log("Çevrimdışı: Sinyal gönderilemedi."));
 }, 10000);
 
-// 🗞️ CANLI RSS HABER ÇEKİCİ (CORS Korumasını Aşar)
+
+// ⛅ CANLI HAVA DURUMU (OPENWEATHERMAP API) ⛅
+// Senin verdiğin anahtarı kullanarak JSON formatında veri çekiyoruz
+const WEATHER_API_URL = "https://api.openweathermap.org/data/2.5/weather?q=Izmir,TR&units=metric&lang=tr&appid=97fe4c9ee7efb72f3e0520ceb21bba8b";
+
+async function fetchWeather() {
+    try {
+        const response = await fetch(WEATHER_API_URL);
+        if(response.ok) {
+            const data = await response.json();
+            const temp = Math.round(data.main.temp); // Dereceyi yuvarla (Örn: 24.3 -> 24)
+            const desc = data.weather[0].description; // Açıklama (Örn: az bulutlu)
+            const iconCode = data.weather[0].icon; // İkon kodu (Örn: 01d)
+            
+            // Orijinal OpenWeatherMap ikonlarını çek
+            const iconUrl = `https://openweathermap.org/img/wn/${iconCode}@2x.png`;
+            
+            document.getElementById('w-temp').innerText = `${temp}°C`;
+            document.getElementById('w-desc').innerText = `İZMİR | ${desc}`;
+            // İkonu bas ve hafif gölge ver ki şık dursun
+            document.getElementById('w-icon').innerHTML = `<img src="${iconUrl}" style="width: 50px; height: 50px; filter: drop-shadow(0px 3px 5px rgba(0,0,0,0.5)); margin-top: 5px;">`;
+        }
+    } catch(e) {
+        console.log("Hava durumu çekilemedi:", e);
+    }
+}
+// İlk açılışta hava durumunu çek
+fetchWeather();
+// İnternet ve API kotasını yormamak için her 30 dakikada bir güncelle
+setInterval(fetchWeather, 1800000); 
+
+
+// 🗞️ CANLI RSS HABER ÇEKİCİ
 async function fetchRssData(url) {
     if(!url) return "🔴 Geçerli bir haber linki girilmedi.";
     const now = Date.now();
-    
-    // API'yi yormamak için haberleri 5 dakikada bir yeniler
     if(rssCache.url === url && (now - rssCache.time < 300000)) {
         return rssCache.data;
     }
-    
     try {
         const res = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(url)}`);
         const data = await res.json();
         if(data.items && data.items.length > 0) {
             const newsString = data.items.map(i => "🔴 " + i.title).join("  |  ");
-            // Kayan animasyonda boşluk olmaması için metni iki kez yazdırıyoruz
             const finalString = newsString + "  |  " + newsString;
             rssCache = { url: url, data: finalString, time: now };
             return finalString;
         }
-    } catch(e) { console.log("RSS Çekilemedi:", e); }
-    
+    } catch(e) { console.log("RSS Hatası:", e); }
     return "🔴 Haber kaynağına ulaşılamıyor...";
 }
 
-// ⏳ RSS EKRAN GÜNCELLEYİCİ (Aktif katmandaki bantları günceller)
 setInterval(async () => {
     const activeLayer = document.querySelector('.slide-layer.active');
     if(!activeLayer) return;
-    
     const rssBands = activeLayer.querySelectorAll('.rss-band');
     for(let band of rssBands) {
         const url = band.getAttribute('data-rss-url');
@@ -78,31 +100,22 @@ setInterval(async () => {
     }
 }, 2000);
 
-// 🧠 AKILLI ZAMANLAMA KONTROLÜ (GÜN VE SAAT)
+// 🧠 AKILLI ZAMANLAMA KONTROLÜ
 function isSlideVisible(key) {
     const s = settingsData[key];
-    if(!s) return true; // Ayar yoksa varsayılan olarak göster
+    if(!s) return true; 
     
     const now = new Date();
-    const currentDay = now.getDay(); // 0: Pazar, 1: Pazartesi ...
+    const currentDay = now.getDay(); 
     const currentTime = now.getHours().toString().padStart(2,'0') + ":" + now.getMinutes().toString().padStart(2,'0');
 
-    // 1. Gün testi
-    if(s.days && s.days.length > 0 && !s.days.includes(currentDay)) {
-        return false;
-    }
-    
-    // 2. Saat testi
+    if(s.days && s.days.length > 0 && !s.days.includes(currentDay)) return false;
     if(s.startTime && s.endTime) {
-        if(currentTime < s.startTime || currentTime > s.endTime) {
-            return false;
-        }
+        if(currentTime < s.startTime || currentTime > s.endTime) return false;
     }
-    
-    return true; // Geçerliyse göster
+    return true; 
 }
 
-// 🎨 AYARLARI DİNLE VE HAFIZAYA KAYDET
 onValue(ref(db, 'sahne/ayarlar'), (snapshot) => {
     if (snapshot.exists()) {
         settingsData = snapshot.val();
@@ -110,43 +123,49 @@ onValue(ref(db, 'sahne/ayarlar'), (snapshot) => {
     }
 });
 
-// 🖼️ SLAYTLARI DİNLE VE KATMANLARI OLUŞTUR (CMS MANTIĞI)
 onValue(ref(db, 'sahne/slaytlar'), (snapshot) => {
     if (snapshot.exists()) {
         slidesData = snapshot.val();
         localStorage.setItem('slidesData', JSON.stringify(slidesData));
-        buildLayers(); // Katmanları çiz
+        buildLayers(); 
     } else {
-        container.innerHTML = "<h1 style='color:white; text-align:center;'>Yayın Bekleniyor veya Slayt Yok...</h1>";
+        container.innerHTML = "<h1 style='color:white; text-align:center;'>Yayın Bekleniyor...</h1>";
     }
 });
 
-// 🏗️ KATMAN (LAYER) İNŞA MOTORU
+// 🛡️ YALITIM (SANDBOX) MOTORU
+function isolateIDs(htmlString, slideKey) {
+    return htmlString
+        .replace(/\bid="([^"]+)"/g, `id="${slideKey}_$1"`)
+        .replace(/url\(['"]?#([^)"']+?)['"]?\)/g, `url(#${slideKey}_$1)`)
+        .replace(/\b(href|xlink:href)="\#([^"]+)"/g, `$1="#${slideKey}_$2"`);
+}
+
+// 🏗️ KATMAN İNŞASI
 function buildLayers() {
-    container.innerHTML = ""; // Ekranı temizle
-    slideKeys = Object.keys(slidesData); // Slaytların anahtarlarını al (Dinamik CMS Listesi)
+    container.innerHTML = ""; 
+    slideKeys = Object.keys(slidesData); 
     
     slideKeys.forEach(key => {
         const div = document.createElement('div');
-        div.className = 'slide-layer'; // Hepsi opacity: 0 olarak arkada bekliyor
+        div.className = 'slide-layer'; 
         div.id = 'layer-' + key;
-        div.innerHTML = slidesData[key];
+        div.innerHTML = isolateIDs(slidesData[key], key);
         container.appendChild(div);
     });
     
     if(!rotationTimer && slideKeys.length > 0) {
-        showSlide(0); // Çizim bittikten sonra ilk slaytı oynat
+        showSlide(0); 
     }
 }
 
-// 🎬 GÖSTERİM (YAYIN DÖNGÜSÜ) MOTORU
+// 🎬 YAYIN MOTORU
 function showSlide(index) {
     if (slideKeys.length === 0) return;
     
     let actualIndex = index % slideKeys.length;
     let currentKey = slideKeys[actualIndex];
 
-    // 🌟 Zamanı gelmeyen slaytları atla
     if(!isSlideVisible(currentKey)) {
         setTimeout(() => { showSlide(actualIndex + 1); }, 100);
         return;
@@ -155,29 +174,24 @@ function showSlide(index) {
     currentIndex = actualIndex;
     const config = settingsData[currentKey] || { effect: 'fade', time: 5000 };
 
-    // Bütün katmanları kapat
     document.querySelectorAll('.slide-layer').forEach(layer => {
         layer.classList.remove('active');
     });
     
-    // Hedef katmanı bul, efektini ata ve aktif et
     const targetLayer = document.getElementById('layer-' + currentKey);
     if(targetLayer) {
         targetLayer.className = `slide-layer ${config.effect || 'fade'}`;
-        void targetLayer.offsetWidth; // Reflow: Efektlerin düzgün çalışmasını zorlar
-        targetLayer.classList.add('active'); // Oynat!
+        void targetLayer.offsetWidth; 
+        targetLayer.classList.add('active'); 
     }
 
-    updateClock(); // Saati tazele
-
-    // Döngüyü sürdür
     clearTimeout(rotationTimer);
     rotationTimer = setTimeout(() => {
         showSlide(currentIndex + 1);
     }, config.time || 5000);
 }
 
-// ⌚ CANLI SAAT MOTORU
+// ⌚ CANLI SAAT KODLARI
 function updateClock() {
     const dateText = document.getElementById("dateText");
     const timeText = document.getElementById("timeText");
@@ -192,10 +206,9 @@ function updateClock() {
 }
 setInterval(updateClock, 1000);
 
-// 🖼️ İÇ RESİM (MİNİ SLAYT) MOTORU
+// 🖼️ İÇ RESİM MOTORU
 function startInnerSliders() {
     setInterval(() => {
-        // Cihazı yormamak için sadece aktif olan katmanın içindeki resimleri çeviriyoruz
         const activeLayer = document.querySelector('.slide-layer.active');
         if(!activeLayer) return;
         
@@ -210,8 +223,6 @@ function startInnerSliders() {
             img.setAttribute('data-slider-idx', idx);
             
             const newUrl = urls[idx];
-            
-            // Crossfade efekti için resmi klonla, üstüne bindir ve eskisini sil
             const clone = img.cloneNode(true);
             clone.removeAttribute('data-image-list'); clone.id = 'clone_' + Date.now();
             clone.style.transition = "opacity 0.8s ease-in-out"; clone.style.opacity = 1;
@@ -226,7 +237,6 @@ function startInnerSliders() {
 }
 startInnerSliders();
 
-// Sistem ilk açıldığında internet kopuksa bile lokal hafızadaki (Cache) eski yayın akışını başlatır
 if(Object.keys(slidesData).length > 0) {
     buildLayers();
 }

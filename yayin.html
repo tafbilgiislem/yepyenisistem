@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Canlı Yayın Ekranı Pro V49</title>
+    <title>Canlı Yayın Ekranı Pro V49.2 (Hava Durumlu)</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&family=Merriweather:wght@400;700&family=Montserrat:wght@400;700;800&family=Nunito:wght@400;700&family=Open+Sans:wght@400;700&family=Oswald:wght@400;700&family=Pacifico&family=Playfair+Display:wght@400;700&family=Poppins:wght@400;700&family=Raleway:wght@400;700&family=Ubuntu:wght@400;700&display=swap" rel="stylesheet">
     
     <style>
-        /* 🛡️ ANDROID TV SABİT KALKAN (Kasmaları önler) */
+        /* 🛡️ ANDROID TV SABİT KALKAN */
         body, html { 
             margin: 0; padding: 0; width: 100vw; height: 100vh; background: #000; overflow: hidden; font-family: 'Montserrat', sans-serif; position: fixed; 
         }
@@ -17,13 +17,9 @@
             position: absolute; inset: 0; transform: translateZ(0); backface-visibility: hidden; transform-style: preserve-3d; perspective: 1000px; 
         }
         
-        /* 🌟 PERFORMANS MİMARİSİ: KATMANLAR 🌟 */
         .slide-layer { 
-            position: absolute; inset: 0; opacity: 0; pointer-events: none; 
-            transition: all 1.2s cubic-bezier(0.25, 1, 0.5, 1); 
-            will-change: transform, opacity, clip-path;
+            position: absolute; inset: 0; opacity: 0; pointer-events: none; transition: all 1.2s cubic-bezier(0.25, 1, 0.5, 1); will-change: transform, opacity, clip-path; 
         }
-        
         .slide-layer.active { opacity: 1; pointer-events: all; z-index: 10; }
         .slide-layer svg { width: 100vw; height: 100vh; object-fit: contain; display: block; }
         .slide-layer text { text-rendering: geometricPrecision; }
@@ -35,56 +31,62 @@
         .slide-layer.active .anim-pop-in { animation: popIn 1s cubic-bezier(0.17, 0.67, 0.83, 0.67) forwards; opacity: 0; }
         @keyframes popIn { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
+        /* ⛅ YENİ: HAVA DURUMU TASARIMI (CAM EFEKTLİ) ⛅ */
+        #weather-widget {
+            position: absolute;
+            top: 25px;
+            right: 30px;
+            background: rgba(15, 23, 42, 0.75);
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 16px;
+            font-weight: 800;
+            font-size: 26px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            z-index: 2000; /* Her şeyin üstünde durur */
+            border: 1px solid rgba(255,255,255,0.15);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+            backdrop-filter: blur(8px);
+        }
+        #w-desc { font-size: 13px; font-weight: 600; color: #cbd5e1; text-transform: uppercase; letter-spacing: 1px; display: block;}
+        #w-temp-box { display: flex; flex-direction: column; justify-content: center; }
+
         /* --- 🌟 14 MEGA EFEKT CSS KODLARI 🌟 --- */
         .fade { opacity: 0; } .fade.active { opacity: 1; }
-        
-        .slide-left { transform: translateX(100vw); opacity: 0; } 
-        .slide-left.active { transform: translateX(0); opacity: 1; }
-        
-        .slide-up { transform: translateY(100vh); opacity: 0; } 
-        .slide-up.active { transform: translateY(0); opacity: 1; }
-        
-        .zoom { transform: scale(0.5); opacity: 0; } 
-        .zoom.active { transform: scale(1); opacity: 1; transition: all 2s ease-in-out; }
-        
-        .rotate-zoom { transform: rotate(-180deg) scale(0.5); opacity: 0; } 
-        .rotate-zoom.active { transform: rotate(0deg) scale(1); opacity: 1; transition: all 1.5s ease-in-out; }
-        
-        .circle { clip-path: circle(0% at 50% 50%); opacity: 0; } 
-        .circle.active { clip-path: circle(150% at 50% 50%); opacity: 1; transition: all 2s ease; }
-        
-        .wave { transform: translateY(100vh) rotate(10deg); opacity: 0; } 
-        .wave.active { transform: translateY(0) rotate(0); opacity: 1; transition: all 1.5s ease; }
-        
-        .curtain { clip-path: inset(0 50% 0 50%); opacity: 0; } 
-        .curtain.active { clip-path: inset(0 0 0 0); opacity: 1; transition: all 1.5s ease; }
-        
-        .spin-zoom { transform: scale(0.2) rotate(-360deg); opacity: 0; } 
-        .spin-zoom.active { transform: scale(1) rotate(0); opacity: 1; transition: all 1.5s ease; }
-        
-        .rotate3d { transform: rotate3d(1,1,0,90deg); opacity: 0; } 
-        .rotate3d.active { transform: rotate3d(0,0,0,0deg); opacity: 1; transition: all 1.5s ease; }
-        
-        .cinematic-cube { transform: rotateY(180deg) scale(.5); opacity: 0; } 
-        .cinematic-cube.active { transform: rotateY(0) scale(1); opacity: 1; transition: 1.5s; }
-        
-        .cube { transform: rotateY(-90deg) translateZ(500px); opacity: 0; } 
-        .cube.active { transform: rotateY(0deg) translateZ(0); opacity: 1; }
-        
-        .flip { transform: rotateY(-90deg); opacity: 0; } 
-        .flip.active { transform: rotateY(0); opacity: 1; }
-        
-        .spin { transform: rotate(180deg) scale(0); opacity: 0; } 
-        .spin.active { transform: rotate(0) scale(1); opacity: 1; }
-        
-        .fold { transform: rotateX(-90deg); opacity: 0; } 
-        .fold.active { transform: rotateX(0); opacity: 1; }
+        .slide-left { transform: translateX(100vw); opacity: 0; } .slide-left.active { transform: translateX(0); opacity: 1; }
+        .slide-up { transform: translateY(100vh); opacity: 0; } .slide-up.active { transform: translateY(0); opacity: 1; }
+        .zoom { transform: scale(0.5); opacity: 0; } .zoom.active { transform: scale(1); opacity: 1; transition: all 2s ease-in-out; }
+        .rotate-zoom { transform: rotate(-180deg) scale(0.5); opacity: 0; } .rotate-zoom.active { transform: rotate(0deg) scale(1); opacity: 1; transition: all 1.5s ease-in-out; }
+        .circle { clip-path: circle(0% at 50% 50%); opacity: 0; } .circle.active { clip-path: circle(150% at 50% 50%); opacity: 1; transition: all 2s ease; }
+        .wave { transform: translateY(100vh) rotate(10deg); opacity: 0; } .wave.active { transform: translateY(0) rotate(0); opacity: 1; transition: all 1.5s ease; }
+        .curtain { clip-path: inset(0 50% 0 50%); opacity: 0; } .curtain.active { clip-path: inset(0 0 0 0); opacity: 1; transition: all 1.5s ease; }
+        .spin-zoom { transform: scale(0.2) rotate(-360deg); opacity: 0; } .spin-zoom.active { transform: scale(1) rotate(0); opacity: 1; transition: all 1.5s ease; }
+        .rotate3d { transform: rotate3d(1,1,0,90deg); opacity: 0; } .rotate3d.active { transform: rotate3d(0,0,0,0deg); opacity: 1; transition: all 1.5s ease; }
+        .cinematic-cube { transform: rotateY(180deg) scale(.5); opacity: 0; } .cinematic-cube.active { transform: rotateY(0) scale(1); opacity: 1; transition: 1.5s; }
+        .cube { transform: rotateY(-90deg) translateZ(500px); opacity: 0; } .cube.active { transform: rotateY(0deg) translateZ(0); opacity: 1; }
+        .flip { transform: rotateY(-90deg); opacity: 0; } .flip.active { transform: rotateY(0); opacity: 1; }
+        .spin { transform: rotate(180deg) scale(0); opacity: 0; } .spin.active { transform: rotate(0) scale(1); opacity: 1; }
+        .fold { transform: rotateX(-90deg); opacity: 0; } .fold.active { transform: rotateX(0); opacity: 1; }
     </style>
 </head>
 <body>
 
     <div id="viewer-container"></div>
+    
+    <div id="weather-widget">
+        <span id="w-icon">⏳</span>
+        <div id="w-temp-box">
+            <span id="w-temp">--°C</span>
+            <span id="w-desc">Bağlanıyor...</span>
+        </div>
+    </div>
+
+    <div id="news-marquee"><div id="news-text"></div></div>
+
     <script type="module" src="/src/yayin.js"></script>
 
 </body>
 </html>
+
