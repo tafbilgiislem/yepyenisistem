@@ -1,7 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-// ⚠️ DİKKAT: KENDİ FIREBASE BİLGİLERİNİ BURAYA YAPIŞTIR
+// ⚠️ KENDİ FİREBASE BİLGİLERİNİ GİR
 const firebaseConfig = {
     apiKey: "AIzaSyCFBrHqXdRVdbtaqyKCQAgJ4U8no9cDIF8",
   authDomain: "svg-pro-studio.firebaseapp.com",
@@ -26,17 +26,16 @@ let currentIndex = 0;
 let rotationTimer = null;
 const container = document.getElementById('viewer-container');
 
-// 📡 HEARTBEAT (CİHAZ TAKİBİ)
+// 📡 HEARTBEAT
 setInterval(() => {
     set(ref(db, 'sahne/cihazlar/' + deviceId), {
         lastSeen: Date.now(),
-        version: "V49.2-WEATHER"
-    }).catch(e => console.log("Çevrimdışı: Sinyal gönderilemedi."));
+        version: "V49.5-PRO"
+    }).catch(e => console.log("Çevrimdışı Sinyal Yok"));
 }, 10000);
 
 
-// ⛅ CANLI HAVA DURUMU (OPENWEATHERMAP API) ⛅
-// Senin verdiğin anahtarı kullanarak JSON formatında veri çekiyoruz
+// ⛅ HAVA DURUMU MOTORU (OPENWEATHERMAP)
 const WEATHER_API_URL = "https://api.openweathermap.org/data/2.5/weather?q=Izmir,TR&units=metric&lang=tr&appid=97fe4c9ee7efb72f3e0520ceb21bba8b";
 
 async function fetchWeather() {
@@ -44,35 +43,26 @@ async function fetchWeather() {
         const response = await fetch(WEATHER_API_URL);
         if(response.ok) {
             const data = await response.json();
-            const temp = Math.round(data.main.temp); // Dereceyi yuvarla (Örn: 24.3 -> 24)
-            const desc = data.weather[0].description; // Açıklama (Örn: az bulutlu)
-            const iconCode = data.weather[0].icon; // İkon kodu (Örn: 01d)
-            
-            // Orijinal OpenWeatherMap ikonlarını çek
+            const temp = Math.round(data.main.temp); 
+            const desc = data.weather[0].description; 
+            const iconCode = data.weather[0].icon; 
             const iconUrl = `https://openweathermap.org/img/wn/${iconCode}@2x.png`;
             
             document.getElementById('w-temp').innerText = `${temp}°C`;
             document.getElementById('w-desc').innerText = `İZMİR | ${desc}`;
-            // İkonu bas ve hafif gölge ver ki şık dursun
             document.getElementById('w-icon').innerHTML = `<img src="${iconUrl}" style="width: 50px; height: 50px; filter: drop-shadow(0px 3px 5px rgba(0,0,0,0.5)); margin-top: 5px;">`;
         }
-    } catch(e) {
-        console.log("Hava durumu çekilemedi:", e);
-    }
+    } catch(e) { console.log("Hava durumu çekilemedi:", e); }
 }
-// İlk açılışta hava durumunu çek
 fetchWeather();
-// İnternet ve API kotasını yormamak için her 30 dakikada bir güncelle
-setInterval(fetchWeather, 1800000); 
+setInterval(fetchWeather, 1800000); // 30 Dk bir yeniler
 
 
-// 🗞️ CANLI RSS HABER ÇEKİCİ
+// 🗞️ RSS HABER MOTORU
 async function fetchRssData(url) {
     if(!url) return "🔴 Geçerli bir haber linki girilmedi.";
     const now = Date.now();
-    if(rssCache.url === url && (now - rssCache.time < 300000)) {
-        return rssCache.data;
-    }
+    if(rssCache.url === url && (now - rssCache.time < 300000)) { return rssCache.data; }
     try {
         const res = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(url)}`);
         const data = await res.json();
@@ -82,7 +72,7 @@ async function fetchRssData(url) {
             rssCache = { url: url, data: finalString, time: now };
             return finalString;
         }
-    } catch(e) { console.log("RSS Hatası:", e); }
+    } catch(e) { }
     return "🔴 Haber kaynağına ulaşılamıyor...";
 }
 
@@ -94,9 +84,7 @@ setInterval(async () => {
         const url = band.getAttribute('data-rss-url');
         const text = await fetchRssData(url);
         const scroller = band.querySelector('.rss-scroller');
-        if(scroller && scroller.innerText !== text) {
-            scroller.innerText = text;
-        }
+        if(scroller && scroller.innerText !== text) { scroller.innerText = text; }
     }
 }, 2000);
 
@@ -104,18 +92,16 @@ setInterval(async () => {
 function isSlideVisible(key) {
     const s = settingsData[key];
     if(!s) return true; 
-    
     const now = new Date();
     const currentDay = now.getDay(); 
     const currentTime = now.getHours().toString().padStart(2,'0') + ":" + now.getMinutes().toString().padStart(2,'0');
 
     if(s.days && s.days.length > 0 && !s.days.includes(currentDay)) return false;
-    if(s.startTime && s.endTime) {
-        if(currentTime < s.startTime || currentTime > s.endTime) return false;
-    }
+    if(s.startTime && s.endTime) { if(currentTime < s.startTime || currentTime > s.endTime) return false; }
     return true; 
 }
 
+// 🎨 VERİLERİ DİNLE VE KAYDET
 onValue(ref(db, 'sahne/ayarlar'), (snapshot) => {
     if (snapshot.exists()) {
         settingsData = snapshot.val();
@@ -133,7 +119,7 @@ onValue(ref(db, 'sahne/slaytlar'), (snapshot) => {
     }
 });
 
-// 🛡️ YALITIM (SANDBOX) MOTORU
+// 🛡️ İZOLASYON (SANDBOX) MOTORU (KAYMALARI ÖNLER)
 function isolateIDs(htmlString, slideKey) {
     return htmlString
         .replace(/\bid="([^"]+)"/g, `id="${slideKey}_$1"`)
@@ -154,12 +140,10 @@ function buildLayers() {
         container.appendChild(div);
     });
     
-    if(!rotationTimer && slideKeys.length > 0) {
-        showSlide(0); 
-    }
+    if(!rotationTimer && slideKeys.length > 0) showSlide(0); 
 }
 
-// 🎬 YAYIN MOTORU
+// 🎬 YAYIN DÖNGÜSÜ
 function showSlide(index) {
     if (slideKeys.length === 0) return;
     
@@ -174,9 +158,7 @@ function showSlide(index) {
     currentIndex = actualIndex;
     const config = settingsData[currentKey] || { effect: 'fade', time: 5000 };
 
-    document.querySelectorAll('.slide-layer').forEach(layer => {
-        layer.classList.remove('active');
-    });
+    document.querySelectorAll('.slide-layer').forEach(layer => { layer.classList.remove('active'); });
     
     const targetLayer = document.getElementById('layer-' + currentKey);
     if(targetLayer) {
@@ -186,12 +168,10 @@ function showSlide(index) {
     }
 
     clearTimeout(rotationTimer);
-    rotationTimer = setTimeout(() => {
-        showSlide(currentIndex + 1);
-    }, config.time || 5000);
+    rotationTimer = setTimeout(() => { showSlide(currentIndex + 1); }, config.time || 5000);
 }
 
-// ⌚ CANLI SAAT KODLARI
+// ⌚ CANLI SAAT MOTORU (HTML'DEKİ ID'LERE BAĞLANDI)
 function updateClock() {
     const dateText = document.getElementById("dateText");
     const timeText = document.getElementById("timeText");
@@ -201,12 +181,14 @@ function updateClock() {
     const minutes = now.getMinutes().toString().padStart(2, '0');
     const seconds = now.getSeconds().toString().padStart(2, '0');
     const date = now.toLocaleDateString('tr-TR');
+    
     if (dateText) dateText.textContent = date;
-    if (timeText) timeText.textContent = hours + ":" + minutes + ":" + seconds;
+    if (timeText) timeText.textContent = hours + ":" + minutes;
 }
 setInterval(updateClock, 1000);
+updateClock(); // Açılışta hemen saati bas
 
-// 🖼️ İÇ RESİM MOTORU
+// 🖼️ İÇ RESİM ÇEVİRİCİ
 function startInnerSliders() {
     setInterval(() => {
         const activeLayer = document.querySelector('.slide-layer.active');
@@ -237,6 +219,4 @@ function startInnerSliders() {
 }
 startInnerSliders();
 
-if(Object.keys(slidesData).length > 0) {
-    buildLayers();
-}
+if(Object.keys(slidesData).length > 0) buildLayers();
