@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>SVG Pro Studio | Ultimate Sürüm V49 (Gelişmiş Medya)</title>
+    <title>SVG Pro Studio | Ultimate Sürüm V49 (Gelişmiş Medya & İndirme)</title>
     <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&family=Merriweather:wght@400;700&family=Montserrat:wght@400;700;800&family=Nunito:wght@400;700&family=Open+Sans:wght@400;700&family=Oswald:wght@400;700&family=Pacifico&family=Playfair+Display:wght@400;700&family=Poppins:wght@400;700&family=Raleway:wght@400;700&family=Roboto:wght@400;700&family=Ubuntu:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     
@@ -184,9 +184,12 @@
     <div id="sidebar">
         <div class="sidebar-scroll-area">
             
-            <div style="display:flex; gap:5px; margin-bottom: 10px;">
+            <div style="display:flex; gap:5px; margin-bottom: 5px;">
                 <button onclick="window.saveData()" class="action-btn active" style="flex:2; font-size:12px;"><i class="ph ph-floppy-disk"></i> YAYINLA</button>
-                <button onclick="window.addNewSlide()" class="action-btn" style="flex:1; font-size:12px; background:#8b5cf6;" title="Yeni Slayt Ekle"><i class="ph ph-plus"></i> YENİ</button>
+                <button onclick="window.downloadSVG()" class="action-btn" style="flex:1; font-size:12px; background:#0ea5e9;" title="SVG Olarak İndir"><i class="ph ph-download-simple"></i> İNDİR</button>
+            </div>
+            <div style="display:flex; gap:5px; margin-bottom: 10px;">
+                <button onclick="window.addNewSlide()" class="action-btn" style="flex:1; font-size:12px; background:#8b5cf6;" title="Yeni Slayt Ekle"><i class="ph ph-plus"></i> YENİ SLAYT</button>
                 <button onclick="window.deleteSlide()" class="action-btn danger" style="flex:1; font-size:12px;" title="Seçili Slaytı Sil"><i class="ph ph-trash"></i> SİL</button>
             </div>
             
@@ -386,6 +389,31 @@
             document.getElementById('canvas-inner').innerHTML = `<svg width="1920" height="1080" viewBox="0 0 1920 1080" xmlns="http://www.w3.org/2000/svg"><rect id="canvas-background" x="0" y="0" width="1920" height="1080" fill="#020617"></rect></svg>`;
             setTimeout(() => window.loadSlide(), 500); 
         }
+    };
+
+    // --- SVG İNDİRME FONKSİYONU GERİ EKLENDİ ---
+    window.downloadSVG = function() {
+        const svg = document.querySelector('#canvas-inner svg');
+        if(!svg) return;
+        const clone = svg.cloneNode(true);
+        // İndirmeden önce gereksiz editör class'larını ve objeleri temizle
+        clone.querySelectorAll('.duzenlenebilir, .locked, .guide-line, .snap-line, .handle, .video-obj').forEach(el => {
+            el.classList.remove('duzenlenebilir', 'locked');
+            if (el.classList.length === 0) el.removeAttribute('class');
+        });
+        const ctrl = clone.querySelector('#control-layer');
+        if (ctrl) clone.removeChild(ctrl);
+        const data = new XMLSerializer().serializeToString(clone);
+        const blob = new Blob([data], {type: "image/svg+xml;charset=utf-8"});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        const fileName = document.getElementById('file-selector')?.value || 'tasarim';
+        a.download = fileName + '.svg';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.showToast("SVG Dosyası İndirildi!", "success");
     };
 
     window.setD = function(el, key, val) { if(el) el.setAttribute('data-' + key, val); };
