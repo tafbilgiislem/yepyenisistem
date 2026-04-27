@@ -112,9 +112,9 @@ onValue(ref(db, 'sahne/slaytlar'), (snapshot) => {
     }
 });
 
-// 🚀 V49 YAYINI KESMEYEN (DONMAYAN) GÜNCELLEME MOTORU
+// 🚀 V49 YAYINI KESMEYEN (DONMAYAN) GÜNCELLEME MOTORU (DÜZELTİLDİ!)
 function updateLayersDifferential(newData) {
-    const newKeys = Object.keys(newData).sort(); // Alfabetik sıralama (Örn: 1_kampanya, 2_slayt)
+    const newKeys = Object.keys(newData).sort(); // Alfabetik sıralama 
     
     // 1. Silinmiş olanları bul ve DOM'dan temizle
     slideKeys.forEach(key => {
@@ -127,17 +127,19 @@ function updateLayersDifferential(newData) {
     // 2. Yeni olanları ekle veya değişenleri güncelle
     newKeys.forEach(key => {
         let layer = document.getElementById('layer-' + key);
+        let isNewLayer = false;
         
         // Eğer katman yoksa oluştur
         if (!layer) {
             layer = document.createElement('div');
-            layer.className = 'slide-layer fade'; // Varsayılan gizli
+            layer.className = 'slide-layer fade'; // Varsayılan efekt
             layer.id = 'layer-' + key;
             container.appendChild(layer);
+            isNewLayer = true; // Siyah ekran hatasını çözen altın vuruş!
         }
 
-        // SADECE veri değişmişse SVG içeriğini değiştir (Yayını dondurmayı engeller!)
-        if (slidesData[key] !== newData[key]) {
+        // Katman yeniyse VEYA içeriği değişmişse SVG'yi bas
+        if (isNewLayer || slidesData[key] !== newData[key]) {
             layer.innerHTML = newData[key];
         }
     });
@@ -148,7 +150,6 @@ function updateLayersDifferential(newData) {
     // Uygulama ilk açıldığında slaytı başlat
     if (isFirstLoad && slideKeys.length > 0) {
         isFirstLoad = false;
-        // Eğer önbellekten yüklenmiş verilerle DOM zaten çizildiyse başlat
         showNextSlide();
     }
 }
