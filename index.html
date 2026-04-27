@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>SVG Pro Studio | Ultimate Sürüm V49 (Gelişmiş Medya & İndirme)</title>
+    <title>SVG Pro Studio | Ultimate Sürüm V49 (Gelişmiş Medya & UI Kulp)</title>
     <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&family=Merriweather:wght@400;700&family=Montserrat:wght@400;700;800&family=Nunito:wght@400;700&family=Open+Sans:wght@400;700&family=Oswald:wght@400;700&family=Pacifico&family=Playfair+Display:wght@400;700&family=Poppins:wght@400;700&family=Raleway:wght@400;700&family=Roboto:wght@400;700&family=Ubuntu:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     
@@ -57,7 +57,9 @@
         #control-layer{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:50;overflow:visible}
         .handle{fill:#fff;stroke-width:2;pointer-events:all;transition:fill .2s,stroke-width .2s}
         .handle:hover{fill:var(--accent);stroke-width:4}
-        .handle-resize{stroke:var(--handle-move);cursor:nwse-resize} .handle-rotate{stroke:var(--handle-rotate);cursor:crosshair;fill:var(--handle-rotate)} .handle-radius{stroke:var(--handle-radius);cursor:ns-resize;fill:var(--handle-radius)}
+        .handle-resize{stroke:var(--handle-move);cursor:nwse-resize} 
+        .handle-rotate{stroke:var(--handle-rotate);cursor:crosshair;fill:var(--handle-rotate)} 
+        .handle-radius{stroke:var(--handle-radius);cursor:nwse-resize;fill:var(--handle-radius)}
         .snap-line{stroke:#ec4899;stroke-width:1.5;stroke-dasharray:4,4;pointer-events:none;z-index:60; opacity: 0.8;}
         .guide-line{stroke:#06b6d4;stroke-width:3;stroke-dasharray:8,4;cursor:grab;pointer-events:all}
         
@@ -176,7 +178,7 @@
         </div>
         <div id="status-bar">
             <div id="status-count">Nesne Sayısı: 0</div>
-            <div>SVG Pro Studio Ultimate V49 (Video, M3U8, YT Destekli)</div>
+            <div>SVG Pro Studio Ultimate V49 (Gelişmiş Medya & UI Kulp)</div>
             <div id="status-time">Son Kayıt: Bekleniyor...</div>
         </div>
     </div>
@@ -308,7 +310,6 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getDatabase, ref, set, get, onValue, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-    // ⚠️ DİKKAT: KENDİ FIREBASE BİLGİLERİNİ BURAYA YAPIŞTIR
     const firebaseConfig = {
         apiKey: "AIzaSyCFBrHqXdRVdbtaqyKCQAgJ4U8no9cDIF8",
         authDomain: "svg-pro-studio.firebaseapp.com",
@@ -662,7 +663,7 @@
         svg.appendChild(rect); window.selectedEl = rect; window.saveState(); window.setupLayers(); window.updateUI(rect); window.renderEditor();
     };
 
-    // 🎥 VİDEO VE YOUTUBE MOTORU (M3U8 DAHİL)
+    // 🎥 VİDEO VE YOUTUBE MOTORU
     window.addVideo = function() {
         const svg = document.querySelector('#canvas-inner svg'); if(!svg) return;
         const dim = window.getSvgDim();
@@ -678,6 +679,7 @@
         window.setD(fo, 'video-muted', 'true');
         window.setD(fo, 'video-loop', 'true');
         window.setD(fo, 'mask-shape', 'none');
+        window.setD(fo, 'rx', '0');
         
         svg.appendChild(fo); window.updateVideoDisplay(fo);
         window.selectedEl = fo; window.saveState(); window.setupLayers(); window.updateUI(fo); window.renderEditor();
@@ -934,7 +936,7 @@
 
     window.describeRoundedRect = function(r, s, x, y, w, h) { if (r <= 0) return `M ${x} ${y} H ${x + w} V ${y + h} H ${x} Z`; r = Math.min(r, w / 2, h / 2); const kappa = (4 * (r * (1 - s)) * Math.tan(Math.PI / 4)) / 3; const pts = [ [x + r, y], [x + w - r, y], [x + w, y + r], [x + w, y + h - r], [x + w - r, y + h], [x + r, y + h], [x, y + h - r], [x, y + r] ]; return `M ${pts[0][0]} ${pts[0][1]} L ${pts[1][0]} ${pts[1][1]} C ${pts[1][0] + kappa} ${pts[1][1]} ${pts[2][0]} ${pts[2][1] - kappa} ${pts[2][0]} ${pts[2][1]} L ${pts[3][0]} ${pts[3][1]} C ${pts[3][0]} ${pts[3][1] + kappa} ${pts[4][0] + kappa} ${pts[4][1]} ${pts[4][0]} ${pts[4][1]} L ${pts[5][0]} ${pts[5][1]} C ${pts[5][0] - kappa} ${pts[5][1]} ${pts[6][0]} ${pts[6][1] + kappa} ${pts[6][0]} ${pts[6][1]} L ${pts[7][0]} ${pts[7][1]} C ${pts[7][0]} ${pts[7][1] - kappa} ${pts[0][0] - kappa} ${pts[0][1]} ${pts[0][0]} ${pts[0][1]} Z`; };
     
-    // --- VİDEO MASKESİ (SQUIRCLE BUG DÜZELTİCİ) ---
+    // --- VİDEO MASKESİ (SQUIRCLE KÖŞE ÇÖZÜMÜ) ---
     window.applyShapeMask = function(el) { 
         if (el.tagName !== 'image' && el.tagName !== 'rect' && !el.classList.contains('video-obj')) return; 
 
@@ -1177,7 +1179,9 @@
                     const el = document.getElementById(target.dataset.id); if (!el || window.getD(el, 'locked') === "true") return;
                     let tempW = 0, tempH = 0; if(el.tagName === 'text') { tempW = parseFloat(el.getAttribute("textLength")) || el.getBBox().width || 0; tempH = parseFloat(window.getD(el, "base-font-size")) || 80; } else { tempW = parseFloat(el.getAttribute("width")) || 0; tempH = parseFloat(el.getAttribute("height")) || 0; }
                     startP = p; startData = { x: parseFloat(el.getAttribute("x")) || 0, y: parseFloat(el.getAttribute("y")) || 0, w: tempW, h: tempH, rx: parseFloat(window.getD(el, 'rx')) || 0, baseFontSize: parseFloat(window.getD(el, 'base-font-size')) || 60 };
-                    if (target.classList.contains('handle-resize')) { resizingEl = el; activeHandle = target.dataset.handle; } else if (target.classList.contains('handle-rotate')) { rotatingEl = el; } else if (target.classList.contains('handle-radius')) { radiusingEl = el; }
+                    if (target.classList.contains('handle-resize')) { resizingEl = el; activeHandle = target.dataset.handle; } 
+                    else if (target.classList.contains('handle-rotate')) { rotatingEl = el; } 
+                    else if (target.classList.contains('handle-radius')) { radiusingEl = el; }
                     try { wrapper.setPointerCapture(e.pointerId); } catch(err){} e.preventDefault(); e.stopPropagation(); return;
                 }
                 const el = target.closest('.duzenlenebilir');
@@ -1212,8 +1216,22 @@
                     isModified = true; let bbox = {x:0, y:0, width:0, height:0}; try{ bbox = rotatingEl.getBBox(); }catch(e){}
                     const angle = Math.atan2(p.y - (bbox.y + bbox.height/2), p.x - (bbox.x + bbox.width/2)) * (180 / Math.PI) + 90; 
                     window.setD(rotatingEl, 'angle', angle); window.applyTransforms(rotatingEl); window.updateUI(rotatingEl);
-                } else if (radiusingEl && (radiusingEl.tagName === "image" || radiusingEl.tagName === "rect" || radiusingEl.classList.contains('video-obj'))) {
-                    isModified = true; window.setD(radiusingEl, 'rx', Math.max(0, Math.min(startData.w/2, startData.h/2, startData.rx + dy))); window.applyShapeMask(radiusingEl); window.updateUI(radiusingEl);
+                } 
+                // --- V49 KÖŞE YUVARLAMA KULPU (SQUIRCLE) HAREKET MANTIĞI ---
+                else if (radiusingEl && (radiusingEl.tagName === "image" || radiusingEl.tagName === "rect" || radiusingEl.classList.contains('video-obj'))) {
+                    isModified = true; 
+                    let delta = Math.max(dx, dy); 
+                    let newRx = Math.max(0, Math.min(startData.w/2, startData.h/2, startData.rx + delta));
+                    window.setD(radiusingEl, 'rx', newRx); 
+                    window.applyShapeMask(radiusingEl); 
+                    window.updateUI(radiusingEl);
+                    
+                    // Yandaki menüyü canlı güncelle
+                    let badge = document.getElementById('val-rx-' + radiusingEl.id);
+                    if(badge) badge.innerText = Math.round(newRx) + 'px';
+                    document.querySelectorAll(`input[oninput*="changeSetting('${radiusingEl.id}', 'rx'"]`).forEach(inp => {
+                        inp.value = newRx;
+                    });
                 } else if (window.selectedEl && isDraggingElement) {
                     isModified = true; 
                     let newX = p.x - offset.x; let newY = p.y - offset.y;
@@ -1276,10 +1294,26 @@
         const strokeColor = isLocked ? "var(--error)" : "var(--handle-move)";
         const r = document.createElementNS("http://www.w3.org/2000/svg", "rect"); r.setAttribute("x", b.x); r.setAttribute("y", b.y); r.setAttribute("width", b.width); r.setAttribute("height", b.height); r.setAttribute("fill", "none"); r.setAttribute("stroke", strokeColor); r.setAttribute("stroke-width", "2"); r.setAttribute("stroke-dasharray", "6,4"); g.appendChild(r);
         if (isLocked) return;
-        const s = 24; const corners = [{ id: 'tl', x: b.x, y: b.y, cur: 'nwse-resize' }, { id: 'tr', x: b.x + b.width, y: b.y, cur: 'nesw-resize' }, { id: 'bl', x: b.x, y: b.y + b.height, cur: 'nesw-resize' }, { id: 'br', x: b.x + b.width, y: b.y + b.height, cur: 'nwse-resize' }];
+        
+        const s = 24; 
+        const corners = [{ id: 'tl', x: b.x, y: b.y, cur: 'nwse-resize' }, { id: 'tr', x: b.x + b.width, y: b.y, cur: 'nesw-resize' }, { id: 'bl', x: b.x, y: b.y + b.height, cur: 'nesw-resize' }, { id: 'br', x: b.x + b.width, y: b.y + b.height, cur: 'nwse-resize' }];
         corners.forEach(c => { const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect"); rect.setAttribute("x", c.x - s/2); rect.setAttribute("y", c.y - s/2); rect.setAttribute("width", s); rect.setAttribute("height", s); rect.setAttribute("class", "handle handle-resize"); rect.dataset.id = el.id; rect.dataset.handle = c.id; rect.style.cursor = c.cur; g.appendChild(rect); });
+        
         const rotY = b.y - 40; const line = document.createElementNS("http://www.w3.org/2000/svg", "line"); line.setAttribute("x1", b.x + b.width/2); line.setAttribute("y1", b.y); line.setAttribute("x2", b.x + b.width/2); line.setAttribute("y2", rotY); line.setAttribute("stroke", "var(--handle-rotate)"); line.setAttribute("stroke-width", "2"); g.appendChild(line);
         const rotH = document.createElementNS("http://www.w3.org/2000/svg", "circle"); rotH.setAttribute("cx", b.x + b.width/2); rotH.setAttribute("cy", rotY); rotH.setAttribute("r", s/2.5); rotH.setAttribute("class", "handle handle-rotate"); rotH.dataset.id = el.id; g.appendChild(rotH);
+
+        // --- V49: RADIUS / KÖŞE YUVARLAMA KULPU (SQUIRCLE) ---
+        if (el.tagName === 'rect' || el.tagName === 'image' || el.classList.contains('video-obj')) {
+            const currentRx = parseFloat(window.getD(el, 'rx')) || 0;
+            const offsetDist = Math.max(15, currentRx);
+            const radH = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+            radH.setAttribute("cx", b.x + offsetDist);
+            radH.setAttribute("cy", b.y + offsetDist);
+            radH.setAttribute("r", s/2.5);
+            radH.setAttribute("class", "handle handle-radius");
+            radH.dataset.id = el.id;
+            g.appendChild(radH);
+        }
     };
     window.updateEditorUI = window.updateUI; 
     
