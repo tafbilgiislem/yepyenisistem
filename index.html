@@ -3,9 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>SVG Pro Studio | Ultimate Sürüm V49 (Video Desteği)</title>
+    <title>SVG Pro Studio | Ultimate Sürüm V49 (Gelişmiş Medya)</title>
     <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&family=Merriweather:wght@400;700&family=Montserrat:wght@400;700;800&family=Nunito:wght@400;700&family=Open+Sans:wght@400;700&family=Oswald:wght@400;700&family=Pacifico&family=Playfair+Display:wght@400;700&family=Poppins:wght@400;700&family=Raleway:wght@400;700&family=Roboto:wght@400;700&family=Ubuntu:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    
     <style>
         :root{--accent:#10b981;--bg:#0f172a;--panel:#1e293b;--border:#334155;--handle-move:#3b82f6;--handle-rotate:#f59e0b;--handle-radius:#ec4899;--error:#ef4444}
         *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -173,7 +176,7 @@
         </div>
         <div id="status-bar">
             <div id="status-count">Nesne Sayısı: 0</div>
-            <div>SVG Pro Studio Ultimate V49 (Video Destekli)</div>
+            <div>SVG Pro Studio Ultimate V49 (Video, M3U8, YT Destekli)</div>
             <div id="status-time">Son Kayıt: Bekleniyor...</div>
         </div>
     </div>
@@ -187,8 +190,7 @@
                 <button onclick="window.deleteSlide()" class="action-btn danger" style="flex:1; font-size:12px;" title="Seçili Slaytı Sil"><i class="ph ph-trash"></i> SİL</button>
             </div>
             
-            <select id="file-selector" style="width:100%; padding:10px; background:#000; color:#fff; border-radius:8px; margin-bottom:10px; border:1px solid #334155; outline:none;" onchange="window.loadSlide()">
-                </select>
+            <select id="file-selector" style="width:100%; padding:10px; background:#000; color:#fff; border-radius:8px; margin-bottom:10px; border:1px solid #334155; outline:none;" onchange="window.loadSlide()"></select>
             
             <details style="margin-bottom: 10px;" open>
                 <summary style="font-size:11px; font-weight:bold; color:#f59e0b; cursor:pointer; margin-bottom:5px; display:flex; align-items:center; gap:6px;"><i class="ph ph-clock" style="font-size:14px;"></i> AKILLI ZAMANLAMA & EFEKT</summary>
@@ -267,7 +269,7 @@
                         <button onclick="window.addShape('rect')" class="action-btn" style="background:#475569;"><i class="ph ph-square"></i> KUTU</button>
                     </div>
                     <div class="action-row" style="margin-top:8px; margin-bottom:0;">
-                        <button onclick="window.addVideo()" class="action-btn" style="background:#0284c7;"><i class="ph ph-video-camera"></i> VİDEO EKLE</button>
+                        <button onclick="window.addVideo()" class="action-btn" style="background:#0284c7;"><i class="ph ph-video-camera"></i> VİDEO / YOUTUBE EKLE</button>
                         <button onclick="window.addRssBand()" class="action-btn" style="background:var(--error);"><i class="ph ph-newspaper"></i> HABER BANT (RSS)</button>
                     </div>
                 </div>
@@ -635,17 +637,17 @@
         svg.appendChild(rect); window.selectedEl = rect; window.saveState(); window.setupLayers(); window.updateUI(rect); window.renderEditor();
     };
 
-    // 🎥 VİDEO EKLEME MOTORU 
+    // 🎥 YENİ: VİDEO VE YOUTUBE MOTORU (M3U8 DAHİL)
     window.addVideo = function() {
         const svg = document.querySelector('#canvas-inner svg'); if(!svg) return;
         const dim = window.getSvgDim();
         const fo = document.createElementNS("http://www.w3.org/2000/svg", "foreignObject");
         fo.id = "vid_" + Date.now();
         fo.setAttribute("class", "duzenlenebilir video-obj");
-        fo.setAttribute("x", dim.w/2 - 300);
-        fo.setAttribute("y", dim.h/2 - 169);
-        fo.setAttribute("width", 600);
-        fo.setAttribute("height", 338);
+        fo.setAttribute("x", dim.w/2 - 400);
+        fo.setAttribute("y", dim.h/2 - 225);
+        fo.setAttribute("width", 800);
+        fo.setAttribute("height", 450);
         
         window.setD(fo, 'video-url', 'https://www.w3schools.com/html/mov_bbb.mp4');
         window.setD(fo, 'video-muted', 'true');
@@ -661,8 +663,43 @@
         const url = window.getD(el, 'video-url') || '';
         const muted = window.getD(el, 'video-muted') === 'true' ? 'muted' : '';
         const loop = window.getD(el, 'video-loop') === 'true' ? 'loop' : '';
-        // Editörde otomatik oynaması için autoplay açık
-        el.innerHTML = `<div xmlns="http://www.w3.org/1999/xhtml" style="width:100%; height:100%; background:#000;"><video src="${url}" style="width:100%; height:100%; object-fit:cover;" autoplay ${muted} ${loop}></video></div>`;
+        
+        const isYT = url.includes('youtube.com') || url.includes('youtu.be');
+        const isHLS = url.includes('.m3u8');
+        
+        let innerHTMLString = '';
+        
+        if (isYT) {
+            // YouTube Regex (Shorts ve Standart linkleri algılar)
+            const ytMatch = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|shorts\/|watch\?v=|watch\?.+&v=))((\w|-){11})/);
+            const ytId = ytMatch ? ytMatch[1] : '';
+            const muteParam = window.getD(el, 'video-muted') === 'true' ? '&mute=1' : '';
+            const loopParam = window.getD(el, 'video-loop') === 'true' ? `&loop=1&playlist=${ytId}` : '';
+            
+            // Editörde sürüklenebilmesi için pointer-events:none
+            innerHTMLString = `<iframe style="width:100%; height:100%; pointer-events:none; border:none;" src="https://www.youtube.com/embed/${ytId}?autoplay=1&controls=0&enablejsapi=1${muteParam}${loopParam}" allow="autoplay; encrypted-media"></iframe>`;
+        } else if (isHLS) {
+            // Canlı Yayın (M3U8) HLS.js entegrasyonu
+            const vidId = "v_" + Date.now() + Math.floor(Math.random()*1000);
+            innerHTMLString = `<video id="${vidId}" style="width:100%; height:100%; object-fit:cover; pointer-events:none;" autoplay playsinline ${muted} ${loop}></video>`;
+            
+            // Editör için HLS yüklemesi
+            setTimeout(() => {
+                const vEl = document.getElementById(vidId);
+                if (vEl && window.Hls && Hls.isSupported()) {
+                    const hls = new Hls();
+                    hls.loadSource(url);
+                    hls.attachMedia(vEl);
+                } else if (vEl && vEl.canPlayType('application/vnd.apple.mpegurl')) {
+                    vEl.src = url; // Apple Safari Native Destek
+                }
+            }, 100);
+        } else {
+            // Standart MP4 / WEBM
+            innerHTMLString = `<video style="width:100%; height:100%; object-fit:cover; pointer-events:none;" src="${url}" autoplay playsinline ${muted} ${loop}></video>`;
+        }
+        
+        el.innerHTML = `<div xmlns="http://www.w3.org/1999/xhtml" style="width:100%; height:100%; background:#000;">${innerHTMLString}</div>`;
     };
 
     window.addRssBand = function() {
@@ -934,7 +971,7 @@
             if (typeName === 'RECT') { typeName = 'ŞEKİL'; icon = 'ph-square'; } if (typeName === 'G' || typeName === 'SVG') { typeName = 'VEKTÖR'; icon = 'ph-shapes'; } if (typeName === 'PATH') { typeName = 'ÇİZİM'; icon = 'ph-scribble-loop'; } if (typeName === 'IMAGE') { typeName = 'RESİM'; icon = 'ph-image'; } if (el.tagName === 'text') { let txt = window.getD(el, 'raw-text') || el.textContent; typeName = `T: ${txt.substring(0,10)}${txt.length>10?'...':''}`; icon = 'ph-text-t'; }
             if (el.classList.contains('rss-band')) { typeName = 'HABER BANT (RSS)'; icon = 'ph-newspaper'; }
             if (el.classList.contains('video-obj')) { typeName = 'VİDEO'; icon = 'ph-video-camera'; }
-            
+
             const item = document.createElement('div'); 
             item.className = `layer-item ${isActive ? 'active' : ''}`;
             item.draggable = true; 
@@ -973,7 +1010,7 @@
             
             let typeName = tag.toUpperCase(); let headerIcon = 'ph-square'; if (isShape) { typeName = 'ŞEKİL'; headerIcon = 'ph-square'; } if (isIcon) { typeName = 'VEKTÖR'; headerIcon = 'ph-shapes'; } if (isPath) { typeName = 'ÇİZİM'; headerIcon = 'ph-scribble-loop'; } if (isImage) { typeName = 'RESİM'; headerIcon = 'ph-image'; } if (tag === 'text') { typeName = 'METİN'; headerIcon = 'ph-text-t'; }
             if (isRss) { typeName = 'HABER BANT (RSS)'; headerIcon = 'ph-newspaper'; }
-            if (isVideo) { typeName = 'VİDEO'; headerIcon = 'ph-video-camera'; }
+            if (isVideo) { typeName = 'VİDEO / YOUTUBE'; headerIcon = 'ph-video-camera'; }
 
             let layoutHtml = "", styleHtml = "", textHtml = "", codeHtml = "", videoHtml = "";
             let headerHtml = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; padding-bottom:10px; border-bottom:1px solid var(--border);"><div style="font-size:14px; color:white; font-weight:bold; letter-spacing:1px; display:flex; align-items:center; gap:8px;"><i class="ph ${headerIcon}" style="color:var(--accent);"></i> ${typeName} AYARLARI ${isLocked ? '<i class="ph ph-lock-key" style="color:#ef4444;"></i>' : ''}</div><div class="delete-btn" style="cursor:pointer; color:#94a3b8; font-size:20px; transition:0.2s;" title="Sil" onclick="if(confirm('Silinecek?')){ document.getElementById('${id}').remove(); window.selectedEl=null; window.saveState(); window.renderEditor(); const ctrl = document.getElementById('control-layer'); if(ctrl) ctrl.innerHTML=''; }"><i class="ph ph-x-circle"></i></div></div><div class="action-row" style="margin-bottom:20px;"><button class="action-btn" onclick="window.toggleLock('${id}')" style="background:${isLocked?'var(--error)':'#334155'}"><i class="ph ${isLocked?'ph-lock-key-open':'ph-lock-key'}"></i> ${isLocked ? 'KİLİDİ AÇ' : 'KİLİTLE'}</button><button class="action-btn special" onclick="window.cloneElement('${id}')" ${isLocked ? 'disabled':''}><i class="ph ph-copy"></i> KOPYALA</button></div>`;
@@ -987,7 +1024,7 @@
                 <button class="tab-btn ${window.activeTabId === 'tab-layout' ? 'active' : ''}" onclick="window.switchTab(this, 'tab-layout')"><i class="ph ph-bounding-box"></i> Düzen</button>
                 <button class="tab-btn ${window.activeTabId === 'tab-style' ? 'active' : ''}" onclick="window.switchTab(this, 'tab-style')"><i class="ph ph-palette"></i> Stil</button>
                 ${isText ? `<button class="tab-btn ${window.activeTabId === 'tab-text' ? 'active' : ''}" onclick="window.switchTab(this, 'tab-text')"><i class="ph ph-text-t"></i> Metin</button>` : ''}
-                ${isVideo ? `<button class="tab-btn ${window.activeTabId === 'tab-video' ? 'active' : ''}" onclick="window.switchTab(this, 'tab-video')"><i class="ph ph-video-camera"></i> Video</button>` : ''}
+                ${isVideo ? `<button class="tab-btn ${window.activeTabId === 'tab-video' ? 'active' : ''}" onclick="window.switchTab(this, 'tab-video')"><i class="ph ph-video-camera"></i> Medya</button>` : ''}
                 <button class="tab-btn ${window.activeTabId === 'tab-code' ? 'active' : ''}" onclick="window.switchTab(this, 'tab-code')"><i class="ph ph-code"></i> Kod</button>
             </div>`;
 
@@ -1041,18 +1078,18 @@
                 const url = window.getD(el, 'video-url') || '';
                 const isMuted = window.getD(el, 'video-muted') === 'true';
                 const isLoop = window.getD(el, 'video-loop') === 'true';
-                videoHtml += createPropGroup("<i class='ph ph-video-camera'></i> Video Ayarları", `
-                <div class="label-text" style="margin-bottom:5px;">VİDEO LİNKİ (MP4 / WEBM)</div>
-                <input type="text" value="${url}" oninput="window.changeSetting('${id}', 'video-url', this.value); window.updateVideoDisplay(document.getElementById('${id}'));" onchange="window.saveState()" placeholder="https://.../video.mp4" style="margin-bottom:15px;">
+                videoHtml += createPropGroup("<i class='ph ph-video-camera'></i> Medya Ayarları", `
+                <div class="label-text" style="margin-bottom:5px;">VİDEO LİNKİ (MP4 / M3U8 / YOUTUBE)</div>
+                <input type="text" value="${url}" oninput="window.changeSetting('${id}', 'video-url', this.value); window.updateVideoDisplay(document.getElementById('${id}'));" onchange="window.saveState()" placeholder="Örn: https://youtu.be/..." style="margin-bottom:15px;">
                 <div class="action-row">
                     <button class="action-btn ${isMuted ? 'active' : ''}" onclick="window.changeSetting('${id}', 'video-muted', '${!isMuted}'); window.updateVideoDisplay(document.getElementById('${id}')); window.renderProperties(); window.saveState();">
-                        <i class="ph ${isMuted ? 'ph-speaker-slash' : 'ph-speaker-high'}"></i> ${isMuted ? 'SESSİZ (AÇIK)' : 'SESLİ'}
+                        <i class="ph ${isMuted ? 'ph-speaker-slash' : 'ph-speaker-high'}"></i> ${isMuted ? 'SESSİZ' : 'SESLİ'}
                     </button>
                     <button class="action-btn ${isLoop ? 'active' : ''}" onclick="window.changeSetting('${id}', 'video-loop', '${!isLoop}'); window.updateVideoDisplay(document.getElementById('${id}')); window.renderProperties(); window.saveState();">
                         <i class="ph ph-arrows-clockwise"></i> ${isLoop ? 'DÖNGÜ (AÇIK)' : 'DÖNGÜ (KAPALI)'}
                     </button>
                 </div>
-                <div style="font-size:10px; color:#94a3b8; font-style:italic;">Not: Tarayıcı kısıtlamaları nedeniyle TV ekranlarında videonun otomatik başlaması için "SESSİZ" ayarının açık olması önerilir.</div>
+                <div style="font-size:10px; color:#94a3b8; font-style:italic;">YouTube linklerini veya .m3u8 IPTV linklerini doğrudan yapıştırın, sistem otomatik çevirir. TV için sessiz oynaması önerilir.</div>
                 `);
             }
 
