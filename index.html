@@ -343,7 +343,6 @@
         setTimeout(() => { toast.style.opacity = '0'; toast.style.transform = 'translateX(120%)'; setTimeout(() => toast.remove(), 300); }, 3000);
     };
 
-    // --- V49 DİNAMİK LİSTE YÖNETİMİ ---
     onValue(ref(db, 'sahne/slaytlar'), (snapshot) => {
         const selector = document.getElementById('file-selector');
         if(!selector) return;
@@ -391,12 +390,10 @@
         }
     };
 
-    // --- SVG İNDİRME FONKSİYONU GERİ EKLENDİ ---
     window.downloadSVG = function() {
         const svg = document.querySelector('#canvas-inner svg');
         if(!svg) return;
         const clone = svg.cloneNode(true);
-        // İndirmeden önce gereksiz editör class'larını ve objeleri temizle
         clone.querySelectorAll('.duzenlenebilir, .locked, .guide-line, .snap-line, .handle, .video-obj').forEach(el => {
             el.classList.remove('duzenlenebilir', 'locked');
             if (el.classList.length === 0) el.removeAttribute('class');
@@ -665,7 +662,7 @@
         svg.appendChild(rect); window.selectedEl = rect; window.saveState(); window.setupLayers(); window.updateUI(rect); window.renderEditor();
     };
 
-    // 🎥 YENİ: VİDEO VE YOUTUBE MOTORU (M3U8 DAHİL)
+    // 🎥 VİDEO VE YOUTUBE MOTORU (M3U8 DAHİL)
     window.addVideo = function() {
         const svg = document.querySelector('#canvas-inner svg'); if(!svg) return;
         const dim = window.getSvgDim();
@@ -698,20 +695,16 @@
         let innerHTMLString = '';
         
         if (isYT) {
-            // YouTube Regex (Shorts ve Standart linkleri algılar)
             const ytMatch = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|shorts\/|watch\?v=|watch\?.+&v=))((\w|-){11})/);
             const ytId = ytMatch ? ytMatch[1] : '';
             const muteParam = window.getD(el, 'video-muted') === 'true' ? '&mute=1' : '';
             const loopParam = window.getD(el, 'video-loop') === 'true' ? `&loop=1&playlist=${ytId}` : '';
             
-            // Editörde sürüklenebilmesi için pointer-events:none
             innerHTMLString = `<iframe style="width:100%; height:100%; pointer-events:none; border:none;" src="https://www.youtube.com/embed/${ytId}?autoplay=1&controls=0&enablejsapi=1${muteParam}${loopParam}" allow="autoplay; encrypted-media"></iframe>`;
         } else if (isHLS) {
-            // Canlı Yayın (M3U8) HLS.js entegrasyonu
             const vidId = "v_" + Date.now() + Math.floor(Math.random()*1000);
             innerHTMLString = `<video id="${vidId}" style="width:100%; height:100%; object-fit:cover; pointer-events:none;" autoplay playsinline ${muted} ${loop}></video>`;
             
-            // Editör için HLS yüklemesi
             setTimeout(() => {
                 const vEl = document.getElementById(vidId);
                 if (vEl && window.Hls && Hls.isSupported()) {
@@ -719,15 +712,15 @@
                     hls.loadSource(url);
                     hls.attachMedia(vEl);
                 } else if (vEl && vEl.canPlayType('application/vnd.apple.mpegurl')) {
-                    vEl.src = url; // Apple Safari Native Destek
+                    vEl.src = url; 
                 }
             }, 100);
         } else {
-            // Standart MP4 / WEBM
             innerHTMLString = `<video style="width:100%; height:100%; object-fit:cover; pointer-events:none;" src="${url}" autoplay playsinline ${muted} ${loop}></video>`;
         }
         
-        el.innerHTML = `<div xmlns="http://www.w3.org/1999/xhtml" style="width:100%; height:100%; background:#000;">${innerHTMLString}</div>`;
+        el.innerHTML = `<div xmlns="http://www.w3.org/1999/xhtml" style="width:100%; height:100%; background:#000; overflow:hidden;">${innerHTMLString}</div>`;
+        window.applyShapeMask(el); 
     };
 
     window.addRssBand = function() {
@@ -940,8 +933,38 @@
     };
 
     window.describeRoundedRect = function(r, s, x, y, w, h) { if (r <= 0) return `M ${x} ${y} H ${x + w} V ${y + h} H ${x} Z`; r = Math.min(r, w / 2, h / 2); const kappa = (4 * (r * (1 - s)) * Math.tan(Math.PI / 4)) / 3; const pts = [ [x + r, y], [x + w - r, y], [x + w, y + r], [x + w, y + h - r], [x + w - r, y + h], [x + r, y + h], [x, y + h - r], [x, y + r] ]; return `M ${pts[0][0]} ${pts[0][1]} L ${pts[1][0]} ${pts[1][1]} C ${pts[1][0] + kappa} ${pts[1][1]} ${pts[2][0]} ${pts[2][1] - kappa} ${pts[2][0]} ${pts[2][1]} L ${pts[3][0]} ${pts[3][1]} C ${pts[3][0]} ${pts[3][1] + kappa} ${pts[4][0] + kappa} ${pts[4][1]} ${pts[4][0]} ${pts[4][1]} L ${pts[5][0]} ${pts[5][1]} C ${pts[5][0] - kappa} ${pts[5][1]} ${pts[6][0]} ${pts[6][1] + kappa} ${pts[6][0]} ${pts[6][1]} L ${pts[7][0]} ${pts[7][1]} C ${pts[7][0]} ${pts[7][1] - kappa} ${pts[0][0] - kappa} ${pts[0][1]} ${pts[0][0]} ${pts[0][1]} Z`; };
+    
+    // --- VİDEO MASKESİ (SQUIRCLE BUG DÜZELTİCİ) ---
     window.applyShapeMask = function(el) { 
-        if (el.tagName !== 'image' && el.tagName !== 'rect' && !el.classList.contains('video-obj')) return; if (!window.getD(el, 'mask-shape') || window.getD(el, 'mask-shape') === "none") { el.removeAttribute("clip-path"); return; }
+        if (el.tagName !== 'image' && el.tagName !== 'rect' && !el.classList.contains('video-obj')) return; 
+
+        if (el.classList.contains('video-obj')) {
+            const shape = window.getD(el, 'mask-shape') || 'none';
+            const innerDiv = el.querySelector('div');
+            if (innerDiv) {
+                let rx = parseFloat(window.getD(el, 'rx')) || 0;
+                if (shape === 'none') {
+                    innerDiv.style.clipPath = 'none';
+                    innerDiv.style.borderRadius = '0px';
+                } else if (shape === 'circle') {
+                    innerDiv.style.clipPath = 'circle(50% at 50% 50%)';
+                    innerDiv.style.borderRadius = '0px';
+                } else if (shape === 'triangle') {
+                    innerDiv.style.clipPath = 'polygon(50% 0%, 0% 100%, 100% 100%)';
+                    innerDiv.style.borderRadius = '0px';
+                } else if (shape === 'star') {
+                    innerDiv.style.clipPath = 'polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)';
+                    innerDiv.style.borderRadius = '0px';
+                } else { 
+                    innerDiv.style.clipPath = 'none';
+                    innerDiv.style.borderRadius = rx + 'px';
+                }
+            }
+            el.removeAttribute("clip-path");
+            return;
+        }
+
+        if (!window.getD(el, 'mask-shape') || window.getD(el, 'mask-shape') === "none") { el.removeAttribute("clip-path"); return; }
         const shape = window.getD(el, 'mask-shape'); const x = parseFloat(el.getAttribute('x')) || 0, y = parseFloat(el.getAttribute('y')) || 0, w = parseFloat(el.getAttribute('width')) || 0, h = parseFloat(el.getAttribute('height')) || 0; if(w === 0 || h === 0) return; let d = "";
         if (shape === 'circle') { const cx = x+w/2, cy = y+h/2, r = Math.min(w,h)/2; d = `M ${cx-r},${cy} A ${r},${r} 0 1,0 ${cx+r},${cy} A ${r},${r} 0 1,0 ${cx-r},${cy} Z`; } else if (shape === 'triangle') { d = `M ${x+w/2},${y} L ${x+w},${y+h} L ${x},${y+h} Z`; } else if (shape === 'star') { const cx = x+w/2, cy = y+h/2, outerR = Math.min(w,h)/2, innerR = outerR/2.5; for(let i=0; i<10; i++) { let r = i%2===0 ? outerR : innerR; let angle = (Math.PI/2) - (i * Math.PI/5); d += (i===0 ? "M " : " L ") + (cx + Math.cos(angle)*r) + "," + (cy - Math.sin(angle)*r); } d += " Z"; } else { let rx = parseFloat(window.getD(el, 'rx')) || 0; let sm = parseFloat(window.getD(el, 'smoothing')); if (isNaN(sm)) sm = 0.5; d = window.describeRoundedRect(rx, sm, x, y, w, h); }
         const svg = document.querySelector('#canvas-inner svg'); let defs = svg.querySelector('defs'); if (!defs) { defs = document.createElementNS("http://www.w3.org/2000/svg", "defs"); svg.prepend(defs); } const clipId = "clip_" + el.id; let clipPath = defs.querySelector("#" + clipId); if (!clipPath) { clipPath = document.createElementNS("http://www.w3.org/2000/svg", "clipPath"); clipPath.id = clipId; const path = document.createElementNS("http://www.w3.org/2000/svg", "path"); clipPath.appendChild(path); defs.appendChild(clipPath); el.setAttribute("clip-path", `url(#${clipId})`); } clipPath.querySelector('path').setAttribute("d", d); 
