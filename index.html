@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>SVG Pro Studio | Ultimate Sürüm V48.5 (Hızlı Liste)</title>
+    <title>SVG Pro Studio | Ultimate Sürüm V49 (Dinamik Liste)</title>
     <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&family=Merriweather:wght@400;700&family=Montserrat:wght@400;700;800&family=Nunito:wght@400;700&family=Open+Sans:wght@400;700&family=Oswald:wght@400;700&family=Pacifico&family=Playfair+Display:wght@400;700&family=Poppins:wght@400;700&family=Raleway:wght@400;700&family=Roboto:wght@400;700&family=Ubuntu:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <style>
@@ -173,7 +173,7 @@
         </div>
         <div id="status-bar">
             <div id="status-count">Nesne Sayısı: 0</div>
-            <div>SVG Pro Studio Ultimate V48.5 (Hızlı Liste)</div>
+            <div>SVG Pro Studio Ultimate V49 (Dinamik Liste)</div>
             <div id="status-time">Son Kayıt: Bekleniyor...</div>
         </div>
     </div>
@@ -182,15 +182,13 @@
         <div class="sidebar-scroll-area">
             
             <div style="display:flex; gap:5px; margin-bottom: 10px;">
-                <button onclick="window.saveData()" class="action-btn active" style="flex:2; font-size:12px;"><i class="ph ph-floppy-disk"></i> YAYINA GÖNDER</button>
-                <button onclick="window.downloadSVG()" class="action-btn" style="flex:1; font-size:12px; background:#0ea5e9;" title="SVG Olarak İndir"><i class="ph ph-download-simple"></i> İNDİR</button>
+                <button onclick="window.saveData()" class="action-btn active" style="flex:2; font-size:12px;"><i class="ph ph-floppy-disk"></i> YAYINLA</button>
+                <button onclick="window.addNewSlide()" class="action-btn" style="flex:1; font-size:12px; background:#8b5cf6;" title="Yeni Slayt Ekle"><i class="ph ph-plus"></i> YENİ</button>
+                <button onclick="window.deleteSlide()" class="action-btn danger" style="flex:1; font-size:12px;" title="Seçili Slaytı Sil"><i class="ph ph-trash"></i> SİL</button>
             </div>
             
             <select id="file-selector" style="width:100%; padding:10px; background:#000; color:#fff; border-radius:8px; margin-bottom:10px; border:1px solid #334155; outline:none;" onchange="window.loadSlide()">
-                <option value="slayt.svg">Ana Slayt (Sabah)</option>
-                <option value="kampanya.svg">Kampanya (Hafta Sonu)</option>
-                <option value="duyuru.svg">Duyuru (Genel)</option>
-            </select>
+                </select>
             
             <details style="margin-bottom: 10px;" open>
                 <summary style="font-size:11px; font-weight:bold; color:#f59e0b; cursor:pointer; margin-bottom:5px; display:flex; align-items:center; gap:6px;"><i class="ph ph-clock" style="font-size:14px;"></i> AKILLI ZAMANLAMA & EFEKT</summary>
@@ -302,17 +300,17 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getDatabase, ref, set, get, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+    import { getDatabase, ref, set, get, onValue, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
     // ⚠️ DİKKAT: KENDİ FIREBASE BİLGİLERİNİ BURAYA YAPIŞTIR
     const firebaseConfig = {
-      apiKey: "AIzaSyCFBrHqXdRVdbtaqyKCQAgJ4U8no9cDIF8",
-  authDomain: "svg-pro-studio.firebaseapp.com",
-  databaseURL: "https://svg-pro-studio-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "svg-pro-studio",
-  storageBucket: "svg-pro-studio.firebasestorage.app",
-  messagingSenderId: "1085012043931",
-  appId: "1:1085012043931:web:fb6f9fb2e79f4a2607fe3e"
+        apiKey: "AIzaSyCFBrHqXdRVdbtaqyKCQAgJ4U8no9cDIF8",
+        authDomain: "svg-pro-studio.firebaseapp.com",
+        databaseURL: "https://svg-pro-studio-default-rtdb.europe-west1.firebasedatabase.app",
+        projectId: "svg-pro-studio",
+        storageBucket: "svg-pro-studio.firebasestorage.app",
+        messagingSenderId: "1085012043931",
+        appId: "1:1085012043931:web:fb6f9fb2e79f4a2607fe3e"
     };
 
     let db = null;
@@ -338,6 +336,55 @@
         toast.innerHTML = `<i class="ph ${icon}"></i> <span>${msg}</span>`; container.appendChild(toast);
         setTimeout(() => { toast.style.opacity = '0'; toast.style.transform = 'translateX(120%)'; setTimeout(() => toast.remove(), 300); }, 3000);
     };
+
+    // --- V49 DİNAMİK LİSTE FONKSİYONLARI BAŞLANGICI ---
+    onValue(ref(db, 'sahne/slaytlar'), (snapshot) => {
+        const selector = document.getElementById('file-selector');
+        if(!selector) return;
+        const current = selector.value;
+        selector.innerHTML = "";
+        if (snapshot.exists()) {
+            const data = snapshot.val();
+            Object.keys(data).forEach(key => {
+                const opt = document.createElement('option');
+                opt.value = key;
+                opt.textContent = key.replace(/_/g, ' ').toUpperCase();
+                selector.appendChild(opt);
+            });
+            if (current && data[current]) {
+                selector.value = current;
+            } else if (!current && Object.keys(data).length > 0) {
+                selector.value = Object.keys(data)[0];
+                window.loadSlide();
+            }
+        }
+    });
+
+    window.addNewSlide = async function() {
+        const name = prompt("Yeni Slayt İsmi (Örn: sabah_kampanyasi):");
+        if (!name) return;
+        const key = name.toLowerCase().replace(/[^a-z0-9]/g, '_');
+        const defaultSvg = `<svg width="1920" height="1080" viewBox="0 0 1920 1080" xmlns="http://www.w3.org/2000/svg"><rect id="canvas-background" x="0" y="0" width="1920" height="1080" fill="#020617"></rect><text id="t_${Date.now()}" class="duzenlenebilir" x="960" y="540" text-anchor="middle" fill="white" font-size="60">${name.toUpperCase()}</text></svg>`;
+        
+        await set(ref(db, 'sahne/slaytlar/' + key), defaultSvg);
+        await set(ref(db, 'sahne/ayarlar/' + key), { time: 5000, effect: 'fade' });
+        window.showToast("Yeni Slayt Oluşturuldu!");
+        document.getElementById('file-selector').value = key;
+        window.loadSlide();
+    };
+
+    window.deleteSlide = async function() {
+        const key = document.getElementById('file-selector').value;
+        if (!key) return;
+        if (confirm(key.replace(/_/g, ' ').toUpperCase() + " adlı slayt tamamen silinecek, emin misiniz?")) {
+            await remove(ref(db, 'sahne/slaytlar/' + key));
+            await remove(ref(db, 'sahne/ayarlar/' + key));
+            window.showToast("Slayt Silindi", "error");
+            document.getElementById('canvas-inner').innerHTML = `<svg width="1920" height="1080" viewBox="0 0 1920 1080" xmlns="http://www.w3.org/2000/svg"><rect id="canvas-background" x="0" y="0" width="1920" height="1080" fill="#020617"></rect></svg>`;
+            setTimeout(() => window.loadSlide(), 500); // Lİsteden yenisini yükle
+        }
+    };
+    // --- V49 DİNAMİK LİSTE FONKSİYONLARI SONU ---
 
     window.setD = function(el, key, val) { if(el) el.setAttribute('data-' + key, val); };
     window.getD = function(el, key) { return el ? el.getAttribute('data-' + key) : null; };
@@ -365,13 +412,14 @@
 
     document.querySelectorAll('.day-btn').forEach(btn => { btn.onclick = () => btn.classList.toggle('active'); });
 
-    window.onload = function() { window.loadSlide(); window.listenDevices(); }
+    window.onload = function() { window.listenDevices(); }
 
     window.loadSlide = async function() {
         window.showToast("Slayt Yükleniyor...", "success");
         try {
-            const file = document.getElementById('file-selector')?.value || 'slayt.svg';
-            const safeKey = file.replace(/\./g, '_');
+            const file = document.getElementById('file-selector')?.value;
+            if(!file) return;
+            const safeKey = file;
             const ci = document.getElementById('canvas-inner'); if(!ci) return;
             
             if(db) {
@@ -415,7 +463,7 @@
                     const isOnline = (now - dev.lastSeen) < 15000;
                     const card = document.createElement('div');
                     card.className = `device-card ${isOnline ? 'online' : 'offline'}`;
-                    card.innerHTML = `<div style="display:flex;justify-content:space-between;"><strong>📺 ${id}</strong><span>${isOnline ? '🟢 Çevrimiçi' : '🔴 Koptu'}</span></div><div style="color:#94a3b8;margin-top:4px;">Sürüm: ${dev.version || 'Bilinmiyor'}</div>`;
+                    card.innerHTML = `<div style="display:flex;justify-content:space-between;"><strong>📺 ${id}</strong><span>${isOnline ? '🟢 Çevrimiçi' : '🔴 Koptu'}</span></div><div style="color:#94a3b8;margin-top:4px;">Sürüm: ${dev.version || 'Bilinmiyor'} | Oynatılan: ${dev.playing || 'Yok'}</div>`;
                     list.appendChild(card);
                 });
             } else {
@@ -424,33 +472,11 @@
         });
     };
 
-    window.downloadSVG = function() {
-        const svg = document.querySelector('#canvas-inner svg');
-        if(!svg) return;
-        const clone = svg.cloneNode(true);
-        clone.querySelectorAll('.duzenlenebilir, .locked, .guide-line, .snap-line').forEach(el => {
-            el.classList.remove('duzenlenebilir', 'locked');
-            if (el.classList.length === 0) el.removeAttribute('class');
-        });
-        const ctrl = clone.querySelector('#control-layer');
-        if (ctrl) clone.removeChild(ctrl);
-        const data = new XMLSerializer().serializeToString(clone);
-        const blob = new Blob([data], {type: "image/svg+xml;charset=utf-8"});
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        const fileName = document.getElementById('file-selector')?.value || 'tasarim.svg';
-        a.download = fileName;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        window.showToast("SVG Dosyası İndirildi!", "success");
-    };
-
     window.syncToFirebase = function() {
         if(!db) return;
-        const file = document.getElementById('file-selector')?.value || 'slayt.svg';
-        const safeKey = file.replace(/\./g, '_');
+        const file = document.getElementById('file-selector')?.value;
+        if(!file) return;
+        const safeKey = file;
         const svg = document.querySelector('#canvas-inner svg'); if (!svg) return;
         
         const ctrl = document.getElementById('control-layer'); 
@@ -467,8 +493,9 @@
     
     window.saveSlideSettings = function() {
         if(!db) return;
-        const file = document.getElementById('file-selector')?.value || 'slayt.svg';
-        const safeKey = file.replace(/\./g, '_');
+        const file = document.getElementById('file-selector')?.value;
+        if(!file) return;
+        const safeKey = file;
         const time = document.getElementById('slide-time')?.value || 5000;
         const effect = document.getElementById('slide-effect')?.value || 'fade';
         const startTime = document.getElementById('start-time')?.value || '00:00';
@@ -608,7 +635,6 @@
         svg.appendChild(rect); window.selectedEl = rect; window.saveState(); window.setupLayers(); window.updateUI(rect); window.renderEditor();
     };
 
-    // 🌟 RSS BANDI EKLEME FONKSİYONU 🌟
     window.addRssBand = function() {
         const svg = document.querySelector('#canvas-inner svg'); if(!svg) return; 
         const dim = window.getSvgDim();
@@ -681,13 +707,11 @@
 
     window.applyRecentColor = function(id, color) { const el = document.getElementById(id); if(!el) return; const fillType = window.getD(el, 'fill-type') || 'solid'; if(fillType === 'solid') { window.setD(el, 'solid-color', color); window.applyFill(el); } else { window.setD(el, 'color1', color); window.applyFill(el); } window.saveState(); window.renderProperties(); };
 
-    // 🌟 LİSTE ŞEKLİNDE TÜM METİNLERİ GÖSTEREN MOTOR 🌟
     window.refreshAutoTextFields = function() {
         const list = document.getElementById('auto-fields-list'); 
         const svg = document.querySelector('#canvas-inner svg'); 
         if(!svg || !list) return;
         
-        // İster variable atanmış olsun ister olmasın tüm yazıları listele
         const textElements = svg.querySelectorAll('text.duzenlenebilir'); 
         list.innerHTML = ""; 
         let hasVars = false;

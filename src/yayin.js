@@ -34,7 +34,7 @@ setInterval(() => {
     set(ref(db, 'sahne/cihazlar/' + deviceId), {
         lastSeen: Date.now(),
         version: "V49-PRO",
-        playing: currentPlaying
+        playing: currentPlaying.replace(/_/g, ' ').toUpperCase()
     }).catch(e => console.log("Sinyal gönderilemedi."));
 }, 5000);
 
@@ -112,7 +112,7 @@ onValue(ref(db, 'sahne/slaytlar'), (snapshot) => {
     }
 });
 
-// 🚀 V49 YAYINI KESMEYEN (DONMAYAN) GÜNCELLEME MOTORU (DÜZELTİLDİ!)
+// 🚀 V49 YAYINI KESMEYEN (DONMAYAN) GÜNCELLEME MOTORU
 function updateLayersDifferential(newData) {
     const newKeys = Object.keys(newData).sort(); // Alfabetik sıralama 
     
@@ -135,7 +135,7 @@ function updateLayersDifferential(newData) {
             layer.className = 'slide-layer fade'; // Varsayılan efekt
             layer.id = 'layer-' + key;
             container.appendChild(layer);
-            isNewLayer = true; // Siyah ekran hatasını çözen altın vuruş!
+            isNewLayer = true; 
         }
 
         // Katman yeniyse VEYA içeriği değişmişse SVG'yi bas
