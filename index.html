@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>SVG Pro Studio | Ultimate Sürüm V49 (Dinamik Liste)</title>
+    <title>SVG Pro Studio | Ultimate Sürüm V49 (Video Desteği)</title>
     <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&family=Merriweather:wght@400;700&family=Montserrat:wght@400;700;800&family=Nunito:wght@400;700&family=Open+Sans:wght@400;700&family=Oswald:wght@400;700&family=Pacifico&family=Playfair+Display:wght@400;700&family=Poppins:wght@400;700&family=Raleway:wght@400;700&family=Roboto:wght@400;700&family=Ubuntu:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <style>
@@ -72,8 +72,8 @@
         .prop-group{margin-bottom:20px;}
         .prop-group-title{font-size:11px; font-weight:700; color:var(--accent); text-transform:uppercase; letter-spacing:1px; margin-bottom:12px; border-bottom:1px solid var(--border); padding-bottom:6px; display:flex; align-items:center; gap:6px;}
         
-        .tabs-header { display: flex; gap: 4px; margin-bottom: 15px; background: #0f172a; padding: 4px; border-radius: 8px; border: 1px solid var(--border); }
-        .tab-btn { flex: 1; background: transparent; border: none; color: #94a3b8; font-size: 11px; font-weight: 700; padding: 10px 4px; cursor: pointer; border-radius: 6px; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 6px; }
+        .tabs-header { display: flex; gap: 4px; margin-bottom: 15px; background: #0f172a; padding: 4px; border-radius: 8px; border: 1px solid var(--border); flex-wrap:wrap;}
+        .tab-btn { flex: 1; background: transparent; border: none; color: #94a3b8; font-size: 11px; font-weight: 700; padding: 10px 4px; cursor: pointer; border-radius: 6px; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 6px; min-width: 60px;}
         .tab-btn:hover { color: #fff; background: rgba(255,255,255,0.05); } .tab-btn.active { background: var(--panel); color: var(--accent); box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
         .tab-content { display: none; animation: fadeIn 0.3s; } .tab-content.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
@@ -173,7 +173,7 @@
         </div>
         <div id="status-bar">
             <div id="status-count">Nesne Sayısı: 0</div>
-            <div>SVG Pro Studio Ultimate V49 (Dinamik Liste)</div>
+            <div>SVG Pro Studio Ultimate V49 (Video Destekli)</div>
             <div id="status-time">Son Kayıt: Bekleniyor...</div>
         </div>
     </div>
@@ -263,11 +263,12 @@
                 <div class="group-box" style="margin-top:5px; margin-bottom:5px;">
                     <div class="action-row" style="margin-bottom:0;">
                         <button onclick="window.addNewText()" class="action-btn" style="background:#475569;"><i class="ph ph-text-t"></i> YAZI</button>
-                        <button onclick="document.getElementById('img-in').click()" class="action-btn" style="background:#475569;" title="SVG veya Resim Sürükleyebilirsiniz"><i class="ph ph-image-square"></i> MEDYA</button>
+                        <button onclick="document.getElementById('img-in').click()" class="action-btn" style="background:#475569;" title="SVG veya Resim Sürükle"><i class="ph ph-image-square"></i> MEDYA</button>
                         <button onclick="window.addShape('rect')" class="action-btn" style="background:#475569;"><i class="ph ph-square"></i> KUTU</button>
                     </div>
                     <div class="action-row" style="margin-top:8px; margin-bottom:0;">
-                        <button onclick="window.addRssBand()" class="action-btn" style="background:var(--error);"><i class="ph ph-newspaper"></i> HABER BANT (RSS) EKLE</button>
+                        <button onclick="window.addVideo()" class="action-btn" style="background:#0284c7;"><i class="ph ph-video-camera"></i> VİDEO EKLE</button>
+                        <button onclick="window.addRssBand()" class="action-btn" style="background:var(--error);"><i class="ph ph-newspaper"></i> HABER BANT (RSS)</button>
                     </div>
                 </div>
             </details>
@@ -337,7 +338,7 @@
         setTimeout(() => { toast.style.opacity = '0'; toast.style.transform = 'translateX(120%)'; setTimeout(() => toast.remove(), 300); }, 3000);
     };
 
-    // --- V49 DİNAMİK LİSTE FONKSİYONLARI BAŞLANGICI ---
+    // --- V49 DİNAMİK LİSTE YÖNETİMİ ---
     onValue(ref(db, 'sahne/slaytlar'), (snapshot) => {
         const selector = document.getElementById('file-selector');
         if(!selector) return;
@@ -381,10 +382,9 @@
             await remove(ref(db, 'sahne/ayarlar/' + key));
             window.showToast("Slayt Silindi", "error");
             document.getElementById('canvas-inner').innerHTML = `<svg width="1920" height="1080" viewBox="0 0 1920 1080" xmlns="http://www.w3.org/2000/svg"><rect id="canvas-background" x="0" y="0" width="1920" height="1080" fill="#020617"></rect></svg>`;
-            setTimeout(() => window.loadSlide(), 500); // Lİsteden yenisini yükle
+            setTimeout(() => window.loadSlide(), 500); 
         }
     };
-    // --- V49 DİNAMİK LİSTE FONKSİYONLARI SONU ---
 
     window.setD = function(el, key, val) { if(el) el.setAttribute('data-' + key, val); };
     window.getD = function(el, key) { return el ? el.getAttribute('data-' + key) : null; };
@@ -635,6 +635,36 @@
         svg.appendChild(rect); window.selectedEl = rect; window.saveState(); window.setupLayers(); window.updateUI(rect); window.renderEditor();
     };
 
+    // 🎥 VİDEO EKLEME MOTORU 
+    window.addVideo = function() {
+        const svg = document.querySelector('#canvas-inner svg'); if(!svg) return;
+        const dim = window.getSvgDim();
+        const fo = document.createElementNS("http://www.w3.org/2000/svg", "foreignObject");
+        fo.id = "vid_" + Date.now();
+        fo.setAttribute("class", "duzenlenebilir video-obj");
+        fo.setAttribute("x", dim.w/2 - 300);
+        fo.setAttribute("y", dim.h/2 - 169);
+        fo.setAttribute("width", 600);
+        fo.setAttribute("height", 338);
+        
+        window.setD(fo, 'video-url', 'https://www.w3schools.com/html/mov_bbb.mp4');
+        window.setD(fo, 'video-muted', 'true');
+        window.setD(fo, 'video-loop', 'true');
+        window.setD(fo, 'mask-shape', 'none');
+        
+        svg.appendChild(fo); window.updateVideoDisplay(fo);
+        window.selectedEl = fo; window.saveState(); window.setupLayers(); window.updateUI(fo); window.renderEditor();
+    };
+
+    window.updateVideoDisplay = function(el) {
+        if (!el || !el.classList.contains('video-obj')) return;
+        const url = window.getD(el, 'video-url') || '';
+        const muted = window.getD(el, 'video-muted') === 'true' ? 'muted' : '';
+        const loop = window.getD(el, 'video-loop') === 'true' ? 'loop' : '';
+        // Editörde otomatik oynaması için autoplay açık
+        el.innerHTML = `<div xmlns="http://www.w3.org/1999/xhtml" style="width:100%; height:100%; background:#000;"><video src="${url}" style="width:100%; height:100%; object-fit:cover;" autoplay ${muted} ${loop}></video></div>`;
+    };
+
     window.addRssBand = function() {
         const svg = document.querySelector('#canvas-inner svg'); if(!svg) return; 
         const dim = window.getSvgDim();
@@ -736,8 +766,9 @@
         if(prop === 'w') { if(el.tagName === 'text') { if(val > 10) { el.setAttribute('textLength', val); el.setAttribute('lengthAdjust', 'spacingAndGlyphs'); const tp = el.querySelector('textPath'); if (tp) { tp.setAttribute('textLength', val); tp.setAttribute('lengthAdjust', 'spacingAndGlyphs'); } } else { el.removeAttribute('textLength'); el.removeAttribute('lengthAdjust'); const tp = el.querySelector('textPath'); if (tp) { tp.removeAttribute('textLength'); tp.removeAttribute('lengthAdjust'); } } } else { el.setAttribute('width', val); } }
         if(prop === 'h') { if(el.tagName === 'text') { window.setD(el, 'base-font-size', val); el.setAttribute('font-size', val); } else { el.setAttribute('height', val); } }
         if (elUI) { const badge = document.getElementById('val-' + prop + '-' + id); if (badge) badge.innerText = val + 'px'; if (elUI.type === 'range' && elUI.nextElementSibling && elUI.nextElementSibling.type === 'number') elUI.nextElementSibling.value = val; else if (elUI.type === 'number' && elUI.previousElementSibling && elUI.previousElementSibling.type === 'range') elUI.previousElementSibling.value = val; }
-        if(el.tagName === 'text') window.applyTextCurve(el); if(el.tagName === 'image' || el.tagName === 'rect') window.applyShapeMask(el); 
+        if(el.tagName === 'text') window.applyTextCurve(el); if(el.tagName === 'image' || el.tagName === 'rect' || el.classList.contains('video-obj')) window.applyShapeMask(el); 
         if(el.classList.contains('rss-band')) window.updateRssDisplay(el);
+        if(el.classList.contains('video-obj')) window.updateVideoDisplay(el);
         window.updateUI(el);
     };
 
@@ -749,6 +780,7 @@
         if(['solid-color', 'color1', 'color2', 'fill-type'].includes(key)) window.applyFill(el); 
         if (elUI) { const badge = document.getElementById('val-' + key + '-' + id); if (badge) badge.innerText = val + (key === 'angle' ? '°' : (key === 'curve' ? '' : 'px')); if (elUI.type === 'range' && elUI.nextElementSibling && elUI.nextElementSibling.type === 'number') elUI.nextElementSibling.value = val; else if (elUI.type === 'number' && elUI.previousElementSibling && elUI.previousElementSibling.type === 'range') elUI.previousElementSibling.value = val; }
         if(el.classList.contains('rss-band')) window.updateRssDisplay(el);
+        if(el.classList.contains('video-obj')) window.updateVideoDisplay(el);
         window.updateUI(el);
     };
 
@@ -776,7 +808,7 @@
         let bbox = {x:0, y:0, width:0, height:0}; try { bbox = el.getBBox(); } catch(e){}
         if (el.tagName === 'text') { if(type === 'center-h') el.setAttribute('x', w/2); if(type === 'center-v') el.setAttribute('y', h/2); if(type === 'left') el.setAttribute('x', bbox.width/2); if(type === 'right') el.setAttribute('x', w - bbox.width/2); } 
         else { let nw = parseFloat(el.getAttribute('width')) || bbox.width; let nh = parseFloat(el.getAttribute('height')) || bbox.height; if(type === 'center-h') el.setAttribute('x', (w/2) - (nw/2)); if(type === 'center-v') el.setAttribute('y', (h/2) - (nh/2)); if(type === 'left') el.setAttribute('x', 0); if(type === 'right') el.setAttribute('x', w - nw); } 
-        if(el.tagName === 'image' || el.tagName === 'rect') window.applyShapeMask(el); window.saveState(); window.updateUI(el);
+        if(el.tagName === 'image' || el.tagName === 'rect' || el.classList.contains('video-obj')) window.applyShapeMask(el); window.saveState(); window.updateUI(el);
     };
 
     window.toggleFlip = function(id, dir) { const el = document.getElementById(id); if(!el) return; if(dir === 'x') window.setD(el, 'flip-x', window.getD(el, 'flip-x') === "-1" ? "1" : "-1"); else window.setD(el, 'flip-y', window.getD(el, 'flip-y') === "-1" ? "1" : "-1"); window.applyTransforms(el); window.saveState(); };
@@ -797,8 +829,9 @@
     };
 
     window.applyFill = function(el) {
-        if(el.tagName === 'image' || el.classList.contains('rss-band')) {
+        if(el.tagName === 'image' || el.classList.contains('rss-band') || el.classList.contains('video-obj')) {
             if(el.classList.contains('rss-band')) window.updateRssDisplay(el);
+            if(el.classList.contains('video-obj')) window.updateVideoDisplay(el);
             return;
         }
         const type = window.getD(el, 'fill-type') || 'solid';
@@ -843,7 +876,7 @@
 
     window.describeRoundedRect = function(r, s, x, y, w, h) { if (r <= 0) return `M ${x} ${y} H ${x + w} V ${y + h} H ${x} Z`; r = Math.min(r, w / 2, h / 2); const kappa = (4 * (r * (1 - s)) * Math.tan(Math.PI / 4)) / 3; const pts = [ [x + r, y], [x + w - r, y], [x + w, y + r], [x + w, y + h - r], [x + w - r, y + h], [x + r, y + h], [x, y + h - r], [x, y + r] ]; return `M ${pts[0][0]} ${pts[0][1]} L ${pts[1][0]} ${pts[1][1]} C ${pts[1][0] + kappa} ${pts[1][1]} ${pts[2][0]} ${pts[2][1] - kappa} ${pts[2][0]} ${pts[2][1]} L ${pts[3][0]} ${pts[3][1]} C ${pts[3][0]} ${pts[3][1] + kappa} ${pts[4][0] + kappa} ${pts[4][1]} ${pts[4][0]} ${pts[4][1]} L ${pts[5][0]} ${pts[5][1]} C ${pts[5][0] - kappa} ${pts[5][1]} ${pts[6][0]} ${pts[6][1] + kappa} ${pts[6][0]} ${pts[6][1]} L ${pts[7][0]} ${pts[7][1]} C ${pts[7][0]} ${pts[7][1] - kappa} ${pts[0][0] - kappa} ${pts[0][1]} ${pts[0][0]} ${pts[0][1]} Z`; };
     window.applyShapeMask = function(el) { 
-        if (el.tagName !== 'image' && el.tagName !== 'rect') return; if (!window.getD(el, 'mask-shape') || window.getD(el, 'mask-shape') === "none") { el.removeAttribute("clip-path"); return; }
+        if (el.tagName !== 'image' && el.tagName !== 'rect' && !el.classList.contains('video-obj')) return; if (!window.getD(el, 'mask-shape') || window.getD(el, 'mask-shape') === "none") { el.removeAttribute("clip-path"); return; }
         const shape = window.getD(el, 'mask-shape'); const x = parseFloat(el.getAttribute('x')) || 0, y = parseFloat(el.getAttribute('y')) || 0, w = parseFloat(el.getAttribute('width')) || 0, h = parseFloat(el.getAttribute('height')) || 0; if(w === 0 || h === 0) return; let d = "";
         if (shape === 'circle') { const cx = x+w/2, cy = y+h/2, r = Math.min(w,h)/2; d = `M ${cx-r},${cy} A ${r},${r} 0 1,0 ${cx+r},${cy} A ${r},${r} 0 1,0 ${cx-r},${cy} Z`; } else if (shape === 'triangle') { d = `M ${x+w/2},${y} L ${x+w},${y+h} L ${x},${y+h} Z`; } else if (shape === 'star') { const cx = x+w/2, cy = y+h/2, outerR = Math.min(w,h)/2, innerR = outerR/2.5; for(let i=0; i<10; i++) { let r = i%2===0 ? outerR : innerR; let angle = (Math.PI/2) - (i * Math.PI/5); d += (i===0 ? "M " : " L ") + (cx + Math.cos(angle)*r) + "," + (cy - Math.sin(angle)*r); } d += " Z"; } else { let rx = parseFloat(window.getD(el, 'rx')) || 0; let sm = parseFloat(window.getD(el, 'smoothing')); if (isNaN(sm)) sm = 0.5; d = window.describeRoundedRect(rx, sm, x, y, w, h); }
         const svg = document.querySelector('#canvas-inner svg'); let defs = svg.querySelector('defs'); if (!defs) { defs = document.createElementNS("http://www.w3.org/2000/svg", "defs"); svg.prepend(defs); } const clipId = "clip_" + el.id; let clipPath = defs.querySelector("#" + clipId); if (!clipPath) { clipPath = document.createElementNS("http://www.w3.org/2000/svg", "clipPath"); clipPath.id = clipId; const path = document.createElementNS("http://www.w3.org/2000/svg", "path"); clipPath.appendChild(path); defs.appendChild(clipPath); el.setAttribute("clip-path", `url(#${clipId})`); } clipPath.querySelector('path').setAttribute("d", d); 
@@ -864,11 +897,12 @@
             if(!el.id) el.id = "el_" + Math.random().toString(36).substr(2,9);
             if(window.getD(el, 'locked') === "true") el.classList.add('locked');
             if(el.tagName === 'text' && window.getD(el, 'curve')) window.applyTextCurve(el);
-            if((el.tagName === 'image' || el.tagName === 'rect') && window.getD(el, 'mask-shape') && window.getD(el, 'mask-shape') !== "none") window.applyShapeMask(el);
+            if((el.tagName === 'image' || el.tagName === 'rect' || el.classList.contains('video-obj')) && window.getD(el, 'mask-shape') && window.getD(el, 'mask-shape') !== "none") window.applyShapeMask(el);
             if(window.getD(el, 'angle') || window.getD(el, 'flip-x') || window.getD(el, 'flip-y')) window.applyTransforms(el);
             if(window.getD(el, 'shadow-blur') || window.getD(el, 'blur') || window.getD(el, 'blend')) window.applyFilters(el);
             window.applyFill(el);
             if(el.classList.contains('rss-band')) window.updateRssDisplay(el);
+            if(el.classList.contains('video-obj')) window.updateVideoDisplay(el);
         });
         window.initEngine(mainSvg); window.renderEditor(); window.updateRulers(); window.refreshAutoTextFields();
     };
@@ -899,6 +933,7 @@
             const isLocked = window.getD(el, 'locked') === "true"; const isActive = window.selectedEl === el; const isHidden = el.getAttribute('visibility') === 'hidden'; let typeName = el.tagName.toUpperCase(); let icon = 'ph-square';
             if (typeName === 'RECT') { typeName = 'ŞEKİL'; icon = 'ph-square'; } if (typeName === 'G' || typeName === 'SVG') { typeName = 'VEKTÖR'; icon = 'ph-shapes'; } if (typeName === 'PATH') { typeName = 'ÇİZİM'; icon = 'ph-scribble-loop'; } if (typeName === 'IMAGE') { typeName = 'RESİM'; icon = 'ph-image'; } if (el.tagName === 'text') { let txt = window.getD(el, 'raw-text') || el.textContent; typeName = `T: ${txt.substring(0,10)}${txt.length>10?'...':''}`; icon = 'ph-text-t'; }
             if (el.classList.contains('rss-band')) { typeName = 'HABER BANT (RSS)'; icon = 'ph-newspaper'; }
+            if (el.classList.contains('video-obj')) { typeName = 'VİDEO'; icon = 'ph-video-camera'; }
             
             const item = document.createElement('div'); 
             item.className = `layer-item ${isActive ? 'active' : ''}`;
@@ -933,20 +968,26 @@
             const el = window.selectedEl; const id = el.id; const tag = el.tagName.toLowerCase();
             const isLocked = window.getD(el, 'locked') === "true"; const isPath = tag === 'path'; const isShape = tag === 'rect'; const isImage = tag === 'image'; const isIcon = tag === 'svg' || tag === 'g';
             const isRss = el.classList.contains('rss-band');
+            const isVideo = el.classList.contains('video-obj');
             const isText = tag === 'text' || isRss; 
             
             let typeName = tag.toUpperCase(); let headerIcon = 'ph-square'; if (isShape) { typeName = 'ŞEKİL'; headerIcon = 'ph-square'; } if (isIcon) { typeName = 'VEKTÖR'; headerIcon = 'ph-shapes'; } if (isPath) { typeName = 'ÇİZİM'; headerIcon = 'ph-scribble-loop'; } if (isImage) { typeName = 'RESİM'; headerIcon = 'ph-image'; } if (tag === 'text') { typeName = 'METİN'; headerIcon = 'ph-text-t'; }
             if (isRss) { typeName = 'HABER BANT (RSS)'; headerIcon = 'ph-newspaper'; }
+            if (isVideo) { typeName = 'VİDEO'; headerIcon = 'ph-video-camera'; }
 
-            let layoutHtml = "", styleHtml = "", textHtml = "", codeHtml = "";
+            let layoutHtml = "", styleHtml = "", textHtml = "", codeHtml = "", videoHtml = "";
             let headerHtml = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; padding-bottom:10px; border-bottom:1px solid var(--border);"><div style="font-size:14px; color:white; font-weight:bold; letter-spacing:1px; display:flex; align-items:center; gap:8px;"><i class="ph ${headerIcon}" style="color:var(--accent);"></i> ${typeName} AYARLARI ${isLocked ? '<i class="ph ph-lock-key" style="color:#ef4444;"></i>' : ''}</div><div class="delete-btn" style="cursor:pointer; color:#94a3b8; font-size:20px; transition:0.2s;" title="Sil" onclick="if(confirm('Silinecek?')){ document.getElementById('${id}').remove(); window.selectedEl=null; window.saveState(); window.renderEditor(); const ctrl = document.getElementById('control-layer'); if(ctrl) ctrl.innerHTML=''; }"><i class="ph ph-x-circle"></i></div></div><div class="action-row" style="margin-bottom:20px;"><button class="action-btn" onclick="window.toggleLock('${id}')" style="background:${isLocked?'var(--error)':'#334155'}"><i class="ph ${isLocked?'ph-lock-key-open':'ph-lock-key'}"></i> ${isLocked ? 'KİLİDİ AÇ' : 'KİLİTLE'}</button><button class="action-btn special" onclick="window.cloneElement('${id}')" ${isLocked ? 'disabled':''}><i class="ph ph-copy"></i> KOPYALA</button></div>`;
             if (isLocked) { f.innerHTML = headerHtml + `<div style="text-align:center; color:#ef4444; font-size:12px; margin-top:30px;"><i class="ph ph-lock-key" style="font-size:40px; display:block; margin-bottom:10px; opacity:0.5;"></i> Bu öğe kilitli. Düzenlemek için kilidini açın.</div>`; return; }
             
-            if (!isText && window.activeTabId === 'tab-text') window.activeTabId = 'tab-layout';
+            if (!isText && !isVideo && (window.activeTabId === 'tab-text' || window.activeTabId === 'tab-video')) window.activeTabId = 'tab-layout';
+            if (isVideo && window.activeTabId === 'tab-text') window.activeTabId = 'tab-video';
+            if (isText && window.activeTabId === 'tab-video') window.activeTabId = 'tab-text';
+
             let tabsNav = `<div class="tabs-header">
                 <button class="tab-btn ${window.activeTabId === 'tab-layout' ? 'active' : ''}" onclick="window.switchTab(this, 'tab-layout')"><i class="ph ph-bounding-box"></i> Düzen</button>
                 <button class="tab-btn ${window.activeTabId === 'tab-style' ? 'active' : ''}" onclick="window.switchTab(this, 'tab-style')"><i class="ph ph-palette"></i> Stil</button>
                 ${isText ? `<button class="tab-btn ${window.activeTabId === 'tab-text' ? 'active' : ''}" onclick="window.switchTab(this, 'tab-text')"><i class="ph ph-text-t"></i> Metin</button>` : ''}
+                ${isVideo ? `<button class="tab-btn ${window.activeTabId === 'tab-video' ? 'active' : ''}" onclick="window.switchTab(this, 'tab-video')"><i class="ph ph-video-camera"></i> Video</button>` : ''}
                 <button class="tab-btn ${window.activeTabId === 'tab-code' ? 'active' : ''}" onclick="window.switchTab(this, 'tab-code')"><i class="ph ph-code"></i> Kod</button>
             </div>`;
 
@@ -960,7 +1001,7 @@
                 layoutHtml += createPropGroup("<i class='ph ph-arrows-out'></i> Konum ve Boyut", `<div class="label-row"><span class="label-text">X KONUMU</span><span class="value-badge" id="val-x-${id}">${x}px</span></div><div style="display:flex; gap:10px; margin-bottom:15px;"><input type="range" min="-1000" max="3000" value="${x}" style="flex:1;" oninput="window.changeProp('${id}', 'x', this.value, this);" onchange="window.saveState()"><input type="number" value="${x}" style="width:70px; padding:8px;" oninput="window.changeProp('${id}', 'x', this.value, this);" onchange="window.saveState()"></div><div class="label-row"><span class="label-text">Y KONUMU</span><span class="value-badge" id="val-y-${id}">${y}px</span></div><div style="display:flex; gap:10px; margin-bottom:15px;"><input type="range" min="-1000" max="3000" value="${y}" style="flex:1;" oninput="window.changeProp('${id}', 'y', this.value, this);" onchange="window.saveState()"><input type="number" value="${y}" style="width:70px; padding:8px;" oninput="window.changeProp('${id}', 'y', this.value, this);" onchange="window.saveState()"></div><div class="label-row"><span class="label-text">${tag === 'text' ? 'GENİŞLİK (ESNETME W)' : 'GENİŞLİK (W)'}</span><span class="value-badge" id="val-w-${id}">${w}px</span></div><div style="display:flex; gap:10px; margin-bottom:15px;"><input type="range" min="1" max="2500" value="${w}" style="flex:1;" oninput="window.changeProp('${id}', 'w', this.value, this);" onchange="window.saveState()"><input type="number" value="${w}" style="width:70px; padding:8px;" oninput="window.changeProp('${id}', 'w', this.value, this);" onchange="window.saveState()"></div><div class="label-row"><span class="label-text">${tag === 'text' ? 'YAZI PUNTO (H)' : 'YÜKSEKLİK (H)'}</span><span class="value-badge" id="val-h-${id}">${h}px</span></div><div style="display:flex; gap:10px;"><input type="range" min="1" max="2500" value="${h}" style="flex:1;" oninput="window.changeProp('${id}', 'h', this.value, this);" onchange="window.saveState()"><input type="number" value="${h}" style="width:70px; padding:8px;" oninput="window.changeProp('${id}', 'h', this.value, this);" onchange="window.saveState()"></div>`);
                 layoutHtml += createPropGroup("<i class='ph ph-arrows-clockwise'></i> Dönüştürme", `<div class="label-row" style="margin-top:0;"><span class="label-text">DÖNDÜRME AÇISI</span><span class="value-badge" id="val-angle-${id}">${angle}°</span></div><div style="display:flex; gap:10px; align-items:center;"><input type="range" min="0" max="360" value="${angle}" style="flex:1;" oninput="window.changeSetting('${id}', 'angle', this.value, this);" onchange="window.saveState()"><input type="number" value="${angle}" style="width:70px; padding:8px;" oninput="window.changeSetting('${id}', 'angle', this.value, this);" onchange="window.saveState()"></div>`);
             }
-            if ((isShape || isImage) && !isRss) {
+            if ((isShape || isImage || isVideo) && !isRss) {
                 const rx = parseFloat(window.getD(el, 'rx')) || 0; const maskShape = window.getD(el, 'mask-shape') || 'none'; let bbox = {width:0, height:0}; try { bbox = el.getBBox(); }catch(e){} const maxR = Math.min(bbox.width, bbox.height) / 2;
                 layoutHtml += createPropGroup("<i class='ph ph-scissors'></i> Form & Maskeleme", `<div class="label-text" style="margin-bottom:5px;">MASKELEME ŞEKLİ</div><select class="font-select" style="margin-bottom:15px;" onchange="window.changeSetting('${id}', 'mask-shape', this.value); window.saveState();"><option value="none" ${maskShape === 'none' ? 'selected' : ''}>Yok (Düz)</option><option value="squircle" ${maskShape === 'squircle' ? 'selected' : ''}>Oval Kare (Squircle)</option><option value="circle" ${maskShape === 'circle' ? 'selected' : ''}>Daire</option><option value="triangle" ${maskShape === 'triangle' ? 'selected' : ''}>Üçgen</option><option value="star" ${maskShape === 'star' ? 'selected' : ''}>Yıldız</option></select><div class="label-row"><span class="label-text">KÖŞE YARIÇAPI (SQUIRCLE)</span><span class="value-badge" id="val-rx-${id}">${Math.round(rx)}px</span></div><div style="display:flex; gap:10px; align-items:center;"><input type="range" min="0" max="${maxR}" value="${rx}" style="flex:1;" oninput="window.changeSetting('${id}', 'rx', this.value, this);" onchange="window.saveState()"><input type="number" value="${rx}" style="width:70px; padding:8px;" oninput="window.changeSetting('${id}', 'rx', this.value, this);" onchange="window.saveState()"></div>`);
                 
@@ -970,7 +1011,7 @@
                 }
             }
 
-            if (!isImage) {
+            if (!isImage && !isVideo) {
                 const fillType = window.getD(el, 'fill-type') || 'solid'; const col1 = window.getD(el, 'color1') || '#10b981'; const col2 = window.getD(el, 'color2') || '#3b82f6'; const solidCol = window.getD(el, 'solid-color') || (el.getAttribute('fill') === 'none' ? el.getAttribute('stroke') : el.getAttribute('fill')) || "#ffffff";
                 let fillHtml = `<div class="label-text" style="margin-bottom:5px;">${isRss?'ARKA PLAN':'DOLGU TİPİ'}</div>`;
                 if (!isRss) fillHtml += `<select class="font-select" style="margin-bottom:15px;" onchange="window.changeSetting('${id}', 'fill-type', this.value); window.saveState();"><option value="solid" ${fillType === 'solid' ? 'selected' : ''}>Düz Renk</option><option value="gradient" ${fillType === 'gradient' ? 'selected' : ''}>Renk Geçişi (Gradient)</option></select>`;
@@ -978,7 +1019,7 @@
                 fillHtml += `<div class="label-text" style="margin-top:15px; margin-bottom:8px;">PROJE RENKLERİ</div><div class="swatch-container">` + recentColors.map(c => `<div class="color-swatch" style="background:${c}" onclick="window.applyRecentColor('${id}', '${c}')" title="${c}"></div>`).join('') + `</div>`;
                 styleHtml += createPropGroup("<i class='ph ph-paint-bucket'></i> Dolgu & Renk", fillHtml);
             }
-            if(!isRss) {
+            if(!isRss && !isVideo) {
                 const strokeCol = el.getAttribute('stroke') || '#000000'; const strokeW = parseFloat(el.getAttribute('stroke-width')) || 0; const dash = el.getAttribute('stroke-dasharray') || 'none';
                 styleHtml += createPropGroup("<i class='ph ph-square-logo'></i> Kenarlık & Çizgi", `<div class="label-text" style="margin-bottom:5px;">ÇİZGİ RENGİ</div><div style="display:flex; gap:10px; align-items:center; margin-bottom:15px;"><input type="color" value="${safeColor(strokeCol)}" oninput="const t=document.getElementById('${id}'); t.setAttribute('stroke', this.value); t.setAttribute('paint-order', 'stroke fill'); t.setAttribute('stroke-linejoin', 'round'); this.nextElementSibling.nextElementSibling.value=this.value;" onchange="window.addRecentColor(this.value); window.saveState();" style="width:45px; height:45px; cursor:pointer; border:none; background:none; border-radius:8px;"><button class="action-btn" style="flex:0 0 45px; padding:12px; background:#334155; font-size:18px;" onclick="window.pickColor('${id}', '', 'stroke')" title="Göz Damlası"><i class="ph ph-drop"></i></button><input type="text" value="${safeColor(strokeCol)}" style="flex:1;" oninput="const t=document.getElementById('${id}'); t.setAttribute('stroke', this.value); t.setAttribute('paint-order', 'stroke fill'); t.setAttribute('stroke-linejoin', 'round'); this.previousElementSibling.previousElementSibling.value=this.value;" onchange="window.addRecentColor(this.value); window.saveState();"></div><div class="label-row"><span class="label-text">KALINLIK</span><span class="value-badge" id="val-sw-${id}">${strokeW}px</span></div><div style="display:flex; gap:10px; align-items:center; margin-bottom:15px;"><input type="range" min="0" max="50" value="${strokeW}" style="flex:1;" oninput="const t=document.getElementById('${id}'); t.setAttribute('stroke-width', this.value); t.setAttribute('paint-order', 'stroke fill'); document.getElementById('val-sw-${id}').innerText=this.value+'px'; this.nextElementSibling.value=this.value;" onchange="window.saveState()"><input type="number" value="${strokeW}" style="width:70px; padding:8px;" oninput="const t=document.getElementById('${id}'); t.setAttribute('stroke-width', this.value); t.setAttribute('paint-order', 'stroke fill'); document.getElementById('val-sw-${id}').innerText=this.value+'px'; this.previousElementSibling.value=this.value;" onchange="window.saveState()"></div><div class="label-text" style="margin-bottom:5px;">ÇİZGİ TİPİ</div><select class="font-select" onchange="document.getElementById('${id}').setAttribute('stroke-dasharray', this.value); window.saveState();"><option value="none" ${dash === 'none' ? 'selected' : ''}>Düz</option><option value="5,5" ${dash === '5,5' ? 'selected' : ''}>Kesikli</option><option value="2,2" ${dash === '2,2' ? 'selected' : ''}>Noktalı</option></select>`);
             }
@@ -996,6 +1037,23 @@
             } else if (isRss) {
                 const url = window.getD(el, 'rss-url') || ''; const speed = window.getD(el, 'rss-speed') || '35'; const txtColor = window.getD(el, 'text-color') || '#ffffff'; const fSize = window.getD(el, 'base-font-size') || '30';
                 textHtml += createPropGroup("<i class='ph ph-rss'></i> Haber Akış Ayarları", `<div class="label-text">RSS LİNKİ (Haber Kaynağı)</div><input type="text" value="${url}" oninput="window.changeSetting('${id}', 'rss-url', this.value); window.updateRssDisplay(document.getElementById('${id}'));" onchange="window.saveState()" placeholder="Örn: https://..."><div class="label-row"><span class="label-text">AKIŞ HIZI (Düşük = Hızlı)</span><span class="value-badge" id="val-rss-speed-${id}">${speed}s</span></div><div style="display:flex; gap:10px; align-items:center; margin-bottom:15px;"><input type="range" min="5" max="150" value="${speed}" style="flex:1;" oninput="window.changeSetting('${id}', 'rss-speed', this.value, this); window.updateRssDisplay(document.getElementById('${id}'));" onchange="window.saveState()"><input type="number" value="${speed}" style="width:70px; padding:8px;" oninput="window.changeSetting('${id}', 'rss-speed', this.value, this); window.updateRssDisplay(document.getElementById('${id}'));" onchange="window.saveState()"></div><div class="label-row"><span class="label-text">YAZI PUNTO</span><span class="value-badge" id="val-base-font-size-${id}">${fSize}px</span></div><div style="display:flex; gap:10px; align-items:center; margin-bottom:15px;"><input type="range" min="10" max="200" value="${fSize}" style="flex:1;" oninput="window.changeSetting('${id}', 'base-font-size', this.value, this); window.updateRssDisplay(document.getElementById('${id}'));" onchange="window.saveState()"><input type="number" value="${fSize}" style="width:70px; padding:8px;" oninput="window.changeSetting('${id}', 'base-font-size', this.value, this); window.updateRssDisplay(document.getElementById('${id}'));" onchange="window.saveState()"></div><div class="label-text">YAZI RENGİ</div><div style="display:flex; gap:10px; align-items:center;"><input type="color" value="${safeColor(txtColor)}" oninput="window.changeSetting('${id}', 'text-color', this.value); window.updateRssDisplay(document.getElementById('${id}')); this.nextElementSibling.value=this.value;" onchange="window.addRecentColor(this.value); window.saveState();" style="width:45px; height:45px; cursor:pointer; border:none; background:none; border-radius:8px;"><input type="text" value="${safeColor(txtColor)}" style="flex:1;" oninput="window.changeSetting('${id}', 'text-color', this.value); window.updateRssDisplay(document.getElementById('${id}')); this.previousElementSibling.value=this.value;" onchange="window.addRecentColor(this.value); window.saveState();"></div>`);
+            } else if (isVideo) {
+                const url = window.getD(el, 'video-url') || '';
+                const isMuted = window.getD(el, 'video-muted') === 'true';
+                const isLoop = window.getD(el, 'video-loop') === 'true';
+                videoHtml += createPropGroup("<i class='ph ph-video-camera'></i> Video Ayarları", `
+                <div class="label-text" style="margin-bottom:5px;">VİDEO LİNKİ (MP4 / WEBM)</div>
+                <input type="text" value="${url}" oninput="window.changeSetting('${id}', 'video-url', this.value); window.updateVideoDisplay(document.getElementById('${id}'));" onchange="window.saveState()" placeholder="https://.../video.mp4" style="margin-bottom:15px;">
+                <div class="action-row">
+                    <button class="action-btn ${isMuted ? 'active' : ''}" onclick="window.changeSetting('${id}', 'video-muted', '${!isMuted}'); window.updateVideoDisplay(document.getElementById('${id}')); window.renderProperties(); window.saveState();">
+                        <i class="ph ${isMuted ? 'ph-speaker-slash' : 'ph-speaker-high'}"></i> ${isMuted ? 'SESSİZ (AÇIK)' : 'SESLİ'}
+                    </button>
+                    <button class="action-btn ${isLoop ? 'active' : ''}" onclick="window.changeSetting('${id}', 'video-loop', '${!isLoop}'); window.updateVideoDisplay(document.getElementById('${id}')); window.renderProperties(); window.saveState();">
+                        <i class="ph ph-arrows-clockwise"></i> ${isLoop ? 'DÖNGÜ (AÇIK)' : 'DÖNGÜ (KAPALI)'}
+                    </button>
+                </div>
+                <div style="font-size:10px; color:#94a3b8; font-style:italic;">Not: Tarayıcı kısıtlamaları nedeniyle TV ekranlarında videonun otomatik başlaması için "SESSİZ" ayarının açık olması önerilir.</div>
+                `);
             }
 
             codeHtml += createPropGroup("<i class='ph ph-file-code'></i> Canlı SVG Kodu", `<textarea id="raw-svg-code" style="width:100%; height:250px; background:#000; color:var(--accent); font-family:monospace; font-size:11px; padding:10px; border-radius:8px; border:1px solid var(--border); resize:vertical;" onchange="window.saveState()">${el.outerHTML.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</textarea><button class="action-btn active" style="width:100%; margin-top:10px; padding:12px;" onclick="window.applyRawCode('${id}')"><i class="ph ph-terminal-window"></i> KODU UYGULA</button>`);
@@ -1004,6 +1062,7 @@
                 `<div id="tab-layout" class="tab-content ${window.activeTabId === 'tab-layout' ? 'active' : ''}">${layoutHtml}</div>` + 
                 `<div id="tab-style" class="tab-content ${window.activeTabId === 'tab-style' ? 'active' : ''}">${styleHtml}</div>` + 
                 (isText ? `<div id="tab-text" class="tab-content ${window.activeTabId === 'tab-text' ? 'active' : ''}">${textHtml}</div>` : '') + 
+                (isVideo ? `<div id="tab-video" class="tab-content ${window.activeTabId === 'tab-video' ? 'active' : ''}">${videoHtml}</div>` : '') + 
                 `<div id="tab-code" class="tab-content ${window.activeTabId === 'tab-code' ? 'active' : ''}">${codeHtml}</div>`;
         } catch(err) { f.innerHTML = `<div style="color:var(--error); padding:20px; font-size:12px; text-align:center;"><i class="ph ph-warning-circle" style="font-size:32px; display:block; margin-bottom:10px;"></i> Özellikler yüklenemedi.</div>`; }
     };
@@ -1060,12 +1119,12 @@
                         if(h > 5) { window.setD(resizingEl, 'base-font-size', h); } if(activeHandle.includes('l')) resizingEl.setAttribute('x', x); if(activeHandle.includes('t')) resizingEl.setAttribute('y', y); window.applyTextCurve(resizingEl);
                     } else if (resizingEl.tagName === "image" || resizingEl.tagName === "rect" || resizingEl.tagName === "svg" || resizingEl.tagName === "g" || resizingEl.tagName === "foreignObject") { 
                         if (w > 10 && h > 10) { resizingEl.setAttribute("x", x); resizingEl.setAttribute("y", y); resizingEl.setAttribute("width", w); resizingEl.setAttribute("height", h); if(resizingEl.tagName !== "svg" && resizingEl.tagName !== "g" && window.getD(resizingEl, 'mask-shape') && window.getD(resizingEl, 'mask-shape') !== "none") window.applyShapeMask(resizingEl); } 
-                    } window.updateUI(resizingEl); if(resizingEl.tagName === 'rect' || resizingEl.tagName === 'image') { document.querySelectorAll(`text[data-bound-rect="${resizingEl.id}"]`).forEach(txt => { window.autoFitText(txt); }); }
+                    } window.updateUI(resizingEl); if(resizingEl.tagName === 'rect' || resizingEl.tagName === 'image' || resizingEl.classList.contains('video-obj')) { document.querySelectorAll(`text[data-bound-rect="${resizingEl.id}"]`).forEach(txt => { window.autoFitText(txt); }); }
                 } else if (rotatingEl) {
                     isModified = true; let bbox = {x:0, y:0, width:0, height:0}; try{ bbox = rotatingEl.getBBox(); }catch(e){}
                     const angle = Math.atan2(p.y - (bbox.y + bbox.height/2), p.x - (bbox.x + bbox.width/2)) * (180 / Math.PI) + 90; 
                     window.setD(rotatingEl, 'angle', angle); window.applyTransforms(rotatingEl); window.updateUI(rotatingEl);
-                } else if (radiusingEl && (radiusingEl.tagName === "image" || radiusingEl.tagName === "rect")) {
+                } else if (radiusingEl && (radiusingEl.tagName === "image" || radiusingEl.tagName === "rect" || radiusingEl.classList.contains('video-obj'))) {
                     isModified = true; window.setD(radiusingEl, 'rx', Math.max(0, Math.min(startData.w/2, startData.h/2, startData.rx + dy))); window.applyShapeMask(radiusingEl); window.updateUI(radiusingEl);
                 } else if (window.selectedEl && isDraggingElement) {
                     isModified = true; 
@@ -1097,10 +1156,10 @@
                         if (isText) { newX = objCX; newY = objCY; } else { newX = objCX - bbox.width / 2; newY = objCY - bbox.height / 2; }
                     }
                     window.selectedEl.setAttribute("x", newX); window.selectedEl.setAttribute("y", newY);
-                    if((window.selectedEl.tagName === 'image' || window.selectedEl.tagName === 'rect') && window.getD(window.selectedEl, 'mask-shape') && window.getD(window.selectedEl, 'mask-shape') !== "none") window.applyShapeMask(window.selectedEl); 
+                    if((window.selectedEl.tagName === 'image' || window.selectedEl.tagName === 'rect' || window.selectedEl.classList.contains('video-obj')) && window.getD(window.selectedEl, 'mask-shape') && window.getD(window.selectedEl, 'mask-shape') !== "none") window.applyShapeMask(window.selectedEl); 
                     if(window.selectedEl.tagName === 'text' && window.getD(window.selectedEl, 'curve')) window.applyTextCurve(window.selectedEl); 
                     window.updateUI(window.selectedEl, snapX, snapY);
-                    if(window.selectedEl.tagName === 'rect' || window.selectedEl.tagName === 'image') { document.querySelectorAll(`text[data-bound-rect="${window.selectedEl.id}"]`).forEach(txt => { window.autoFitText(txt); }); }
+                    if(window.selectedEl.tagName === 'rect' || window.selectedEl.tagName === 'image' || window.selectedEl.classList.contains('video-obj')) { document.querySelectorAll(`text[data-bound-rect="${window.selectedEl.id}"]`).forEach(txt => { window.autoFitText(txt); }); }
                 }
             };
 
@@ -1143,7 +1202,7 @@
         if (window.selectedEl && window.getD(window.selectedEl, 'locked') !== "true") {
             const step = e.shiftKey ? 10 : 1; let moved = false; let x = parseFloat(window.selectedEl.getAttribute("x")) || 0, y = parseFloat(window.selectedEl.getAttribute("y")) || 0;
             if (e.key === 'ArrowUp') { y -= step; moved = true; } if (e.key === 'ArrowDown') { y += step; moved = true; } if (e.key === 'ArrowLeft') { x -= step; moved = true; } if (e.key === 'ArrowRight') { x += step; moved = true; }
-            if (moved) { e.preventDefault(); window.selectedEl.setAttribute("x", x); window.selectedEl.setAttribute("y", y); if(window.selectedEl.tagName === 'image' || window.selectedEl.tagName === 'rect') window.applyShapeMask(window.selectedEl); if(window.selectedEl.tagName === 'text') window.applyTextCurve(window.selectedEl); window.updateUI(window.selectedEl); isModified = true; }
+            if (moved) { e.preventDefault(); window.selectedEl.setAttribute("x", x); window.selectedEl.setAttribute("y", y); if(window.selectedEl.tagName === 'image' || window.selectedEl.tagName === 'rect' || window.selectedEl.classList.contains('video-obj')) window.applyShapeMask(window.selectedEl); if(window.selectedEl.tagName === 'text') window.applyTextCurve(window.selectedEl); window.updateUI(window.selectedEl); isModified = true; }
             if (e.key === 'Delete' || e.key === 'Backspace') { e.preventDefault(); window.selectedEl.remove(); const ctrl = document.getElementById('control-layer'); if(ctrl) ctrl.innerHTML = ''; window.selectedEl = null; window.saveState(); window.renderEditor(); }
             if (e.ctrlKey && e.key === 'c') { e.preventDefault(); clipboard = window.selectedEl.cloneNode(true); }
         }

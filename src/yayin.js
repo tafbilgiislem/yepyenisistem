@@ -33,7 +33,7 @@ setInterval(() => {
     const currentPlaying = slideKeys[currentIndex] || "Bekleniyor...";
     set(ref(db, 'sahne/cihazlar/' + deviceId), {
         lastSeen: Date.now(),
-        version: "V49-PRO",
+        version: "V49-PRO-VIDEO",
         playing: currentPlaying.replace(/_/g, ' ').toUpperCase()
     }).catch(e => console.log("Sinyal gönderilemedi."));
 }, 5000);
@@ -42,7 +42,6 @@ setInterval(() => {
 async function fetchRssData(url) {
     if(!url) return "🔴 Geçerli bir haber linki girilmedi.";
     const now = Date.now();
-    // 5 Dakikada bir yeniler (Api'yi yormaz)
     if(rssCache.url === url && (now - rssCache.time < 300000)) {
         return rssCache.data;
     }
@@ -51,7 +50,6 @@ async function fetchRssData(url) {
         const data = await res.json();
         if(data.items && data.items.length > 0) {
             const newsString = data.items.map(i => "🔴 " + i.title).join("  |  ");
-            // Kayan yazının kesilmemesi için metni iki kez çoğaltıyoruz
             const finalString = newsString + "  |  " + newsString;
             rssCache = { url: url, data: finalString, time: now };
             return finalString;
@@ -65,7 +63,6 @@ setInterval(async () => {
     const activeLayer = document.querySelector('.slide-layer.active');
     if(!activeLayer) return;
     
-    // Aktif ekranda Haber Bandı nesnesi var mı kontrol et
     const rssBands = activeLayer.querySelectorAll('.rss-band');
     for(let band of rssBands) {
         const url = band.getAttribute('data-rss-url');
@@ -112,11 +109,10 @@ onValue(ref(db, 'sahne/slaytlar'), (snapshot) => {
     }
 });
 
-// 🚀 V49 YAYINI KESMEYEN (DONMAYAN) GÜNCELLEME MOTORU
+// 🚀 V49 YAYINI KESMEYEN GÜNCELLEME MOTORU
 function updateLayersDifferential(newData) {
-    const newKeys = Object.keys(newData).sort(); // Alfabetik sıralama 
+    const newKeys = Object.keys(newData).sort(); 
     
-    // 1. Silinmiş olanları bul ve DOM'dan temizle
     slideKeys.forEach(key => {
         if (!newData[key]) {
             const el = document.getElementById('layer-' + key);
@@ -124,42 +120,41 @@ function updateLayersDifferential(newData) {
         }
     });
 
-    // 2. Yeni olanları ekle veya değişenleri güncelle
     newKeys.forEach(key => {
         let layer = document.getElementById('layer-' + key);
         let isNewLayer = false;
         
-        // Eğer katman yoksa oluştur
         if (!layer) {
             layer = document.createElement('div');
-            layer.className = 'slide-layer fade'; // Varsayılan efekt
+            layer.className = 'slide-layer fade'; 
             layer.id = 'layer-' + key;
             container.appendChild(layer);
             isNewLayer = true; 
         }
 
-        // Katman yeniyse VEYA içeriği değişmişse SVG'yi bas
         if (isNewLayer || slidesData[key] !== newData[key]) {
             layer.innerHTML = newData[key];
+            // Yeni veri basıldığında arka plandaki videoyu hemen durdur ki ses yapmasın
+            if(!layer.classList.contains('active')) {
+                layer.querySelectorAll('video').forEach(v => { v.pause(); v.currentTime = 0; });
+            }
         }
     });
 
     slidesData = newData;
     slideKeys = newKeys;
 
-    // Uygulama ilk açıldığında slaytı başlat
     if (isFirstLoad && slideKeys.length > 0) {
         isFirstLoad = false;
         showNextSlide();
     }
 }
 
-// İlk yüklemede LocalStorage'dan katmanları oluştur (Offline destek)
 if(Object.keys(slidesData).length > 0) {
     updateLayersDifferential(slidesData);
 }
 
-// 🎬 KESİNTİSİZ YAYIN MOTORU
+// 🎬 KESİNTİSİZ YAYIN MOTORU VE VİDEO YÖNETİCİSİ
 function showNextSlide() {
     if (slideKeys.length === 0) {
         rotationTimer = setTimeout(showNextSlide, 2000);
@@ -169,7 +164,6 @@ function showNextSlide() {
     let attempts = 0;
     let nextIndex = (currentIndex + 1) % slideKeys.length;
 
-    // Sıradaki GÖRÜNÜR (Zamanlaması uygun) slaytı bul
     while (attempts < slideKeys.length) {
         const key = slideKeys[nextIndex];
         if (isSlideVisible(key)) {
@@ -181,30 +175,36 @@ function showNextSlide() {
         attempts++;
     }
 
-    // Hiçbir slayt yayın saatinde değilse bekle
     rotationTimer = setTimeout(showNextSlide, 3000);
 }
 
 function applySlide(key) {
     const config = settingsData[key] || { effect: 'fade', time: 5000 };
 
-    // Diğer tüm katmanları gizle
+    // 1. Önce tüm katmanları gizle ve tüm VİDEOLARI DURDUR
     document.querySelectorAll('.slide-layer').forEach(layer => {
         layer.classList.remove('active');
+        layer.querySelectorAll('video').forEach(v => {
+            v.pause();
+            v.currentTime = 0;
+        });
     });
     
-    // Yeni katmanı göster
+    // 2. Yeni katmanı göster ve İÇİNDEKİ VİDEOLARI BAŞLAT
     const targetLayer = document.getElementById('layer-' + key);
     if(targetLayer) {
         targetLayer.className = `slide-layer ${config.effect || 'fade'}`;
-        void targetLayer.offsetWidth; // Reflow tetikle (Animasyonun çalışması için)
+        void targetLayer.offsetWidth; 
         targetLayer.classList.add('active'); 
+        
+        targetLayer.querySelectorAll('video').forEach(v => {
+            // Tarayıcı otomatik oynatma kurallarına takılmamak için catch ekliyoruz
+            v.play().catch(e => console.log("Video oynatılamadı. Lütfen sessiz (muted) modda olduğundan emin olun.", e));
+        });
     }
 
-    // Saati güncelle
     updateClock(); 
 
-    // Zamanlayıcıyı kur
     clearTimeout(rotationTimer);
     rotationTimer = setTimeout(showNextSlide, config.time || 5000);
 }
