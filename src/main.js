@@ -245,39 +245,59 @@ window.listenDevices = function() {
             Object.keys(devices).forEach(id => {
                 const dev = devices[id];
                 const lastSeenDiff = now - dev.lastSeen;
-                const isOnline = lastSeenDiff < 15000; // Son 15 saniyede sinyal verdiyse Aktif
-
-                // EĞER CİHAZ 1 SAATTEN UZUN SÜREDİR YOKSA (3600000 ms), VERİTABANINDAN SİL (Temizlik)
+                const isOnline = lastSeenDiff < 15000;
+                
+                // KOPTUKTAN 1 SAAT SONRA VERİTABANINDAN TAMAMEN SİL
                 if (lastSeenDiff > 3600000) {
                     remove(ref(db, 'sahne/cihazlar/' + id));
-                    return; // Ekrana çizmeden atla
+                    return; 
                 }
 
                 // EKRANDA SADECE AKTİFLERİ (Veya anlık kopmuş olanları) GÖSTER
-                if (lastSeenDiff < 60000) { // Son 1 dakika içinde sinyal vermişleri listede tut
+                if (lastSeenDiff < 60000) {
                     activeCount++;
+                    const tvName = dev.name || id; // TV'nin özel ismini al
+                    
                     const card = document.createElement('div');
                     card.className = `device-card ${isOnline ? 'online' : 'offline'}`;
                     card.innerHTML = `
-                        <div style="display:flex; justify-content:space-between; align-items:center;">
-                            <strong style="font-size:14px;"><i class="ph ph-monitor"></i> ${id}</strong>
-                            <span style="font-size:12px;">${isOnline ? '🟢 Çevrimiçi' : '🟡 Sinyal Koptu'}</span>
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+                            <strong style="font-size:14px; color:#fff;"><i class="ph ph-monitor"></i> ${tvName}</strong>
+                            <span style="font-size:12px;">${isOnline ? '🟢 Açık' : '🟡 Koptu'}</span>
                         </div>
-                        <div style="color:#94a3b8; margin-top:6px; font-size:12px; display:flex; flex-direction:column; gap:3px;">
+                        <div style="color:#94a3b8; font-size:11px; margin-bottom:10px;">
                             <span><i class="ph ph-presentation-chart"></i> Oynatılan: <b>${dev.playing || 'Yok'}</b></span>
+                            <span style="margin-left:5px; opacity:0.5;">(${id})</span>
+                        </div>
+                        <div style="display:flex; gap:5px;">
+                            <button class="action-btn" style="flex:1; padding:6px; font-size:11px;" onclick="window.sendTvCommand('${id}', 'ping')" title="Ekranda ismini göster"><i class="ph ph-map-pin"></i> Bul</button>
+                            <button class="action-btn" style="flex:1; padding:6px; font-size:11px;" onclick="window.sendTvCommand('${id}', 'refresh')" title="TV'yi Uzaktan Yenile"><i class="ph ph-arrows-clockwise"></i> F5 Yenile</button>
+                            <button class="action-btn special" style="flex:1; padding:6px; font-size:11px;" onclick="window.renameTv('${id}', '${tvName}')" title="İsmini Değiştir"><i class="ph ph-pencil"></i> İsim</button>
                         </div>
                     `;
                     list.appendChild(card);
                 }
             });
 
-            if (activeCount === 0) {
-                list.innerHTML = '<div style="font-size:12px; color:#64748b; text-align:center; padding:15px;"><i class="ph ph-plugs" style="font-size:24px; display:block; margin-bottom:5px; opacity:0.5;"></i>Şu an yayına bağlı cihaz yok.</div>';
-            }
+            if (activeCount === 0) list.innerHTML = '<div style="font-size:12px; color:#64748b; text-align:center; padding:15px;"><i class="ph ph-plugs" style="font-size:24px; display:block; margin-bottom:5px; opacity:0.5;"></i>Yayına bağlı cihaz yok.</div>';
         } else {
             list.innerHTML = '<div style="font-size:12px; color:#64748b; text-align:center; padding:15px;">Cihazlar bekleniyor...</div>';
         }
     });
+};
+
+// 🌟 KUMANDA FONKSİYONLARI 🌟
+window.sendTvCommand = function(deviceId, type) {
+    set(ref(db, 'sahne/komutlar/' + deviceId), { type: type, ts: Date.now() });
+    window.showToast(type === 'ping' ? "Sinyal gönderildi!" : "Yenileme komutu gönderildi!", "success");
+};
+
+window.renameTv = function(deviceId, currentName) {
+    const newName = prompt("Televizyon için yeni bir isim girin (Örn: Lobi TV):", currentName);
+    if (newName && newName.trim() !== "") {
+        set(ref(db, 'sahne/komutlar/' + deviceId), { type: 'rename', newName: newName.trim(), ts: Date.now() });
+        window.showToast("Yeni isim TV'ye gönderildi!", "success");
+    }
 };
 
 window.syncToFirebase = function() {

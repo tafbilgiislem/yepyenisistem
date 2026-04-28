@@ -15,13 +15,16 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-// Cihazın ID'sini hafızadan al, yoksa yeni üret ve kaydet
+// --- 2. CİHAZ KİMLİĞİ VE İSİM HAFIZASI ---
 let deviceId = localStorage.getItem('tv_device_id');
 if (!deviceId) {
     deviceId = "TV_" + Math.floor(Math.random() * 10000);
     localStorage.setItem('tv_device_id', deviceId);
-} 
+}
+// Varsa özel ismini al, yoksa standart ID'yi kullan
+let deviceName = localStorage.getItem('tv_custom_name') || deviceId; 
 
+// --- 3. DEĞİŞKENLER ---
 let slidesData = JSON.parse(localStorage.getItem('slidesData')) || {};
 let settingsData = JSON.parse(localStorage.getItem('settingsData')) || {};
 let rssCache = { url: "", data: "🔴 Haberler Bekleniyor...", time: 0 };
@@ -36,14 +39,49 @@ let pendingDeletes = [];
 
 const container = document.getElementById('viewer-container');
 
+// --- 4. FİREBASE'E "BEN AKTİFİM" SİNYALİ GÖNDER ---
 setInterval(() => {
     const currentPlaying = slideKeys[currentIndex] || "Bekleniyor...";
     set(ref(db, 'sahne/cihazlar/' + deviceId), {
         lastSeen: Date.now(),
-        version: "V49-WIDGET-ACTIVE",
-        playing: currentPlaying.replace(/_/g, ' ').toUpperCase()
+        version: "V49-PRO",
+        playing: currentPlaying.replace(/_/g, ' ').toUpperCase(),
+        name: deviceName // Özel ismini de panele gönderir
     }).catch(() => {});
 }, 5000);
+
+// --- 5. 🌟 UZAKTAN KUMANDA (KOMUT DİNLEYİCİ) 🌟 ---
+onValue(ref(db, 'sahne/komutlar/' + deviceId), (snapshot) => {
+    if (snapshot.exists()) {
+        const cmd = snapshot.val();
+        const lastCmdTs = localStorage.getItem('last_cmd_ts') || 0;
+        
+        // Sadece YENİ bir komut geldiyse çalıştır
+        if (cmd.ts > lastCmdTs) {
+            localStorage.setItem('last_cmd_ts', cmd.ts);
+            
+            if (cmd.type === 'refresh') {
+                window.location.reload(); // TV sayfayı uzaktan yeniler
+            } 
+            else if (cmd.type === 'rename') {
+                deviceName = cmd.newName; // Yeni ismini kaydeder
+                localStorage.setItem('tv_custom_name', deviceName);
+            } 
+            else if (cmd.type === 'ping') {
+                // TV Ekranında dev gibi ismini gösterir
+                let div = document.getElementById('ping-overlay');
+                if(!div) {
+                    div = document.createElement('div'); div.id = 'ping-overlay';
+                    div.style.cssText = 'position:fixed; inset:0; background:rgba(220,38,38,0.95); color:white; z-index:9999999; display:flex; align-items:center; justify-content:center; font-size:8vw; font-weight:900; text-transform:uppercase;';
+                    document.body.appendChild(div);
+                }
+                div.innerText = "📍 BEN: " + deviceName;
+                div.style.display = 'flex';
+                setTimeout(() => { div.style.display = 'none'; }, 4000); // 4 saniye sonra kaybolur
+            }
+        }
+    }
+});
 
 // --- 🌟 CANLI VERİ (RSS / HAVA DURUMU / DÖVİZ) GÜNCELLEYİCİSİ ---
 async function fetchRssData(url) {
