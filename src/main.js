@@ -26,9 +26,10 @@ function veriTabaninaKaydet() {
 const state = { activeTool: 'select', layers: [], selectedId: null, drag: { isDragging: false, target: null, offsetX: 0, offsetY: 0 } };
 
 // --- DOM SEÇİCİLERİ ---
-const loginScreen = document.getElementById('login-overlay'); // Yeni HTML yapına uyumlu
-const emailInput = document.getElementById('email-input');    // Yeni E-posta kutusu
-const passwordInput = document.getElementById('pin-input');   // Şifre kutusu
+const loginScreen = document.getElementById('login-overlay'); 
+const appContainer = document.getElementById('app-container'); // EDİTÖR KAPSAYICISI EKLENDİ
+const emailInput = document.getElementById('email-input');    
+const passwordInput = document.getElementById('pin-input');   
 const layersList = document.getElementById('layers-list');
 const mainSvg = document.getElementById('main-svg');
 const propertiesPanel = document.getElementById('properties-panel');
@@ -42,11 +43,13 @@ const propColorInput = document.getElementById('prop-color-input');
 // Firebase kullanıcının giriş yapıp yapmadığını dinler
 onAuthStateChanged(auth, (user) => {
   if (user) {
-    // Kullanıcı giriş yapmış, paneli gizle ve sistemi kullanıma aç
+    // Kullanıcı giriş yapmış, paneli gizle ve EDİTÖRÜ GÖSTER
     if(loginScreen) loginScreen.style.display = 'none';
+    if(appContainer) appContainer.style.display = 'flex'; // ARTIK EDİTÖR GÖRÜNECEK
   } else {
-    // Kullanıcı giriş yapmamış, paneli göster
+    // Kullanıcı giriş yapmamış, paneli göster ve EDİTÖRÜ GİZLE
     if(loginScreen) loginScreen.style.display = 'flex';
+    if(appContainer) appContainer.style.display = 'none';
   }
 });
 
