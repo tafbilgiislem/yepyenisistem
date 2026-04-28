@@ -78,17 +78,14 @@ onAuthStateChanged(auth, (user) => {
     }
 });
 
-// 🛡️ PERSONEL KALKANI: Yeniden Çizilmeyi Önleyen Terminatör Versiyonu
 function aktifEtPersonelModu() {
-    // 1. SİSTEMİN PANELLERİ ÇİZME MOTORLARINI BOZ! (Artık geri gelemezler)
-    window.renderProperties = function() {}; // Tıklayınca Vektör Ayarları AÇILAMAZ
-    window.updateUI = function() {};         // Tıklayınca mavi çizgiler ÇİZİLEMEZ
-    window.renderLayers = function() {};     // Katmanlar listesi YÜKLENEMEZ
-    window.initCanvasSettings = function() {}; // Tuval ayarları YENİLENEMEZ
+    // 1. TIKLAMALARI DURDUR (Vektör Ayarları penceresinin açılma motorunu iptal eder)
+    window.renderProperties = function() {}; 
+    window.updateUI = function() {};
     window.selectedEl = null;
     if(window.closeCtx) window.closeCtx();
 
-    // 2. GÖRSEL KALKAN (Fare Tıklamalarını Kesinlikle Engelle)
+    // 2. ÖNİZLEME KALKANI (Sahneye tıklanmasını engeller)
     let kalkan = document.getElementById('personel-kalkan');
     if (!kalkan) {
         kalkan = document.createElement('style');
@@ -96,77 +93,71 @@ function aktifEtPersonelModu() {
         document.head.appendChild(kalkan);
     }
     kalkan.innerHTML = `
-        /* Sahneye dokunulamaz */
-        #svg-wrapper, #canvas-inner, svg { pointer-events: none !important; user-select: none !important; }
+        #svg-wrapper { pointer-events: none !important; user-select: none !important; }
         #control-layer, #context-menu { display: none !important; }
     `;
 
-    // 3. TERMİNATÖR DÖNGÜSÜ (Saniyede 2 kez tarar ve kaçanları yok eder)
+    // 3. SAĞ ALT KÖŞEYE YAYINA GÖNDER BUTONU
+    let gonderBtn = document.getElementById('personel-yayinla-btn');
+    if (!gonderBtn) {
+        gonderBtn = document.createElement('button');
+        gonderBtn.id = 'personel-yayinla-btn';
+        gonderBtn.innerHTML = '<i class="ph ph-paper-plane-tilt"></i> YAYINA GÖNDER';
+        gonderBtn.style.cssText = 'position:fixed; bottom:30px; right:30px; z-index:999999; background:#10b981; color:white; padding:15px 30px; font-size:16px; font-weight:bold; border-radius:8px; border:none; cursor:pointer; box-shadow:0 10px 20px rgba(16,185,129,0.4); display:flex; align-items:center; gap:10px;';
+        gonderBtn.onclick = function() {
+            if(window.saveData) window.saveData();
+            window.showToast("Yayına Gönderildi!", "success");
+        };
+        document.body.appendChild(gonderBtn);
+    }
+
+    // 4. PANELERİ SÜREKLİ TARAYIP SİLEN DÖNGÜ (Asıl Çözüm)
     setInterval(() => {
-        const yasakliKelimeler = [
+        // Ekrandan silinmesini istediğimiz o inatçı başlıklar
+        const hedefler = [
             "AKILLI ZAMANLAMA", 
-            "AKTİF CİHAZLAR", 
+            "AKTİF CİHAZLAR (TAKİP)", 
             "TUVAL AYARLARI", 
             "NESNE EKLE", 
             "KATMANLAR", 
             "VEKTÖR AYARLARI"
         ];
-        
-        // Ekrandaki tüm metin taşıyabilecek etiketleri tara
-        document.querySelectorAll('div, span, h1, h2, h3, h4, h5, h6, label').forEach(el => {
-            const metin = el.innerText ? el.innerText.toUpperCase().trim() : '';
-            
-            yasakliKelimeler.forEach(yasakli => {
-                // Eğer başlık yasaklı bir kelimeyse ve "Hızlı Metin" değilse
-                if (metin.includes(yasakli) && !metin.includes("HIZLI METİN")) {
-                    // Sadece kısa başlıkları hedef al (yanlışlıkla ana ekranı silmemek için)
-                    if (metin.length < 50) {
-                        el.style.display = 'none'; // Başlığı yok et
-                        
-                        // Başlığın hemen altındaki ayar kutusunu da yok et
-                        if (el.nextElementSibling && !el.nextElementSibling.innerText.includes("HIZLI METİN")) {
-                            el.nextElementSibling.style.display = 'none';
+
+        // Ekrandaki tüm elemanları tara
+        document.querySelectorAll('*').forEach(el => {
+            // Eğer elementin içinde sadece bir başlık metni varsa
+            if (el.children.length <= 2 && el.textContent) {
+                let metin = el.textContent.trim().toUpperCase();
+                
+                // Metin uzunluğu kısıtlaması (Yanlışlıkla tüm ekranı silmemesi için güvenlik)
+                if (metin.length > 5 && metin.length < 35) {
+                    hedefler.forEach(hedef => {
+                        if (metin.includes(hedef)) {
+                            // Başlığı gizle
+                            el.style.setProperty('display', 'none', 'important');
+                            
+                            // Başlığın hemen altındaki kutuyu/listeyi de gizle
+                            if (el.nextElementSibling) {
+                                el.nextElementSibling.style.setProperty('display', 'none', 'important');
+                            }
                         }
-                    }
+                    });
                 }
-            });
+            }
         });
 
-        // Eski yayınla ve indir butonlarını gördüğü yerde yok etsin
-        document.querySelectorAll('button[onclick*="saveData"], button[onclick*="downloadSVG"]').forEach(btn => {
-            if(btn.id !== 'yeni-gonder-btn') btn.style.display = 'none';
+        // En üstte duran eski "Yayınla", "İndir" ve Slayt "Ekle/Sil" butonlarını gizle
+        document.querySelectorAll('button').forEach(btn => {
+            let btnMetin = btn.textContent.toUpperCase();
+            if (btn.id !== 'personel-yayinla-btn' && (btnMetin.includes('YAYINLA') || btnMetin.includes('İNDİR'))) {
+                btn.style.setProperty('display', 'none', 'important');
+            }
+            if (btn.hasAttribute('onclick') && (btn.getAttribute('onclick').includes('addNewSlide') || btn.getAttribute('onclick').includes('deleteSlide'))) {
+                btn.style.setProperty('display', 'none', 'important');
+            }
         });
 
-        // Eski Ekle/Sil butonlarını gizle
-        document.querySelectorAll('button[onclick*="addNewSlide"], button[onclick*="deleteSlide"]').forEach(btn => btn.style.display = 'none');
-
-    }, 500); // Döngü bitti.
-
-    // 4. SİLİNEMEZ "YAYINA GÖNDER" BUTONU (Sağ Alt Köşe)
-    let gonderBtn = document.getElementById('yeni-gonder-btn');
-    if (!gonderBtn) {
-        gonderBtn = document.createElement('button');
-        gonderBtn.id = 'yeni-gonder-btn';
-        gonderBtn.innerHTML = '<i class="ph ph-paper-plane-tilt"></i> YAYINA GÖNDER';
-        gonderBtn.style.cssText = 'position:fixed; bottom:30px; right:30px; z-index:999999; background:#10b981; color:white; padding:15px 30px; font-size:16px; font-weight:bold; border-radius:8px; border:none; cursor:pointer; box-shadow:0 10px 20px rgba(16,185,129,0.4); display:flex; align-items:center; gap:10px;';
-        
-        gonderBtn.onclick = function() {
-            if(window.saveData) window.saveData();
-        };
-        document.body.appendChild(gonderBtn);
-    }
-
-    // 5. Hızlı Metin Bölümünü Koru
-    setTimeout(() => {
-        let hizliMetin = document.getElementById('auto-fields-wrapper');
-        if(hizliMetin) {
-            hizliMetin.style.display = 'block';
-            hizliMetin.style.pointerEvents = 'auto';
-        }
-        if(window.refreshAutoTextFields) window.refreshAutoTextFields();
-    }, 800);
-
-    window.showToast("Personel Modu Kilitlendi: Ayarlar gizlendi.", "success");
+    }, 300); // Her 300 milisaniyede bir kontrol eder. Sistem panelleri sonradan yüklese bile anında yok eder!
 }
 
 function kapatPersonelModu() {
