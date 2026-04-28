@@ -85,17 +85,25 @@ function aktifEtPersonelModu() {
         kalkan = document.createElement('style');
         kalkan.id = 'personel-kalkan';
         kalkan.innerHTML = `
+            /* --- 1. SAHNE VE EDİTÖRÜ KİLİTLE --- */
             /* Sahneyi (SVG) sürüklemeye ve tıklamaya kapat */
             #svg-wrapper { pointer-events: none !important; }
             
-            /* Sol Menü: Yeni Araç Eklemeyi Gizle */
-            #btn-add-text, #btn-add-rect, #btn-add-svg, #btn-add-video, #btn-add-rss { display: none !important; }
+            /* Slayt Ekle / Sil / Yayına Gönder Butonlarını Gizle */
+            #top-actions, button[onclick*="addNewSlide"], button[onclick*="deleteSlide"], button[onclick*="saveData"] { display: none !important; }
             
+            /* --- 2. SOL MENÜÜ (ARAÇLAR) TAMAMEN TEMİZLE --- */
+            /* Sol taraftaki Nesne Ekleme menüsünü ve başlığını tamamen gizle */
+            #sidebar { display: none !important; }
+            
+            /* Eğer #sidebar tamamen gizlenince tasarım bozulursa, sadece içini gizleyelim: */
+            /* #sidebar h3, #sidebar .action-btn,
+               #btn-add-text, #btn-add-rect, #btn-add-svg, #btn-add-video, #btn-add-rss { display: none !important; }
+            */
+
+            /* --- 3. SAĞ MENÜ (AYARLAR) KISITLA --- */
             /* Katmanlar ve Cihazlar Panelini Gizle */
             #layers-list, #device-list { display: none !important; }
-            
-            /* Slayt Ekle / Sil Butonlarını Gizle */
-            button[onclick*="addNewSlide"], button[onclick*="deleteSlide"] { display: none !important; }
             
             /* Detaylı Özellikler Panelini Gizle (Sadece Otomatik Metinler Kalsın) */
             #editor-fields { display: none !important; }
@@ -108,7 +116,7 @@ function aktifEtPersonelModu() {
         `;
         document.head.appendChild(kalkan);
     }
-    window.showToast("Personel Modu: Sadece metinleri değiştirebilirsiniz.", "warning");
+    window.showToast("Personel Modu: Sadece hızlı metinleri değiştirebilirsiniz.", "warning");
 }
 
 function kapatPersonelModu() {
