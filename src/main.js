@@ -78,7 +78,7 @@ onAuthStateChanged(auth, (user) => {
     }
 });
 
-// 🛡️ PERSONEL KALKANI: Tam sterilizasyon sağlar.
+// 🛡️ PERSONEL KALKANI: İskeleti bozmaz, sadece yetkileri ustaca gizler (SON VERSİYON)
 function aktifEtPersonelModu() {
     let kalkan = document.getElementById('personel-kalkan');
     if (!kalkan) {
@@ -87,68 +87,65 @@ function aktifEtPersonelModu() {
         document.head.appendChild(kalkan);
     }
     kalkan.innerHTML = `
-        /* 1. ÖNİZLEME EKRANI: Tıklamayı tamamen kapat (Ayar paneli açılmaz) */
-        #svg-wrapper { 
-            pointer-events: none !important; 
-            user-select: none !important;
-        }
+        /* 1. ÖNİZLEME EKRANI KİLİDİ (Asla Tıklanamaz, Menü Fırlamaz) */
+        #svg-wrapper { pointer-events: none !important; user-select: none !important; }
         #control-layer, #context-menu { display: none !important; }
 
-        /* 2. SOL MENÜ (SLAYT SEÇİMİ): Sadece dropdown kalsın, gerisi gitsin */
-        #sidebar > *:not(#file-selector):not(.label-row) { display: none !important; }
-        #sidebar h3, #sidebar button, #sidebar .action-btn { display: none !important; }
-        #file-selector { display: block !important; margin-bottom: 20px !important; }
-
-        /* 3. SAĞ PANEL: 'Hızlı Metin' dışındaki her şeyi (Tuval, Katmanlar, Cihazlar) yok et */
-        #editor-fields > h3, 
-        #editor-fields > div:not(#auto-fields-wrapper),
-        #layers-list, 
-        #device-list, 
-        .tabs-header, 
-        .prop-group,
-        #canvas-settings { 
+        /* 2. SOL/SAĞ PANELDEKİ "İSTENMEYEN" ARAÇLARI GİZLE */
+        /* Nesne ekleme araçları ve slayt silme/ekleme butonları yok olur */
+        #btn-add-text, #btn-add-rect, #btn-add-svg, #btn-add-video, #btn-add-rss, 
+        #btn-add-wth, #btn-add-cur, 
+        button[onclick*="addNewSlide"], button[onclick*="deleteSlide"] { 
             display: none !important; 
         }
 
-        /* 4. HIZLI METİN YERLEŞTİRME: Sadece burayı göster ve başlığını pembe yap */
-        #auto-fields-wrapper { display: block !important; pointer-events: auto !important; }
-        h3:has(.ph-lightning), #auto-fields-list { display: block !important; }
-
-        /* 5. YAYINA GÖNDER BUTONU: Sağ alta devasa ve yeşil sabitle */
-        button[onclick*="saveData"] {
-            display: block !important;
-            visibility: visible !important;
-            position: fixed !important;
-            bottom: 30px !important;
-            right: 30px !important;
-            z-index: 999999 !important;
-            background: #10b981 !important; /* Yeşil */
-            color: white !important;
-            width: 220px !important;
-            height: 60px !important;
-            font-size: 16px !important;
-            font-weight: 900 !important;
-            border-radius: 15px !important;
-            border: 3px solid white !important;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5) !important;
-            pointer-events: auto !important;
-            cursor: pointer !important;
+        /* Tüm detaylı ayarlar (Katmanlar, Tuval, Efektler vb.) gizlenir */
+        #layers-list, #device-list, .tabs-header, .prop-group,
+        #tab-layout, #tab-style, #tab-text, #tab-video, #tab-widget, #tab-code,
+        .bottom-settings, #canvas-settings, 
+        #slide-time, #slide-effect, #start-time, #end-time, .day-btn {
+            display: none !important;
         }
 
-        /* 6. ALT PANEL (SÜRE, EFEKT): Tamamen gizle */
-        .bottom-settings, #slide-time, #slide-effect, #start-time, #end-time {
+        /* Başlıkları Temizle (Sadece lazım olanlar kalsın) */
+        h3:has(.ph-layers), h3:has(.ph-monitor), h3:has(.ph-clock), 
+        h3:has(.ph-palette), h3:has(.ph-paint-brush-broad), h3:has(.ph-squares-four) {
             display: none !important;
+        }
+
+        /* Yanlışlıkla Vektör Ayarları fırlarsa içini boşalt */
+        .action-row, .delete-btn { display: none !important; }
+
+        /* 3. GÜVENLİ BÖLGE: BUNLAR KESİNLİKLE AÇIK VE KULLANILABİLİR KALACAK */
+        /* Slayt Seçici */
+        #file-selector { display: block !important; pointer-events: auto !important; opacity: 1 !important; }
+        
+        /* Hızlı Metin Kutuları */
+        #auto-fields-wrapper, #auto-fields-list { 
+            display: block !important; 
+            pointer-events: auto !important; 
+            opacity: 1 !important; 
+            visibility: visible !important; 
+        }
+        
+        /* Yayına Gönder Butonu */
+        button[onclick*="saveData"] { 
+            display: flex !important; 
+            pointer-events: auto !important; 
+            opacity: 1 !important; 
+            visibility: visible !important; 
         }
     `;
 
-    // Personel bir yere tıklarsa ayar paneli fırlamasın diye seçimi sıfırla
+    // Seçimleri temizle ki tıklanmış bir şey varsa kapansın
     window.selectedEl = null;
     const ctrl = document.getElementById('control-layer');
     if(ctrl) ctrl.innerHTML = "";
+    window.closeCtx();
     
-    // Paneli tazele
+    // Metin listesini yenile
     window.refreshAutoTextFields();
-    window.showToast("Personel Modu: Sadece metinleri güncelleyip sağ alttan gönderin.", "warning");
+    window.showToast("Personel Modu Aktif: Sadece metinleri düzenleyebilirsiniz.", "warning");
 }
 
 function kapatPersonelModu() {
