@@ -3,10 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>SVG Pro Studio | Ultimate Sürüm V49 (Gelişmiş Medya & Font)</title>
+    <title>SVG Pro Studio | Ultimate Sürüm V49 (Canlı Widget'lar)</title>
     <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&family=Merriweather:wght@400;700&family=Montserrat:wght@400;700;800&family=Nunito:wght@400;700&family=Open+Sans:wght@400;700&family=Oswald:wght@400;700&family=Pacifico&family=Playfair+Display:wght@400;700&family=Poppins:wght@400;700&family=Raleway:wght@400;700&family=Roboto:wght@400;700&family=Ubuntu:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
-    
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     
     <style>
@@ -178,7 +177,7 @@
         </div>
         <div id="status-bar">
             <div id="status-count">Nesne Sayısı: 0</div>
-            <div>SVG Pro Studio Ultimate V49 (Stabil Medya & UI Kulp)</div>
+            <div>SVG Pro Studio Ultimate V49 (Canlı Widget'lar)</div>
             <div id="status-time">Son Kayıt: Bekleniyor...</div>
         </div>
     </div>
@@ -275,8 +274,12 @@
                         <button onclick="window.addShape('rect')" class="action-btn" style="background:#475569;"><i class="ph ph-square"></i> KUTU</button>
                     </div>
                     <div class="action-row" style="margin-top:8px; margin-bottom:0;">
-                        <button onclick="window.addVideo()" class="action-btn" style="background:#0284c7;"><i class="ph ph-video-camera"></i> VİDEO / YOUTUBE EKLE</button>
-                        <button onclick="window.addRssBand()" class="action-btn" style="background:var(--error);"><i class="ph ph-newspaper"></i> HABER BANT (RSS)</button>
+                        <button onclick="window.addVideo()" class="action-btn" style="background:#0284c7;"><i class="ph ph-video-camera"></i> VİDEO / YOUTUBE</button>
+                        <button onclick="window.addRssBand()" class="action-btn" style="background:var(--error);"><i class="ph ph-newspaper"></i> HABER (RSS)</button>
+                    </div>
+                    <div class="action-row" style="margin-top:8px; margin-bottom:0;">
+                        <button onclick="window.addWeather()" class="action-btn" style="background:#0ea5e9;"><i class="ph ph-cloud-sun"></i> HAVA DURUMU</button>
+                        <button onclick="window.addCurrency()" class="action-btn" style="background:#16a34a;"><i class="ph ph-currency-circle-dollar"></i> DÖVİZ (CANLI)</button>
                     </div>
                 </div>
             </details>
@@ -311,7 +314,6 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getDatabase, ref, set, get, onValue, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-    // ⚠️ DİKKAT: KENDİ FIREBASE BİLGİLERİNİ BURAYA YAPIŞTIR
     const firebaseConfig = {
         apiKey: "AIzaSyCFBrHqXdRVdbtaqyKCQAgJ4U8no9cDIF8",
         authDomain: "svg-pro-studio.firebaseapp.com",
@@ -397,7 +399,7 @@
         const svg = document.querySelector('#canvas-inner svg');
         if(!svg) return;
         const clone = svg.cloneNode(true);
-        clone.querySelectorAll('.duzenlenebilir, .locked, .guide-line, .snap-line, .handle, .video-obj').forEach(el => {
+        clone.querySelectorAll('.duzenlenebilir, .locked, .guide-line, .snap-line, .handle, .video-obj, .weather-widget, .currency-widget').forEach(el => {
             el.classList.remove('duzenlenebilir', 'locked');
             if (el.classList.length === 0) el.removeAttribute('class');
         });
@@ -431,7 +433,6 @@
     let isDrawingMode = false, isDrawing = false, currentPath = null, pathData = "", isDraggingGuide = false, currentGuide = null;
     let draggedLayerId = null;
 
-    // YAZI TİPİ MENÜSÜNE TIMES NEW ROMAN EKLENDİ
     const googleFonts = [
         { name: "Varsayılan", val: "sans-serif" }, 
         { name: "Times New Roman", val: "'Times New Roman', Times, serif" },
@@ -674,7 +675,6 @@
         svg.appendChild(rect); window.selectedEl = rect; window.saveState(); window.setupLayers(); window.updateUI(rect); window.renderEditor();
     };
 
-    // 🎥 YENİ: VİDEO YOUTUBE VE M3U8 MOTORU
     window.addVideo = function() {
         const svg = document.querySelector('#canvas-inner svg'); if(!svg) return;
         const dim = window.getSvgDim();
@@ -721,12 +721,8 @@
             setTimeout(() => {
                 const vEl = document.getElementById(vidId);
                 if (vEl && window.Hls && Hls.isSupported()) {
-                    const hls = new Hls({
-                        maxBufferLength: 60,
-                        liveSyncDurationCount: 3
-                    });
-                    hls.loadSource(url);
-                    hls.attachMedia(vEl);
+                    const hls = new Hls({ maxBufferLength: 60, liveSyncDurationCount: 3 });
+                    hls.loadSource(url); hls.attachMedia(vEl);
                 } else if (vEl && vEl.canPlayType('application/vnd.apple.mpegurl')) {
                     vEl.src = url; 
                 }
@@ -769,6 +765,114 @@
         const fSize = window.getD(el, 'base-font-size') || '30';
         
         el.innerHTML = `<div xmlns="http://www.w3.org/1999/xhtml" style="width:100%; height:100%; display:flex; align-items:center; overflow:hidden; background:${bgColor}; border-top:3px solid #fff;"><div class="rss-scroller" style="white-space:nowrap; color:${txtColor}; font-size:${fSize}px; font-weight:800; font-family:sans-serif; animation: scrollNews ${speed}s linear infinite; padding-left:100vw; letter-spacing:1px;">🔴 HABER BANT ÖNİZLEMESİ (${url || 'Link Yok'})</div></div>`;
+    };
+
+    // 🌟 YENİ: HAVA DURUMU (WEATHER) WIDGET
+    window.addWeather = function() {
+        const svg = document.querySelector('#canvas-inner svg'); if(!svg) return;
+        const dim = window.getSvgDim();
+        const fo = document.createElementNS("http://www.w3.org/2000/svg", "foreignObject");
+        fo.id = "wth_" + Date.now();
+        fo.setAttribute("class", "duzenlenebilir weather-widget");
+        fo.setAttribute("x", dim.w/2 - 200); fo.setAttribute("y", dim.h/2 - 100);
+        fo.setAttribute("width", 400); fo.setAttribute("height", 200);
+        
+        window.setD(fo, 'city', 'Istanbul');
+        window.setD(fo, 'theme', 'dark');
+        window.setD(fo, 'mask-shape', 'none');
+        
+        svg.appendChild(fo); window.updateWeatherDisplay(fo);
+        window.selectedEl = fo; window.saveState(); window.setupLayers(); window.updateUI(fo); window.renderEditor();
+    };
+
+    window.updateWeatherDisplay = async function(el) {
+        if (!el || !el.classList.contains('weather-widget')) return;
+        const city = window.getD(el, 'city') || 'Istanbul';
+        const theme = window.getD(el, 'theme') || 'dark';
+        const bg = theme === 'dark' ? 'rgba(0,0,0,0.7)' : 'rgba(255,255,255,0.8)';
+        const color = theme === 'dark' ? '#fff' : '#000';
+        
+        el.innerHTML = `<div xmlns="http://www.w3.org/1999/xhtml" style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; background:${bg}; color:${color}; border-radius:20px; font-family:sans-serif; backdrop-filter:blur(10px);">Yükleniyor...</div>`;
+        window.applyShapeMask(el);
+
+        try {
+            const res = await fetch(`https://wttr.in/${encodeURIComponent(city)}?format=j1`);
+            const data = await res.json();
+            const temp = data.current_condition[0].temp_C;
+            const desc = data.current_condition[0].lang_tr?.[0]?.value || data.current_condition[0].weatherDesc[0].value;
+            const engDesc = data.current_condition[0].weatherDesc[0].value;
+            
+            const iconMap = { "Sunny": "☀️", "Clear": "🌤️", "Partly cloudy": "⛅", "Cloudy": "☁️", "Overcast": "☁️", "Mist": "🌫️", "Patchy rain possible": "🌦️", "Patchy light drizzle": "🌧️", "Light drizzle": "🌧️", "Freezing drizzle": "🌧️", "Heavy freezing drizzle": "🌧️", "Patchy light rain": "🌧️", "Light rain": "🌧️", "Moderate rain at times": "🌧️", "Moderate rain": "🌧️", "Heavy rain at times": "🌧️", "Heavy rain": "🌧️", "Light freezing rain": "🌧️", "Moderate or heavy freezing rain": "🌧️", "Light sleet": "🌨️", "Moderate or heavy sleet": "🌨️", "Patchy light snow": "🌨️", "Light snow": "🌨️", "Patchy moderate snow": "🌨️", "Moderate snow": "🌨️", "Patchy heavy snow": "❄️", "Heavy snow": "❄️", "Ice pellets": "🌨️", "Light rain shower": "🌦️", "Moderate or heavy rain shower": "🌧️", "Torrential rain shower": "🌧️", "Light sleet showers": "🌨️", "Moderate or heavy sleet showers": "🌨️", "Light snow showers": "🌨️", "Moderate or heavy snow showers": "❄️", "Light showers of ice pellets": "🌨️", "Moderate or heavy showers of ice pellets": "🌨️", "Patchy light rain with thunder": "⛈️", "Moderate or heavy rain with thunder": "⛈️", "Patchy light snow with thunder": "🌩️", "Moderate or heavy snow with thunder": "🌩️" };
+            const emoji = iconMap[engDesc] || "🌤️";
+
+            el.innerHTML = `<div xmlns="http://www.w3.org/1999/xhtml" style="width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; background:${bg}; color:${color}; border-radius:20px; font-family:sans-serif; backdrop-filter:blur(10px); padding:20px; box-sizing:border-box;">
+                <div style="font-size:1.5em; font-weight:bold; margin-bottom:5px; text-transform:uppercase; letter-spacing:2px;">${city}</div>
+                <div style="display:flex; align-items:center; gap:15px;">
+                    <span style="font-size:4em;">${emoji}</span>
+                    <span style="font-size:4.5em; font-weight:800;">${temp}°</span>
+                </div>
+                <div style="font-size:1.2em; opacity:0.8; margin-top:5px;">${desc}</div>
+            </div>`;
+            window.applyShapeMask(el); 
+        } catch(e) {
+            el.innerHTML = `<div xmlns="http://www.w3.org/1999/xhtml" style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; background:${bg}; color:${color}; border-radius:20px; font-family:sans-serif; backdrop-filter:blur(10px);">Hata: Veri Alınamadı</div>`;
+        }
+    };
+
+    // 🌟 YENİ: CANLI DÖVİZ (CURRENCY) WIDGET
+    window.addCurrency = function() {
+        const svg = document.querySelector('#canvas-inner svg'); if(!svg) return;
+        const dim = window.getSvgDim();
+        const fo = document.createElementNS("http://www.w3.org/2000/svg", "foreignObject");
+        fo.id = "cur_" + Date.now();
+        fo.setAttribute("class", "duzenlenebilir currency-widget");
+        fo.setAttribute("x", dim.w/2 - 300); fo.setAttribute("y", dim.h/2 - 75);
+        fo.setAttribute("width", 600); fo.setAttribute("height", 150);
+        
+        window.setD(fo, 'currencies', 'USD,EUR,GBP');
+        window.setD(fo, 'mask-shape', 'none');
+        
+        svg.appendChild(fo); window.updateCurrencyDisplay(fo);
+        window.selectedEl = fo; window.saveState(); window.setupLayers(); window.updateUI(fo); window.renderEditor();
+    };
+
+    window.updateCurrencyDisplay = async function(el) {
+        if (!el || !el.classList.contains('currency-widget')) return;
+        const curs = (window.getD(el, 'currencies') || 'USD,EUR,GBP').split(',').map(c=>c.trim().toUpperCase());
+        
+        el.innerHTML = `<div xmlns="http://www.w3.org/1999/xhtml" style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.7); color:#fff; border-radius:15px; font-family:sans-serif; backdrop-filter:blur(10px);">Yükleniyor...</div>`;
+        window.applyShapeMask(el);
+
+        try {
+            const res = await fetch('https://open.er-api.com/v6/latest/USD');
+            const data = await res.json();
+            const tryRate = data.rates['TRY'];
+            
+            let htmlBlocks = '';
+            curs.forEach(c => {
+                let val = "0.00";
+                if(c === 'USD') val = tryRate.toFixed(2);
+                else if(data.rates[c]) {
+                    val = (tryRate / data.rates[c]).toFixed(2);
+                }
+                
+                let flag = "💰";
+                if(c==='USD') flag="🇺🇸"; if(c==='EUR') flag="🇪🇺"; if(c==='GBP') flag="🇬🇧"; if(c==='CHF') flag="🇨🇭"; if(c==='JPY') flag="🇯🇵"; if(c==='SAR' || c==='AED') flag="🇸🇦";
+                
+                htmlBlocks += `<div style="display:flex; flex-direction:column; align-items:center; background:rgba(255,255,255,0.1); padding:15px; border-radius:10px; min-width:100px;">
+                    <span style="font-size:1.5em; margin-bottom:5px;">${flag}</span>
+                    <span style="font-size:1em; color:#10b981; font-weight:bold;">${c}</span>
+                    <span style="font-size:1.6em; font-weight:800;">₺${val}</span>
+                </div>`;
+            });
+
+            el.innerHTML = `<div xmlns="http://www.w3.org/1999/xhtml" style="width:100%; height:100%; display:flex; align-items:center; justify-content:space-evenly; background:rgba(0,0,0,0.7); color:#fff; border-radius:15px; font-family:sans-serif; backdrop-filter:blur(10px); padding:10px; box-sizing:border-box;">
+                ${htmlBlocks}
+            </div>`;
+            window.applyShapeMask(el);
+        } catch(e) {
+            el.innerHTML = `<div xmlns="http://www.w3.org/1999/xhtml" style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.7); color:#fff; border-radius:15px; font-family:sans-serif; backdrop-filter:blur(10px);">Hata: Kurlar Alınamadı</div>`;
+        }
     };
 
     window.processImportedFile = function(file) {
@@ -840,9 +944,8 @@
         if(prop === 'w') { if(el.tagName === 'text') { if(val > 10) { el.setAttribute('textLength', val); el.setAttribute('lengthAdjust', 'spacingAndGlyphs'); const tp = el.querySelector('textPath'); if (tp) { tp.setAttribute('textLength', val); tp.setAttribute('lengthAdjust', 'spacingAndGlyphs'); } } else { el.removeAttribute('textLength'); el.removeAttribute('lengthAdjust'); const tp = el.querySelector('textPath'); if (tp) { tp.removeAttribute('textLength'); tp.removeAttribute('lengthAdjust'); } } } else { el.setAttribute('width', val); } }
         if(prop === 'h') { if(el.tagName === 'text') { window.setD(el, 'base-font-size', val); el.setAttribute('font-size', val); } else { el.setAttribute('height', val); } }
         if (elUI) { const badge = document.getElementById('val-' + prop + '-' + id); if (badge) badge.innerText = val + 'px'; if (elUI.type === 'range' && elUI.nextElementSibling && elUI.nextElementSibling.type === 'number') elUI.nextElementSibling.value = val; else if (elUI.type === 'number' && elUI.previousElementSibling && elUI.previousElementSibling.type === 'range') elUI.previousElementSibling.value = val; }
-        if(el.tagName === 'text') window.applyTextCurve(el); if(el.tagName === 'image' || el.tagName === 'rect' || el.classList.contains('video-obj')) window.applyShapeMask(el); 
-        if(el.classList.contains('rss-band')) window.updateRssDisplay(el);
-        if(el.classList.contains('video-obj')) window.updateVideoDisplay(el);
+        if(el.tagName === 'text') window.applyTextCurve(el); 
+        if(el.tagName === 'image' || el.tagName === 'rect' || el.classList.contains('video-obj') || el.classList.contains('weather-widget') || el.classList.contains('currency-widget')) window.applyShapeMask(el); 
         window.updateUI(el);
     };
 
@@ -853,8 +956,6 @@
         if(key === 'rx' || key === 'mask-shape') window.applyShapeMask(el); if(key === 'angle') window.applyTransforms(el);
         if(['solid-color', 'color1', 'color2', 'fill-type'].includes(key)) window.applyFill(el); 
         if (elUI) { const badge = document.getElementById('val-' + key + '-' + id); if (badge) badge.innerText = val + (key === 'angle' ? '°' : (key === 'curve' ? '' : 'px')); if (elUI.type === 'range' && elUI.nextElementSibling && elUI.nextElementSibling.type === 'number') elUI.nextElementSibling.value = val; else if (elUI.type === 'number' && elUI.previousElementSibling && elUI.previousElementSibling.type === 'range') elUI.previousElementSibling.value = val; }
-        if(el.classList.contains('rss-band')) window.updateRssDisplay(el);
-        if(el.classList.contains('video-obj')) window.updateVideoDisplay(el);
         window.updateUI(el);
     };
 
@@ -882,7 +983,7 @@
         let bbox = {x:0, y:0, width:0, height:0}; try { bbox = el.getBBox(); } catch(e){}
         if (el.tagName === 'text') { if(type === 'center-h') el.setAttribute('x', w/2); if(type === 'center-v') el.setAttribute('y', h/2); if(type === 'left') el.setAttribute('x', bbox.width/2); if(type === 'right') el.setAttribute('x', w - bbox.width/2); } 
         else { let nw = parseFloat(el.getAttribute('width')) || bbox.width; let nh = parseFloat(el.getAttribute('height')) || bbox.height; if(type === 'center-h') el.setAttribute('x', (w/2) - (nw/2)); if(type === 'center-v') el.setAttribute('y', (h/2) - (nh/2)); if(type === 'left') el.setAttribute('x', 0); if(type === 'right') el.setAttribute('x', w - nw); } 
-        if(el.tagName === 'image' || el.tagName === 'rect' || el.classList.contains('video-obj')) window.applyShapeMask(el); window.saveState(); window.updateUI(el);
+        if(el.tagName === 'image' || el.tagName === 'rect' || el.classList.contains('video-obj') || el.classList.contains('weather-widget') || el.classList.contains('currency-widget')) window.applyShapeMask(el); window.saveState(); window.updateUI(el);
     };
 
     window.toggleFlip = function(id, dir) { const el = document.getElementById(id); if(!el) return; if(dir === 'x') window.setD(el, 'flip-x', window.getD(el, 'flip-x') === "-1" ? "1" : "-1"); else window.setD(el, 'flip-y', window.getD(el, 'flip-y') === "-1" ? "1" : "-1"); window.applyTransforms(el); window.saveState(); };
@@ -903,9 +1004,11 @@
     };
 
     window.applyFill = function(el) {
-        if(el.tagName === 'image' || el.classList.contains('rss-band') || el.classList.contains('video-obj')) {
+        if(el.tagName === 'image' || el.classList.contains('rss-band') || el.classList.contains('video-obj') || el.classList.contains('weather-widget') || el.classList.contains('currency-widget')) {
             if(el.classList.contains('rss-band')) window.updateRssDisplay(el);
             if(el.classList.contains('video-obj')) window.updateVideoDisplay(el);
+            if(el.classList.contains('weather-widget')) window.updateWeatherDisplay(el);
+            if(el.classList.contains('currency-widget')) window.updateCurrencyDisplay(el);
             return;
         }
         const type = window.getD(el, 'fill-type') || 'solid';
@@ -950,18 +1053,18 @@
 
     window.describeRoundedRect = function(r, s, x, y, w, h) { if (r <= 0) return `M ${x} ${y} H ${x + w} V ${y + h} H ${x} Z`; r = Math.min(r, w / 2, h / 2); const kappa = (4 * (r * (1 - s)) * Math.tan(Math.PI / 4)) / 3; const pts = [ [x + r, y], [x + w - r, y], [x + w, y + r], [x + w, y + h - r], [x + w - r, y + h], [x + r, y + h], [x, y + h - r], [x, y + r] ]; return `M ${pts[0][0]} ${pts[0][1]} L ${pts[1][0]} ${pts[1][1]} C ${pts[1][0] + kappa} ${pts[1][1]} ${pts[2][0]} ${pts[2][1] - kappa} ${pts[2][0]} ${pts[2][1]} L ${pts[3][0]} ${pts[3][1]} C ${pts[3][0]} ${pts[3][1] + kappa} ${pts[4][0] + kappa} ${pts[4][1]} ${pts[4][0]} ${pts[4][1]} L ${pts[5][0]} ${pts[5][1]} C ${pts[5][0] - kappa} ${pts[5][1]} ${pts[6][0]} ${pts[6][1] + kappa} ${pts[6][0]} ${pts[6][1]} L ${pts[7][0]} ${pts[7][1]} C ${pts[7][0]} ${pts[7][1] - kappa} ${pts[0][0] - kappa} ${pts[0][1]} ${pts[0][0]} ${pts[0][1]} Z`; };
     
-    // --- VİDEO MASKESİ (SQUIRCLE KÖŞE ÇÖZÜMÜ) ---
+    // --- WIDGET VE VİDEO MASKESİ (SQUIRCLE) ---
     window.applyShapeMask = function(el) { 
-        if (el.tagName !== 'image' && el.tagName !== 'rect' && !el.classList.contains('video-obj')) return; 
+        if (el.tagName !== 'image' && el.tagName !== 'rect' && !el.classList.contains('video-obj') && !el.classList.contains('weather-widget') && !el.classList.contains('currency-widget')) return; 
 
-        if (el.classList.contains('video-obj')) {
+        if (el.classList.contains('video-obj') || el.classList.contains('weather-widget') || el.classList.contains('currency-widget')) {
             const shape = window.getD(el, 'mask-shape') || 'none';
             const innerDiv = el.querySelector('div');
             if (innerDiv) {
                 let rx = parseFloat(window.getD(el, 'rx')) || 0;
                 if (shape === 'none') {
                     innerDiv.style.clipPath = 'none';
-                    innerDiv.style.borderRadius = '0px';
+                    innerDiv.style.borderRadius = el.classList.contains('weather-widget') || el.classList.contains('currency-widget') ? '15px' : '0px';
                 } else if (shape === 'circle') {
                     innerDiv.style.clipPath = 'circle(50% at 50% 50%)';
                     innerDiv.style.borderRadius = '0px';
@@ -1001,12 +1104,14 @@
             if(!el.id) el.id = "el_" + Math.random().toString(36).substr(2,9);
             if(window.getD(el, 'locked') === "true") el.classList.add('locked');
             if(el.tagName === 'text' && window.getD(el, 'curve')) window.applyTextCurve(el);
-            if((el.tagName === 'image' || el.tagName === 'rect' || el.classList.contains('video-obj')) && window.getD(el, 'mask-shape') && window.getD(el, 'mask-shape') !== "none") window.applyShapeMask(el);
+            if((el.tagName === 'image' || el.tagName === 'rect' || el.classList.contains('video-obj') || el.classList.contains('weather-widget') || el.classList.contains('currency-widget')) && window.getD(el, 'mask-shape') && window.getD(el, 'mask-shape') !== "none") window.applyShapeMask(el);
             if(window.getD(el, 'angle') || window.getD(el, 'flip-x') || window.getD(el, 'flip-y')) window.applyTransforms(el);
             if(window.getD(el, 'shadow-blur') || window.getD(el, 'blur') || window.getD(el, 'blend')) window.applyFilters(el);
             window.applyFill(el);
             if(el.classList.contains('rss-band')) window.updateRssDisplay(el);
             if(el.classList.contains('video-obj')) window.updateVideoDisplay(el);
+            if(el.classList.contains('weather-widget')) window.updateWeatherDisplay(el);
+            if(el.classList.contains('currency-widget')) window.updateCurrencyDisplay(el);
         });
         window.initEngine(mainSvg); window.renderEditor(); window.updateRulers(); window.refreshAutoTextFields();
     };
@@ -1038,6 +1143,8 @@
             if (typeName === 'RECT') { typeName = 'ŞEKİL'; icon = 'ph-square'; } if (typeName === 'G' || typeName === 'SVG') { typeName = 'VEKTÖR'; icon = 'ph-shapes'; } if (typeName === 'PATH') { typeName = 'ÇİZİM'; icon = 'ph-scribble-loop'; } if (typeName === 'IMAGE') { typeName = 'RESİM'; icon = 'ph-image'; } if (el.tagName === 'text') { let txt = window.getD(el, 'raw-text') || el.textContent; typeName = `T: ${txt.substring(0,10)}${txt.length>10?'...':''}`; icon = 'ph-text-t'; }
             if (el.classList.contains('rss-band')) { typeName = 'HABER BANT (RSS)'; icon = 'ph-newspaper'; }
             if (el.classList.contains('video-obj')) { typeName = 'VİDEO'; icon = 'ph-video-camera'; }
+            if (el.classList.contains('weather-widget')) { typeName = 'HAVA DURUMU'; icon = 'ph-cloud-sun'; }
+            if (el.classList.contains('currency-widget')) { typeName = 'DÖVİZ'; icon = 'ph-currency-circle-dollar'; }
 
             const item = document.createElement('div'); 
             item.className = `layer-item ${isActive ? 'active' : ''}`;
@@ -1073,25 +1180,32 @@
             const isLocked = window.getD(el, 'locked') === "true"; const isPath = tag === 'path'; const isShape = tag === 'rect'; const isImage = tag === 'image'; const isIcon = tag === 'svg' || tag === 'g';
             const isRss = el.classList.contains('rss-band');
             const isVideo = el.classList.contains('video-obj');
+            const isWeather = el.classList.contains('weather-widget');
+            const isCurrency = el.classList.contains('currency-widget');
             const isText = tag === 'text' || isRss; 
+            const isWidget = isWeather || isCurrency;
             
             let typeName = tag.toUpperCase(); let headerIcon = 'ph-square'; if (isShape) { typeName = 'ŞEKİL'; headerIcon = 'ph-square'; } if (isIcon) { typeName = 'VEKTÖR'; headerIcon = 'ph-shapes'; } if (isPath) { typeName = 'ÇİZİM'; headerIcon = 'ph-scribble-loop'; } if (isImage) { typeName = 'RESİM'; headerIcon = 'ph-image'; } if (tag === 'text') { typeName = 'METİN'; headerIcon = 'ph-text-t'; }
             if (isRss) { typeName = 'HABER BANT (RSS)'; headerIcon = 'ph-newspaper'; }
             if (isVideo) { typeName = 'VİDEO / YOUTUBE'; headerIcon = 'ph-video-camera'; }
+            if (isWeather) { typeName = 'HAVA DURUMU'; headerIcon = 'ph-cloud-sun'; }
+            if (isCurrency) { typeName = 'DÖVİZ TABLOSU'; headerIcon = 'ph-currency-circle-dollar'; }
 
-            let layoutHtml = "", styleHtml = "", textHtml = "", codeHtml = "", videoHtml = "";
+            let layoutHtml = "", styleHtml = "", textHtml = "", codeHtml = "", videoHtml = "", widgetHtml = "";
             let headerHtml = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; padding-bottom:10px; border-bottom:1px solid var(--border);"><div style="font-size:14px; color:white; font-weight:bold; letter-spacing:1px; display:flex; align-items:center; gap:8px;"><i class="ph ${headerIcon}" style="color:var(--accent);"></i> ${typeName} AYARLARI ${isLocked ? '<i class="ph ph-lock-key" style="color:#ef4444;"></i>' : ''}</div><div class="delete-btn" style="cursor:pointer; color:#94a3b8; font-size:20px; transition:0.2s;" title="Sil" onclick="if(confirm('Silinecek?')){ document.getElementById('${id}').remove(); window.selectedEl=null; window.saveState(); window.renderEditor(); const ctrl = document.getElementById('control-layer'); if(ctrl) ctrl.innerHTML=''; }"><i class="ph ph-x-circle"></i></div></div><div class="action-row" style="margin-bottom:20px;"><button class="action-btn" onclick="window.toggleLock('${id}')" style="background:${isLocked?'var(--error)':'#334155'}"><i class="ph ${isLocked?'ph-lock-key-open':'ph-lock-key'}"></i> ${isLocked ? 'KİLİDİ AÇ' : 'KİLİTLE'}</button><button class="action-btn special" onclick="window.cloneElement('${id}')" ${isLocked ? 'disabled':''}><i class="ph ph-copy"></i> KOPYALA</button></div>`;
             if (isLocked) { f.innerHTML = headerHtml + `<div style="text-align:center; color:#ef4444; font-size:12px; margin-top:30px;"><i class="ph ph-lock-key" style="font-size:40px; display:block; margin-bottom:10px; opacity:0.5;"></i> Bu öğe kilitli. Düzenlemek için kilidini açın.</div>`; return; }
             
-            if (!isText && !isVideo && (window.activeTabId === 'tab-text' || window.activeTabId === 'tab-video')) window.activeTabId = 'tab-layout';
-            if (isVideo && window.activeTabId === 'tab-text') window.activeTabId = 'tab-video';
-            if (isText && window.activeTabId === 'tab-video') window.activeTabId = 'tab-text';
+            if (!isText && !isVideo && !isWidget && (window.activeTabId === 'tab-text' || window.activeTabId === 'tab-video' || window.activeTabId === 'tab-widget')) window.activeTabId = 'tab-layout';
+            if (isVideo && window.activeTabId !== 'tab-video' && window.activeTabId !== 'tab-layout' && window.activeTabId !== 'tab-style' && window.activeTabId !== 'tab-code') window.activeTabId = 'tab-video';
+            if (isWidget && window.activeTabId !== 'tab-widget' && window.activeTabId !== 'tab-layout' && window.activeTabId !== 'tab-style' && window.activeTabId !== 'tab-code') window.activeTabId = 'tab-widget';
+            if (isText && window.activeTabId !== 'tab-text' && window.activeTabId !== 'tab-layout' && window.activeTabId !== 'tab-style' && window.activeTabId !== 'tab-code') window.activeTabId = 'tab-text';
 
             let tabsNav = `<div class="tabs-header">
                 <button class="tab-btn ${window.activeTabId === 'tab-layout' ? 'active' : ''}" onclick="window.switchTab(this, 'tab-layout')"><i class="ph ph-bounding-box"></i> Düzen</button>
                 <button class="tab-btn ${window.activeTabId === 'tab-style' ? 'active' : ''}" onclick="window.switchTab(this, 'tab-style')"><i class="ph ph-palette"></i> Stil</button>
                 ${isText ? `<button class="tab-btn ${window.activeTabId === 'tab-text' ? 'active' : ''}" onclick="window.switchTab(this, 'tab-text')"><i class="ph ph-text-t"></i> Metin</button>` : ''}
                 ${isVideo ? `<button class="tab-btn ${window.activeTabId === 'tab-video' ? 'active' : ''}" onclick="window.switchTab(this, 'tab-video')"><i class="ph ph-video-camera"></i> Medya</button>` : ''}
+                ${isWidget ? `<button class="tab-btn ${window.activeTabId === 'tab-widget' ? 'active' : ''}" onclick="window.switchTab(this, 'tab-widget')"><i class="ph ph-plug"></i> Widget</button>` : ''}
                 <button class="tab-btn ${window.activeTabId === 'tab-code' ? 'active' : ''}" onclick="window.switchTab(this, 'tab-code')"><i class="ph ph-code"></i> Kod</button>
             </div>`;
 
@@ -1105,7 +1219,7 @@
                 layoutHtml += createPropGroup("<i class='ph ph-arrows-out'></i> Konum ve Boyut", `<div class="label-row"><span class="label-text">X KONUMU</span><span class="value-badge" id="val-x-${id}">${x}px</span></div><div style="display:flex; gap:10px; margin-bottom:15px;"><input type="range" min="-1000" max="3000" value="${x}" style="flex:1;" oninput="window.changeProp('${id}', 'x', this.value, this);" onchange="window.saveState()"><input type="number" value="${x}" style="width:70px; padding:8px;" oninput="window.changeProp('${id}', 'x', this.value, this);" onchange="window.saveState()"></div><div class="label-row"><span class="label-text">Y KONUMU</span><span class="value-badge" id="val-y-${id}">${y}px</span></div><div style="display:flex; gap:10px; margin-bottom:15px;"><input type="range" min="-1000" max="3000" value="${y}" style="flex:1;" oninput="window.changeProp('${id}', 'y', this.value, this);" onchange="window.saveState()"><input type="number" value="${y}" style="width:70px; padding:8px;" oninput="window.changeProp('${id}', 'y', this.value, this);" onchange="window.saveState()"></div><div class="label-row"><span class="label-text">${tag === 'text' ? 'GENİŞLİK (ESNETME W)' : 'GENİŞLİK (W)'}</span><span class="value-badge" id="val-w-${id}">${w}px</span></div><div style="display:flex; gap:10px; margin-bottom:15px;"><input type="range" min="1" max="2500" value="${w}" style="flex:1;" oninput="window.changeProp('${id}', 'w', this.value, this);" onchange="window.saveState()"><input type="number" value="${w}" style="width:70px; padding:8px;" oninput="window.changeProp('${id}', 'w', this.value, this);" onchange="window.saveState()"></div><div class="label-row"><span class="label-text">${tag === 'text' ? 'YAZI PUNTO (H)' : 'YÜKSEKLİK (H)'}</span><span class="value-badge" id="val-h-${id}">${h}px</span></div><div style="display:flex; gap:10px;"><input type="range" min="1" max="2500" value="${h}" style="flex:1;" oninput="window.changeProp('${id}', 'h', this.value, this);" onchange="window.saveState()"><input type="number" value="${h}" style="width:70px; padding:8px;" oninput="window.changeProp('${id}', 'h', this.value, this);" onchange="window.saveState()"></div>`);
                 layoutHtml += createPropGroup("<i class='ph ph-arrows-clockwise'></i> Dönüştürme", `<div class="label-row" style="margin-top:0;"><span class="label-text">DÖNDÜRME AÇISI</span><span class="value-badge" id="val-angle-${id}">${angle}°</span></div><div style="display:flex; gap:10px; align-items:center;"><input type="range" min="0" max="360" value="${angle}" style="flex:1;" oninput="window.changeSetting('${id}', 'angle', this.value, this);" onchange="window.saveState()"><input type="number" value="${angle}" style="width:70px; padding:8px;" oninput="window.changeSetting('${id}', 'angle', this.value, this);" onchange="window.saveState()"></div>`);
             }
-            if ((isShape || isImage || isVideo) && !isRss) {
+            if ((isShape || isImage || isVideo || isWidget) && !isRss) {
                 const rx = parseFloat(window.getD(el, 'rx')) || 0; const maskShape = window.getD(el, 'mask-shape') || 'none'; let bbox = {width:0, height:0}; try { bbox = el.getBBox(); }catch(e){} const maxR = Math.min(bbox.width, bbox.height) / 2;
                 layoutHtml += createPropGroup("<i class='ph ph-scissors'></i> Form & Maskeleme", `<div class="label-text" style="margin-bottom:5px;">MASKELEME ŞEKLİ</div><select class="font-select" style="margin-bottom:15px;" onchange="window.changeSetting('${id}', 'mask-shape', this.value); window.saveState();"><option value="none" ${maskShape === 'none' ? 'selected' : ''}>Yok (Düz)</option><option value="squircle" ${maskShape === 'squircle' ? 'selected' : ''}>Oval Kare (Squircle)</option><option value="circle" ${maskShape === 'circle' ? 'selected' : ''}>Daire</option><option value="triangle" ${maskShape === 'triangle' ? 'selected' : ''}>Üçgen</option><option value="star" ${maskShape === 'star' ? 'selected' : ''}>Yıldız</option></select><div class="label-row"><span class="label-text">KÖŞE YARIÇAPI (SQUIRCLE)</span><span class="value-badge" id="val-rx-${id}">${Math.round(rx)}px</span></div><div style="display:flex; gap:10px; align-items:center;"><input type="range" min="0" max="${maxR}" value="${rx}" style="flex:1;" oninput="window.changeSetting('${id}', 'rx', this.value, this);" onchange="window.saveState()"><input type="number" value="${rx}" style="width:70px; padding:8px;" oninput="window.changeSetting('${id}', 'rx', this.value, this);" onchange="window.saveState()"></div>`);
                 
@@ -1115,7 +1229,7 @@
                 }
             }
 
-            if (!isImage && !isVideo) {
+            if (!isImage && !isVideo && !isWidget) {
                 const fillType = window.getD(el, 'fill-type') || 'solid'; const col1 = window.getD(el, 'color1') || '#10b981'; const col2 = window.getD(el, 'color2') || '#3b82f6'; const solidCol = window.getD(el, 'solid-color') || (el.getAttribute('fill') === 'none' ? el.getAttribute('stroke') : el.getAttribute('fill')) || "#ffffff";
                 let fillHtml = `<div class="label-text" style="margin-bottom:5px;">${isRss?'ARKA PLAN':'DOLGU TİPİ'}</div>`;
                 if (!isRss) fillHtml += `<select class="font-select" style="margin-bottom:15px;" onchange="window.changeSetting('${id}', 'fill-type', this.value); window.saveState();"><option value="solid" ${fillType === 'solid' ? 'selected' : ''}>Düz Renk</option><option value="gradient" ${fillType === 'gradient' ? 'selected' : ''}>Renk Geçişi (Gradient)</option></select>`;
@@ -1123,7 +1237,7 @@
                 fillHtml += `<div class="label-text" style="margin-top:15px; margin-bottom:8px;">PROJE RENKLERİ</div><div class="swatch-container">` + recentColors.map(c => `<div class="color-swatch" style="background:${c}" onclick="window.applyRecentColor('${id}', '${c}')" title="${c}"></div>`).join('') + `</div>`;
                 styleHtml += createPropGroup("<i class='ph ph-paint-bucket'></i> Dolgu & Renk", fillHtml);
             }
-            if(!isRss && !isVideo) {
+            if(!isRss && !isVideo && !isWidget) {
                 const strokeCol = el.getAttribute('stroke') || '#000000'; const strokeW = parseFloat(el.getAttribute('stroke-width')) || 0; const dash = el.getAttribute('stroke-dasharray') || 'none';
                 styleHtml += createPropGroup("<i class='ph ph-square-logo'></i> Kenarlık & Çizgi", `<div class="label-text" style="margin-bottom:5px;">ÇİZGİ RENGİ</div><div style="display:flex; gap:10px; align-items:center; margin-bottom:15px;"><input type="color" value="${safeColor(strokeCol)}" oninput="const t=document.getElementById('${id}'); t.setAttribute('stroke', this.value); t.setAttribute('paint-order', 'stroke fill'); t.setAttribute('stroke-linejoin', 'round'); this.nextElementSibling.nextElementSibling.value=this.value;" onchange="window.addRecentColor(this.value); window.saveState();" style="width:45px; height:45px; cursor:pointer; border:none; background:none; border-radius:8px;"><button class="action-btn" style="flex:0 0 45px; padding:12px; background:#334155; font-size:18px;" onclick="window.pickColor('${id}', '', 'stroke')" title="Göz Damlası"><i class="ph ph-drop"></i></button><input type="text" value="${safeColor(strokeCol)}" style="flex:1;" oninput="const t=document.getElementById('${id}'); t.setAttribute('stroke', this.value); t.setAttribute('paint-order', 'stroke fill'); t.setAttribute('stroke-linejoin', 'round'); this.previousElementSibling.previousElementSibling.value=this.value;" onchange="window.addRecentColor(this.value); window.saveState();"></div><div class="label-row"><span class="label-text">KALINLIK</span><span class="value-badge" id="val-sw-${id}">${strokeW}px</span></div><div style="display:flex; gap:10px; align-items:center; margin-bottom:15px;"><input type="range" min="0" max="50" value="${strokeW}" style="flex:1;" oninput="const t=document.getElementById('${id}'); t.setAttribute('stroke-width', this.value); t.setAttribute('paint-order', 'stroke fill'); document.getElementById('val-sw-${id}').innerText=this.value+'px'; this.nextElementSibling.value=this.value;" onchange="window.saveState()"><input type="number" value="${strokeW}" style="width:70px; padding:8px;" oninput="const t=document.getElementById('${id}'); t.setAttribute('stroke-width', this.value); t.setAttribute('paint-order', 'stroke fill'); document.getElementById('val-sw-${id}').innerText=this.value+'px'; this.previousElementSibling.value=this.value;" onchange="window.saveState()"></div><div class="label-text" style="margin-bottom:5px;">ÇİZGİ TİPİ</div><select class="font-select" onchange="document.getElementById('${id}').setAttribute('stroke-dasharray', this.value); window.saveState();"><option value="none" ${dash === 'none' ? 'selected' : ''}>Düz</option><option value="5,5" ${dash === '5,5' ? 'selected' : ''}>Kesikli</option><option value="2,2" ${dash === '2,2' ? 'selected' : ''}>Noktalı</option></select>`);
             }
@@ -1158,6 +1272,27 @@
                 </div>
                 <div style="font-size:10px; color:#94a3b8; font-style:italic;">YouTube linklerini veya .m3u8 IPTV linklerini doğrudan yapıştırın, sistem otomatik çevirir. TV için sessiz oynaması önerilir.</div>
                 `);
+            } else if (isWeather) {
+                const city = window.getD(el, 'city') || 'Istanbul';
+                const theme = window.getD(el, 'theme') || 'dark';
+                widgetHtml += createPropGroup("<i class='ph ph-cloud-sun'></i> Hava Durumu Ayarları", `
+                <div class="label-text" style="margin-bottom:5px;">ŞEHİR ADI</div>
+                <input type="text" value="${city}" oninput="window.changeSetting('${id}', 'city', this.value); window.updateWeatherDisplay(document.getElementById('${id}'));" onchange="window.saveState()" placeholder="Örn: Istanbul" style="margin-bottom:15px;">
+                <div class="label-text" style="margin-bottom:5px;">TEMA</div>
+                <select class="font-select" onchange="window.changeSetting('${id}', 'theme', this.value); window.updateWeatherDisplay(document.getElementById('${id}')); window.saveState();">
+                    <option value="dark" ${theme==='dark'?'selected':''}>Koyu (Cam Efekti)</option>
+                    <option value="light" ${theme==='light'?'selected':''}>Açık (Buzlu Cam)</option>
+                </select>
+                <button class="action-btn active" style="width:100%; margin-top:15px;" onclick="window.updateWeatherDisplay(document.getElementById('${id}'));"><i class="ph ph-arrows-clockwise"></i> VERİYİ YENİLE</button>
+                `);
+            } else if (isCurrency) {
+                const curs = window.getD(el, 'currencies') || 'USD,EUR,GBP';
+                widgetHtml += createPropGroup("<i class='ph ph-currency-circle-dollar'></i> Döviz Ayarları", `
+                <div class="label-text" style="margin-bottom:5px;">GÖSTERİLECEK KURLAR (Virgülle Ayırın)</div>
+                <input type="text" value="${curs}" oninput="window.changeSetting('${id}', 'currencies', this.value.toUpperCase()); window.updateCurrencyDisplay(document.getElementById('${id}'));" onchange="window.saveState()" placeholder="USD,EUR,GBP" style="margin-bottom:15px;">
+                <div style="font-size:10px; color:#94a3b8; font-style:italic;">Desteklenen: USD, EUR, GBP, CHF, JPY, SAR vb. Canlı serbest piyasa kurları çekilir.</div>
+                <button class="action-btn active" style="width:100%; margin-top:15px;" onclick="window.updateCurrencyDisplay(document.getElementById('${id}'));"><i class="ph ph-arrows-clockwise"></i> VERİYİ YENİLE</button>
+                `);
             }
 
             codeHtml += createPropGroup("<i class='ph ph-file-code'></i> Canlı SVG Kodu", `<textarea id="raw-svg-code" style="width:100%; height:250px; background:#000; color:var(--accent); font-family:monospace; font-size:11px; padding:10px; border-radius:8px; border:1px solid var(--border); resize:vertical;" onchange="window.saveState()">${el.outerHTML.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</textarea><button class="action-btn active" style="width:100%; margin-top:10px; padding:12px;" onclick="window.applyRawCode('${id}')"><i class="ph ph-terminal-window"></i> KODU UYGULA</button>`);
@@ -1167,6 +1302,7 @@
                 `<div id="tab-style" class="tab-content ${window.activeTabId === 'tab-style' ? 'active' : ''}">${styleHtml}</div>` + 
                 (isText ? `<div id="tab-text" class="tab-content ${window.activeTabId === 'tab-text' ? 'active' : ''}">${textHtml}</div>` : '') + 
                 (isVideo ? `<div id="tab-video" class="tab-content ${window.activeTabId === 'tab-video' ? 'active' : ''}">${videoHtml}</div>` : '') + 
+                (isWidget ? `<div id="tab-widget" class="tab-content ${window.activeTabId === 'tab-widget' ? 'active' : ''}">${widgetHtml}</div>` : '') +
                 `<div id="tab-code" class="tab-content ${window.activeTabId === 'tab-code' ? 'active' : ''}">${codeHtml}</div>`;
         } catch(err) { f.innerHTML = `<div style="color:var(--error); padding:20px; font-size:12px; text-align:center;"><i class="ph ph-warning-circle" style="font-size:32px; display:block; margin-bottom:10px;"></i> Özellikler yüklenemedi.</div>`; }
     };
@@ -1225,13 +1361,13 @@
                         if(h > 5) { window.setD(resizingEl, 'base-font-size', h); } if(activeHandle.includes('l')) resizingEl.setAttribute('x', x); if(activeHandle.includes('t')) resizingEl.setAttribute('y', y); window.applyTextCurve(resizingEl);
                     } else if (resizingEl.tagName === "image" || resizingEl.tagName === "rect" || resizingEl.tagName === "svg" || resizingEl.tagName === "g" || resizingEl.tagName === "foreignObject") { 
                         if (w > 10 && h > 10) { resizingEl.setAttribute("x", x); resizingEl.setAttribute("y", y); resizingEl.setAttribute("width", w); resizingEl.setAttribute("height", h); if(resizingEl.tagName !== "svg" && resizingEl.tagName !== "g" && window.getD(resizingEl, 'mask-shape') && window.getD(resizingEl, 'mask-shape') !== "none") window.applyShapeMask(resizingEl); } 
-                    } window.updateUI(resizingEl); if(resizingEl.tagName === 'rect' || resizingEl.tagName === 'image' || resizingEl.classList.contains('video-obj')) { document.querySelectorAll(`text[data-bound-rect="${resizingEl.id}"]`).forEach(txt => { window.autoFitText(txt); }); }
+                    } window.updateUI(resizingEl); if(resizingEl.tagName === 'rect' || resizingEl.tagName === 'image' || resizingEl.classList.contains('video-obj') || resizingEl.classList.contains('weather-widget') || resizingEl.classList.contains('currency-widget')) { document.querySelectorAll(`text[data-bound-rect="${resizingEl.id}"]`).forEach(txt => { window.autoFitText(txt); }); }
                 } else if (rotatingEl) {
                     isModified = true; let bbox = {x:0, y:0, width:0, height:0}; try{ bbox = rotatingEl.getBBox(); }catch(e){}
                     const angle = Math.atan2(p.y - (bbox.y + bbox.height/2), p.x - (bbox.x + bbox.width/2)) * (180 / Math.PI) + 90; 
                     window.setD(rotatingEl, 'angle', angle); window.applyTransforms(rotatingEl); window.updateUI(rotatingEl);
                 } 
-                else if (radiusingEl && (radiusingEl.tagName === "image" || radiusingEl.tagName === "rect" || radiusingEl.classList.contains('video-obj'))) {
+                else if (radiusingEl && (radiusingEl.tagName === "image" || radiusingEl.tagName === "rect" || radiusingEl.classList.contains('video-obj') || radiusingEl.classList.contains('weather-widget') || radiusingEl.classList.contains('currency-widget'))) {
                     isModified = true; 
                     let delta = Math.max(dx, dy); 
                     let newRx = Math.max(0, Math.min(startData.w/2, startData.h/2, startData.rx + delta));
@@ -1274,10 +1410,10 @@
                         if (isText) { newX = objCX; newY = objCY; } else { newX = objCX - bbox.width / 2; newY = objCY - bbox.height / 2; }
                     }
                     window.selectedEl.setAttribute("x", newX); window.selectedEl.setAttribute("y", newY);
-                    if((window.selectedEl.tagName === 'image' || window.selectedEl.tagName === 'rect' || window.selectedEl.classList.contains('video-obj')) && window.getD(window.selectedEl, 'mask-shape') && window.getD(window.selectedEl, 'mask-shape') !== "none") window.applyShapeMask(window.selectedEl); 
+                    if((window.selectedEl.tagName === 'image' || window.selectedEl.tagName === 'rect' || window.selectedEl.classList.contains('video-obj') || window.selectedEl.classList.contains('weather-widget') || window.selectedEl.classList.contains('currency-widget')) && window.getD(window.selectedEl, 'mask-shape') && window.getD(window.selectedEl, 'mask-shape') !== "none") window.applyShapeMask(window.selectedEl); 
                     if(window.selectedEl.tagName === 'text' && window.getD(window.selectedEl, 'curve')) window.applyTextCurve(window.selectedEl); 
                     window.updateUI(window.selectedEl, snapX, snapY);
-                    if(window.selectedEl.tagName === 'rect' || window.selectedEl.tagName === 'image' || window.selectedEl.classList.contains('video-obj')) { document.querySelectorAll(`text[data-bound-rect="${window.selectedEl.id}"]`).forEach(txt => { window.autoFitText(txt); }); }
+                    if(window.selectedEl.tagName === 'rect' || window.selectedEl.tagName === 'image' || window.selectedEl.classList.contains('video-obj') || window.selectedEl.classList.contains('weather-widget') || window.selectedEl.classList.contains('currency-widget')) { document.querySelectorAll(`text[data-bound-rect="${window.selectedEl.id}"]`).forEach(txt => { window.autoFitText(txt); }); }
                 }
             };
 
@@ -1314,7 +1450,7 @@
         const rotY = b.y - 40; const line = document.createElementNS("http://www.w3.org/2000/svg", "line"); line.setAttribute("x1", b.x + b.width/2); line.setAttribute("y1", b.y); line.setAttribute("x2", b.x + b.width/2); line.setAttribute("y2", rotY); line.setAttribute("stroke", "var(--handle-rotate)"); line.setAttribute("stroke-width", "2"); g.appendChild(line);
         const rotH = document.createElementNS("http://www.w3.org/2000/svg", "circle"); rotH.setAttribute("cx", b.x + b.width/2); rotH.setAttribute("cy", rotY); rotH.setAttribute("r", s/2.5); rotH.setAttribute("class", "handle handle-rotate"); rotH.dataset.id = el.id; g.appendChild(rotH);
 
-        if (el.tagName === 'rect' || el.tagName === 'image' || el.classList.contains('video-obj')) {
+        if (el.tagName === 'rect' || el.tagName === 'image' || el.classList.contains('video-obj') || el.classList.contains('weather-widget') || el.classList.contains('currency-widget')) {
             const currentRx = parseFloat(window.getD(el, 'rx')) || 0;
             const offsetDist = Math.max(15, currentRx);
             const radH = document.createElementNS("http://www.w3.org/2000/svg", "circle");
@@ -1335,7 +1471,7 @@
         if (window.selectedEl && window.getD(window.selectedEl, 'locked') !== "true") {
             const step = e.shiftKey ? 10 : 1; let moved = false; let x = parseFloat(window.selectedEl.getAttribute("x")) || 0, y = parseFloat(window.selectedEl.getAttribute("y")) || 0;
             if (e.key === 'ArrowUp') { y -= step; moved = true; } if (e.key === 'ArrowDown') { y += step; moved = true; } if (e.key === 'ArrowLeft') { x -= step; moved = true; } if (e.key === 'ArrowRight') { x += step; moved = true; }
-            if (moved) { e.preventDefault(); window.selectedEl.setAttribute("x", x); window.selectedEl.setAttribute("y", y); if(window.selectedEl.tagName === 'image' || window.selectedEl.tagName === 'rect' || window.selectedEl.classList.contains('video-obj')) window.applyShapeMask(window.selectedEl); if(window.selectedEl.tagName === 'text') window.applyTextCurve(window.selectedEl); window.updateUI(window.selectedEl); isModified = true; }
+            if (moved) { e.preventDefault(); window.selectedEl.setAttribute("x", x); window.selectedEl.setAttribute("y", y); if(window.selectedEl.tagName === 'image' || window.selectedEl.tagName === 'rect' || window.selectedEl.classList.contains('video-obj') || window.selectedEl.classList.contains('weather-widget') || window.selectedEl.classList.contains('currency-widget')) window.applyShapeMask(window.selectedEl); if(window.selectedEl.tagName === 'text') window.applyTextCurve(window.selectedEl); window.updateUI(window.selectedEl); isModified = true; }
             if (e.key === 'Delete' || e.key === 'Backspace') { e.preventDefault(); window.selectedEl.remove(); const ctrl = document.getElementById('control-layer'); if(ctrl) ctrl.innerHTML = ''; window.selectedEl = null; window.saveState(); window.renderEditor(); }
             if (e.ctrlKey && e.key === 'c') { e.preventDefault(); clipboard = window.selectedEl.cloneNode(true); }
         }
