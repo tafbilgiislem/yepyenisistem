@@ -78,37 +78,45 @@ onAuthStateChanged(auth, (user) => {
     }
 });
 
-// 🛡️ PERSONEL KALKANI: İstenmeyen her şeyi CSS ile gizler ve kilitler
+// 🛡️ PERSONEL KALKANI: Yerleşimi bozmadan sadece yetkileri kısıtlar
 function aktifEtPersonelModu() {
     let kalkan = document.getElementById('personel-kalkan');
     if (!kalkan) {
         kalkan = document.createElement('style');
         kalkan.id = 'personel-kalkan';
         kalkan.innerHTML = `
-            /* --- 1. SAHNE VE EDİTÖRÜ KİLİTLE --- */
-            /* Sahneyi (SVG) sürüklemeye ve tıklamaya kapat */
-            #svg-wrapper { pointer-events: none !important; }
-            
-            /* Slayt Ekle / Sil / Yayına Gönder Butonlarını Gizle */
-            #top-actions, button[onclick*="addNewSlide"], button[onclick*="deleteSlide"], button[onclick*="saveData"] { display: none !important; }
-            
-            /* --- 2. SOL MENÜÜ (ARAÇLAR) TAMAMEN TEMİZLE --- */
-            /* Sol taraftaki Nesne Ekleme menüsünü ve başlığını tamamen gizle */
-            #sidebar { display: none !important; }
-            
-            /* Eğer #sidebar tamamen gizlenince tasarım bozulursa, sadece içini gizleyelim: */
-            /* #sidebar h3, #sidebar .action-btn,
-               #btn-add-text, #btn-add-rect, #btn-add-svg, #btn-add-video, #btn-add-rss { display: none !important; }
-            */
+            /* 1. Tasarımı koru ama üzerine tıklamayı/sürüklemeyi engelle */
+            #svg-wrapper { 
+                pointer-events: none !important; 
+            }
 
-            /* --- 3. SAĞ MENÜ (AYARLAR) KISITLA --- */
-            /* Katmanlar ve Cihazlar Panelini Gizle */
-            #layers-list, #device-list { display: none !important; }
-            
-            /* Detaylı Özellikler Panelini Gizle (Sadece Otomatik Metinler Kalsın) */
-            #editor-fields { display: none !important; }
-            
-            /* Slayt Ayarlarını (Süre, Efekt vb.) Kilitler (Soluk Gösterir) */
+            /* 2. Sol Menü (Sidebar): Slayt Seçici kalsın, Nesne Ekleme araçları gizlensin */
+            #sidebar h3, 
+            #sidebar .action-btn:not(.special), /* Nesne ekleme butonlarını gizle */
+            #btn-add-text, #btn-add-rect, #btn-add-svg, #btn-add-video, #btn-add-rss, #btn-add-wth, #btn-add-cur { 
+                display: none !important; 
+            }
+            /* Slayt Yönetim Butonlarını (Ekle/Sil) gizle */
+            button[onclick*="addNewSlide"], button[onclick*="deleteSlide"] { 
+                display: none !important; 
+            }
+
+            /* 3. Sağ Menü: Sadece 'Hızlı Metin' kutuları görünsün */
+            /* Katmanlar, Cihazlar ve Stil Sekmelerini gizle */
+            #layers-list, 
+            #device-list, 
+            .tabs-header, 
+            .prop-group { 
+                display: none !important; 
+            }
+
+            /* Hızlı Metin Yerleştirme alanının bulunduğu bölümü zorla göster */
+            #auto-fields-wrapper, 
+            #auto-fields-list { 
+                display: block !important; 
+            }
+
+            /* 4. Alt Bilgi ve Ayarları Kısıtla */
             #slide-time, #slide-effect, #start-time, #end-time, .day-btn, #canvas-w, #canvas-h, #canvas-bg-color { 
                 pointer-events: none !important; 
                 opacity: 0.5 !important; 
@@ -116,7 +124,10 @@ function aktifEtPersonelModu() {
         `;
         document.head.appendChild(kalkan);
     }
-    window.showToast("Personel Modu: Sadece hızlı metinleri değiştirebilirsiniz.", "warning");
+    
+    // Personel modunda sağ panelin her zaman güncel kalmasını sağla
+    window.refreshAutoTextFields();
+    window.showToast("Personel Modu: Slayt seçebilir ve metinleri düzenleyebilirsiniz.", "warning");
 }
 
 function kapatPersonelModu() {
