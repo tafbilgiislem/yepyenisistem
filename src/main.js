@@ -78,7 +78,7 @@ onAuthStateChanged(auth, (user) => {
     }
 });
 
-// 🛡️ PERSONEL KALKANI: Yerleşimi bozmadan sadece yetkileri budar
+// 🛡️ PERSONEL KALKANI: Tam sterilizasyon sağlar.
 function aktifEtPersonelModu() {
     let kalkan = document.getElementById('personel-kalkan');
     if (!kalkan) {
@@ -87,79 +87,68 @@ function aktifEtPersonelModu() {
         document.head.appendChild(kalkan);
     }
     kalkan.innerHTML = `
-        /* 1. ÖNİZLEME ALANI: Slaytı göster ama dokunulmaz yap */
-        #svg-wrapper {
-            pointer-events: none !important;
+        /* 1. ÖNİZLEME EKRANI: Tıklamayı tamamen kapat (Ayar paneli açılmaz) */
+        #svg-wrapper { 
+            pointer-events: none !important; 
             user-select: none !important;
-            display: block !important;
-            visibility: visible !important;
         }
-        /* Mavi seçim çerçevelerini ve sağ tıkı tamamen yok et */
         #control-layer, #context-menu { display: none !important; }
 
-        /* 2. SOL MENÜ: Sadece Slayt Seçici kalsın */
-        #sidebar h3, 
-        #sidebar .action-btn, 
-        #sidebar button:not(#file-selector) { 
+        /* 2. SOL MENÜ (SLAYT SEÇİMİ): Sadece dropdown kalsın, gerisi gitsin */
+        #sidebar > *:not(#file-selector):not(.label-row) { display: none !important; }
+        #sidebar h3, #sidebar button, #sidebar .action-btn { display: none !important; }
+        #file-selector { display: block !important; margin-bottom: 20px !important; }
+
+        /* 3. SAĞ PANEL: 'Hızlı Metin' dışındaki her şeyi (Tuval, Katmanlar, Cihazlar) yok et */
+        #editor-fields > h3, 
+        #editor-fields > div:not(#auto-fields-wrapper),
+        #layers-list, 
+        #device-list, 
+        .tabs-header, 
+        .prop-group,
+        #canvas-settings { 
             display: none !important; 
         }
-        /* Slayt Seçici Dropdown'ı zorla göster */
-        #file-selector { display: block !important; visibility: visible !important; }
 
-        /* 3. SAĞ PANEL: Hızlı Metin hariç her şeyi gizle */
-        #editor-fields > h3,
-        #editor-fields > div:not(#auto-fields-wrapper),
-        #layers-list,
-        #device-list,
-        .tabs-header,
-        .prop-group,
-        #canvas-settings {
-            display: none !important;
-        }
+        /* 4. HIZLI METİN YERLEŞTİRME: Sadece burayı göster ve başlığını pembe yap */
+        #auto-fields-wrapper { display: block !important; pointer-events: auto !important; }
+        h3:has(.ph-lightning), #auto-fields-list { display: block !important; }
 
-        /* Hızlı Metin alanını en başa çek ve görünür yap */
-        #auto-fields-wrapper, #auto-fields-list {
-            display: block !important;
-            visibility: visible !important;
-            pointer-events: auto !important;
-        }
-
-        /* 4. YAYINA GÖNDER BUTONU: Sağ alta devasa sabitle */
+        /* 5. YAYINA GÖNDER BUTONU: Sağ alta devasa ve yeşil sabitle */
         button[onclick*="saveData"] {
             display: block !important;
             visibility: visible !important;
             position: fixed !important;
-            bottom: 25px !important;
-            right: 25px !important;
-            z-index: 99999 !important;
-            background: #10b981 !important;
+            bottom: 30px !important;
+            right: 30px !important;
+            z-index: 999999 !important;
+            background: #10b981 !important; /* Yeşil */
             color: white !important;
-            padding: 20px 40px !important;
+            width: 220px !important;
+            height: 60px !important;
             font-size: 16px !important;
-            font-weight: 800 !important;
-            border-radius: 50px !important;
-            box-shadow: 0 10px 30px rgba(16, 185, 129, 0.5) !important;
+            font-weight: 900 !important;
+            border-radius: 15px !important;
+            border: 3px solid white !important;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5) !important;
             pointer-events: auto !important;
-            border: 2px solid white !important;
+            cursor: pointer !important;
         }
 
-        /* 5. ALT BİLGİLERİ (ZAMANLAMA VB) GİZLE */
+        /* 6. ALT PANEL (SÜRE, EFEKT): Tamamen gizle */
         .bottom-settings, #slide-time, #slide-effect, #start-time, #end-time {
             display: none !important;
         }
     `;
 
-    // Eski seçimleri temizle ki paneller kapansın
+    // Personel bir yere tıklarsa ayar paneli fırlamasın diye seçimi sıfırla
     window.selectedEl = null;
     const ctrl = document.getElementById('control-layer');
     if(ctrl) ctrl.innerHTML = "";
     
-    // Metin alanlarını personelin önünde tazele
-    setTimeout(() => {
-        window.refreshAutoTextFields();
-    }, 300);
-
-    window.showToast("Personel Modu: Sadece metinleri değiştirip gönderin.", "warning");
+    // Paneli tazele
+    window.refreshAutoTextFields();
+    window.showToast("Personel Modu: Sadece metinleri güncelleyip sağ alttan gönderin.", "warning");
 }
 
 function kapatPersonelModu() {
