@@ -78,64 +78,88 @@ onAuthStateChanged(auth, (user) => {
     }
 });
 
-// 🛡️ PERSONEL KALKANI: Fonksiyon İptali ve Lazerli Temizlik (SON VERSİYON)
+// 🛡️ PERSONEL KALKANI: Beyaz ekran riskini %0'a indiren en güvenli versiyon
 function aktifEtPersonelModu() {
-    // 1. TIKLAMA FONKSİYONLARINI ÖLDÜR (Menü Fırlaması İmkansız Hale Gelir)
-    window.renderProperties = function() { /* İçi BOŞ! Özellik paneli asla açılamaz. */ };
-    window.updateUI = function() { /* Mavi seçim çizgileri asla çizilmez. */ };
+    // 1. Tıklamada menülerin (Vektör Ayarları vs) fırlamasını sağlayan fonksiyonları BOŞALT
+    window.renderProperties = function() {}; 
+    window.updateUI = function() {};
     window.selectedEl = null;
 
-    // 2. GÖRSEL KALKAN (Tıklamaları Engelle)
+    // 2. GÜVENLİ CSS KALKANI
     let kalkan = document.getElementById('personel-kalkan');
     if (!kalkan) {
         kalkan = document.createElement('style');
         kalkan.id = 'personel-kalkan';
         document.head.appendChild(kalkan);
     }
+    
     kalkan.innerHTML = `
-        #svg-wrapper, #canvas-inner, svg { pointer-events: none !important; user-select: none !important; }
+        /* -- ÖNİZLEME EKRANINI KORU (Tıklamaları yoksay) -- */
+        #svg-wrapper { pointer-events: none !important; user-select: none !important; }
         #control-layer, #context-menu { display: none !important; }
+
+        /* -- SOL MENÜ (Sadece Slayt Seçimi Kalsın) -- */
+        #sidebar h3 { display: none !important; }
+        #sidebar .action-btn { display: none !important; }
+        #btn-add-text, #btn-add-rect, #btn-add-svg, #btn-add-video, #btn-add-rss { display: none !important; }
+        button[onclick*="addNewSlide"], button[onclick*="deleteSlide"] { display: none !important; }
+
+        /* -- SAĞ MENÜ (MUCİZE KOD): Hızlı metin hariç İÇİNDEKİ HER ŞEYİ GİZLE -- */
+        /* Bu kod sağ paneldeki Tuval, Katmanlar vb. her şeyi tek hamlede hatasız gizler */
+        #editor-fields > *:not(#auto-fields-wrapper) { 
+            display: none !important; 
+        }
+        
+        /* Eğer dışarıda kalan inatçı başlıklar varsa diye güvenlik: */
+        #layers-list, #device-list, .tabs-header, .prop-group, #canvas-settings { 
+            display: none !important; 
+        }
+
+        /* -- HIZLI METİN ALANINI GÖSTER -- */
+        #auto-fields-wrapper { 
+            display: block !important; 
+            margin-top: 10px !important; 
+            pointer-events: auto !important; 
+        }
+        #auto-fields-list { display: block !important; }
+
+        /* -- YAYINA GÖNDER BUTONUNU SAĞ ALTA ZIMBALA -- */
+        button[onclick*="saveData"] {
+            display: block !important;
+            visibility: visible !important;
+            position: fixed !important;
+            bottom: 30px !important;
+            right: 30px !important;
+            z-index: 999999 !important;
+            background: #10b981 !important;
+            color: white !important;
+            padding: 15px 40px !important;
+            font-size: 16px !important;
+            font-weight: 900 !important;
+            border-radius: 8px !important;
+            border: 2px solid white !important;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5) !important;
+            pointer-events: auto !important;
+            cursor: pointer !important;
+        }
+
+        /* -- ALT AYARLARI (SÜRE/EFEKT) GİZLE -- */
+        .bottom-settings, #slide-time, #slide-effect, #start-time, #end-time, .day-btn { 
+            display: none !important; 
+        }
     `;
 
-    // 3. LAZERLİ TEMİZLİK: Ekranda inatla duran başlıkları metinlerinden bulup yok et!
-    setTimeout(() => {
-        const yokEdilecekler = [
-            "AKILLI ZAMANLAMA", 
-            "AKTİF CİHAZLAR", 
-            "TUVAL AYARLARI", 
-            "NESNE EKLE", 
-            "KATMANLAR",
-            "VEKTÖR AYARLARI"
-        ];
-        
-        // Ekrandaki tüm elemanları tara
-        document.querySelectorAll('*').forEach(el => {
-            // Sadece başlık olabilecek elemanlara odaklan
-            if(el.children.length <= 2 && el.innerText) {
-                const text = el.innerText.toUpperCase();
-                yokEdilecekler.forEach(hedef => {
-                    if (text.includes(hedef)) {
-                        // 1. O başlığı tamamen sil
-                        el.style.display = 'none';
-                        
-                        // 2. Başlığın hemen altındaki içeriği (Örn: 1920x1080 kutuları veya listeler) de sil
-                        let altEleman = el.nextElementSibling;
-                        // Silerken kazara "Hızlı Metin" listemizi silmemek için güvenlik önlemi:
-                        if(altEleman && 
-                           altEleman.id !== 'auto-fields-list' && 
-                           altEleman.id !== 'auto-fields-wrapper' && 
-                           !altEleman.innerText.includes('HIZLI METİN')) {
-                            altEleman.style.display = 'none';
-                        }
-                    }
-                });
-            }
-        });
-    }, 200);
+    // Eski kontrol katmanını temizle
+    const ctrl = document.getElementById('control-layer');
+    if (ctrl) ctrl.innerHTML = "";
+    if (window.closeCtx) window.closeCtx();
 
-    // Hızlı metinleri tazele
-    window.refreshAutoTextFields();
-    window.showToast("Personel Modu: Sadece hızlı metin girebilirsiniz.", "success");
+    // Metinleri yenile
+    setTimeout(() => {
+        if(window.refreshAutoTextFields) window.refreshAutoTextFields();
+    }, 100);
+
+    window.showToast("Personel Modu Aktif: Ekran kilitlendi.", "success");
 }
 
 function kapatPersonelModu() {
