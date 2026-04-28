@@ -78,65 +78,83 @@ onAuthStateChanged(auth, (user) => {
     }
 });
 
-// 🛡️ PERSONEL KALKANI: Sadece 'Hızlı Metin Yerleştirme' alanını bırakır, gerisini yok eder.
+// 🛡️ PERSONEL KALKANI: Sadece 'Hızlı Metin' ve 'Yayına Gönder' butonunu bırakır
 function aktifEtPersonelModu() {
     let kalkan = document.getElementById('personel-kalkan');
     if (!kalkan) {
         kalkan = document.createElement('style');
         kalkan.id = 'personel-kalkan';
-        kalkan.innerHTML = `
-            /* 1. Önizleme Alanını ve Sağ Tıkı Tamamen Kilitle */
-            #svg-wrapper { pointer-events: none !important; user-select: none !important; }
-            #context-menu { display: none !important; }
-
-            /* 2. Sol Menü (Sidebar): Sadece Slayt Seçici kalsın, diğer başlıkları ve araçları gizle */
-            #sidebar h3, 
-            #sidebar .action-btn:not(.special),
-            #btn-add-text, #btn-add-rect, #btn-add-svg, #btn-add-video, #btn-add-rss { 
-                display: none !important; 
-            }
-            /* Slayt Ekle/Sil butonlarını gizle */
-            button[onclick*="addNewSlide"], button[onclick*="deleteSlide"] { display: none !important; }
-
-            /* 3. Sağ Panel Temizliği: Katmanlar ve Diğer Tüm Başlıkları Gizle */
-            /* Senin resminde görünen tüm o renkli başlıkları ve listeleri hedefliyoruz */
-            #editor-fields > h3,
-            #layers-list, 
-            #device-list,
-            .tabs-header,
-            .prop-group,
-            .layer-item,
-            h3:has(.ph-layers), /* Katmanlar başlığı */
-            h3:has(.ph-monitor), /* Aktif Cihazlar başlığı */
-            h3:has(.ph-clock),   /* Zamanlama başlığı */
-            h3:has(.ph-palette)  /* Tuval Ayarları başlığı */ { 
-                display: none !important; 
-            }
-
-            /* 4. Sadece Hızlı Metin Bölümünü Göster ve En Üste Al */
-            #auto-fields-wrapper {
-                display: block !important;
-                pointer-events: auto !important;
-                margin-top: 0 !important;
-                padding-top: 10px !important;
-            }
-            #auto-fields-list { display: block !important; }
-
-            /* 5. Alt Ayar Çubuklarını (Süre vb.) Kilitle */
-            .bottom-settings, #slide-time, #slide-effect, #start-time, #end-time, .day-btn { 
-                pointer-events: none !important; 
-                opacity: 0.4 !important; 
-            }
-            
-            /* Eğer 'Yayına Gönder' butonu kaybolursa onu görünür tutalım */
-            button[onclick*="saveData"] { display: block !important; pointer-events: auto !important; opacity: 1 !important; }
-        `;
         document.head.appendChild(kalkan);
     }
+    kalkan.innerHTML = `
+        /* 1. ÖNİZLEME ALANINI TAMAMEN DOKUNULMAZ YAP (Tıklama, Seçme, Kopyalama Paneli Açılmaz) */
+        #svg-wrapper, #main-svg, .duzenlenebilir, #control-layer, #context-menu {
+            pointer-events: none !important;
+            user-select: none !important;
+            display: none !important; /* Sağ tık menüsünü tamamen kapat */
+        }
+        /* Sadece görsel önizleme için ana alanı göster ama tıklamaya kapalı tut */
+        #svg-wrapper { display: block !important; }
+
+        /* 2. SOL MENÜ: Sadece Slayt Seçici Dropdown kalsın */
+        #sidebar > *:not(#file-selector):not(.label-row) { display: none !important; }
+        #sidebar h3, #sidebar button, #sidebar .action-btn { display: none !important; }
+
+        /* 3. SAĞ PANEL: Hızlı Metin hariç HER ŞEYİ sil */
+        #editor-fields > div:not(#auto-fields-wrapper), 
+        #editor-fields > h3, 
+        #layers-list, 
+        #device-list, 
+        .tabs-header, 
+        .prop-group { 
+            display: none !important; 
+        }
+
+        /* 4. SADECE HIZLI METİN ALANINI VE BAŞLIĞINI GÖSTER */
+        #auto-fields-wrapper {
+            display: block !important;
+            pointer-events: auto !important;
+            margin-top: 0 !important;
+        }
+        /* Hızlı Metin başlığını zorla göster */
+        h3:has(.ph-lightning) { 
+            display: flex !important; 
+            margin-top: 0 !important;
+            color: #f472b6 !important;
+        }
+
+        /* 5. YAYINA GÖNDER BUTONU: Özel olarak görünür yap ve sağ alta sabitle */
+        button[onclick*="saveData"] {
+            display: block !important;
+            visibility: visible !important;
+            position: fixed !important;
+            bottom: 30px !important;
+            right: 30px !important;
+            z-index: 999999 !important;
+            width: 200px !important;
+            height: 60px !important;
+            background: #10b981 !important;
+            color: white !important;
+            font-weight: bold !important;
+            border-radius: 12px !important;
+            box-shadow: 0 10px 20px rgba(16, 185, 129, 0.4) !important;
+            pointer-events: auto !important;
+            opacity: 1 !important;
+        }
+
+        /* 6. ALT AYARLARI (TUVAL, ZAMANLAMA VB.) TAMAMEN GİZLE */
+        .bottom-settings, #slide-time, #slide-effect, #start-time, #end-time, .day-btn, #canvas-settings {
+            display: none !important;
+        }
+    `;
+
+    // Arka planda seçili bir şey varsa temizle (Vektör Ayarları panelini kapatmak için)
+    window.selectedEl = null;
+    const ctrl = document.getElementById('control-layer');
+    if(ctrl) ctrl.innerHTML = "";
     
-    window.closeCtx();
     window.refreshAutoTextFields();
-    window.showToast("Personel Girişi: Sadece metinleri güncelleyebilirsiniz.", "warning");
+    window.showToast("Personel Modu: Metinleri değiştirip sağ alttan gönderin.", "warning");
 }
 
 function kapatPersonelModu() {
