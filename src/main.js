@@ -1,12 +1,25 @@
-// 1. Firebase Modülünü İçeri Aktar
 import { db, ref, set, get, onValue, remove } from "./firebase.js";
 
-// 🔥 2. İŞTE EKSİK OLAN HAYATİ BAĞLANTILAR (MODÜLLERİ ÇAĞIRIYORUZ) 🔥
-import "./tools.js";
-import "./ui.js";
-import "./engine.js";
+// --- GLOBAL DEĞİŞKENLER VE TEMEL ARAÇLAR ---
+window.selectedEl = null; window.activeTabId = 'tab-layout'; 
+window.currentZoom = 1; window.panX = 0; window.panY = 0; window.historyStack = []; window.historyIndex = -1; 
+window.isModified = false; window.clipboard = null;
+window.isDraggingElement = false; window.isSpacePressed = false; window.isPanning = false; 
+window.panStart = {x:0, y:0}; window.panOffsetStart = {x:0, y:0};
+window.resizingEl = null; window.rotatingEl = null; window.radiusingEl = null; window.activeHandle = null; 
+window.offset = {x:0, y:0}; window.startP = {x:0, y:0}; window.startData = {}; window.draggedLayerId = null;
 
-// --- GİRİŞ VE SİSTEM ARAÇLARI ---
+window.getSvgDim = function() {
+    const svg = document.querySelector('#canvas-inner svg'); let w = 1920, h = 1080;
+    if(svg && svg.hasAttribute('viewBox')) { const vb = svg.getAttribute('viewBox').split(/\s+|,/); if(vb.length >= 4) { w = parseFloat(vb[2]); h = parseFloat(vb[3]); } }
+    return { w, h };
+};
+window.getCanvasCenter = function() { const dim = window.getSvgDim(); return { cx: dim.w / 2, cy: dim.h / 2 }; };
+window.setD = function(el, key, val) { if(el) el.setAttribute('data-' + key, val); };
+window.getD = function(el, key) { return el ? el.getAttribute('data-' + key) : null; };
+window.safeColor = function(c) { if(!c) return "#ffffff"; if(c.length === 4 && c.startsWith('#')) return "#" + c[1] + c[1] + c[2] + c[2] + c[3] + c[3]; return c.startsWith('#') && c.length === 7 ? c : "#ffffff"; };
+
+// --- BİLDİRİM VE GİRİŞ ---
 window.checkPin = function() {
     const pin = document.getElementById('pin-input').value;
     if(pin === '1234') { 
@@ -14,8 +27,7 @@ window.checkPin = function() {
         document.getElementById('app-container').style.filter = 'blur(0px)';
         window.showToast("Giriş Başarılı!", "success");
     } else {
-        window.showToast("Hatalı Şifre!", "error");
-        document.getElementById('pin-input').value = "";
+        window.showToast("Hatalı Şifre!", "error"); document.getElementById('pin-input').value = "";
     }
 };
 
@@ -27,141 +39,143 @@ window.showToast = function(msg, type = 'success') {
     setTimeout(() => { toast.style.opacity = '0'; toast.style.transform = 'translateX(120%)'; setTimeout(() => toast.remove(), 300); }, 3000);
 };
 
-// --- GLOBAL DEĞİŞKENLER ---
-window.selectedEl = null; 
-window.activeTabId = 'tab-layout'; 
-window.currentZoom = 1; 
-window.panX = 0; 
-window.panY = 0; 
-window.historyStack = []; 
-window.historyIndex = -1; 
-window.isModified = false; 
-window.clipboard = null;
-
-// --- FIREBASE VERİ SENKRONİZASYONU VE SİSTEM MANTIĞI ---
-if(db) {
-    onValue(ref(db, 'sahne/slaytlar'), (snapshot) => {
-        const selector = document.getElementById('file-selector'); if(!selector) return;
-        const current = selector.value; selector.innerHTML = "";
-        if (snapshot.exists()) {
-            const data = snapshot.val();
-            Object.keys(data).forEach(key => {
-                const opt = document.createElement('option'); opt.value = key; opt.textContent = key.replace(/_/g, ' ').toUpperCase(); selector.appendChild(opt);
-            });
-            if (current && data[current]) { selector.value = current; } 
-            else if (!current && Object.keys(data).length > 0) { selector.value = Object.keys(data)[0]; if(window.loadSlide) window.loadSlide(); }
-        }
-    });
-}
-
-window.addNewSlide = async function() {
-    const name = prompt("Yeni Slayt İsmi (Örn: sabah_kampanyasi):"); if (!name) return;
-    const key = name.toLowerCase().replace(/[^a-z0-9]/g, '_');
-    const defaultSvg = `<svg width="1920" height="1080" viewBox="0 0 1920 1080" xmlns="http://www.w3.org/2000/svg"><rect id="canvas-background" x="0" y="0" width="1920" height="1080" fill="#020617"></rect></svg>`;
-    await set(ref(db, 'sahne/slaytlar/' + key), defaultSvg);
-    await set(ref(db, 'sahne/ayarlar/' + key), { time: 5000, effect: 'fade' });
-    window.showToast("Yeni Slayt Oluşturuldu!"); document.getElementById('file-selector').value = key; if(window.loadSlide) window.loadSlide();
+// --- ARAÇLAR (NESNE EKLEME) ---
+window.addNewText = function() {
+    const svg = document.querySelector('#canvas-inner svg'); if(!svg) return; const center = window.getCanvasCenter();
+    const t = document.createElementNS("http://www.w3.org/2000/svg", "text"); t.id = "txt_" + Date.now(); t.setAttribute("class", "duzenlenebilir"); t.setAttribute("x", center.cx); t.setAttribute("y", center.cy); t.setAttribute("text-anchor", "middle"); t.setAttribute("dominant-baseline", "central"); window.setD(t, 'base-font-size', "80"); window.setD(t, 'raw-text', "YENİ METİN"); window.setD(t, 'solid-color', "#ffffff"); t.setAttribute("fill", "#ffffff"); t.setAttribute("font-size", "80"); t.setAttribute("font-family", "sans-serif"); t.textContent = "YENİ METİN";
+    svg.appendChild(t); window.selectedEl = t; window.saveState(); window.setupLayers(); window.updateUI(t); window.renderEditor();
 };
 
-window.deleteSlide = async function() {
-    const key = document.getElementById('file-selector').value; if (!key) return;
-    if (confirm(key.replace(/_/g, ' ').toUpperCase() + " adlı slayt tamamen silinecek, emin misiniz?")) {
-        await remove(ref(db, 'sahne/slaytlar/' + key)); await remove(ref(db, 'sahne/ayarlar/' + key));
-        window.showToast("Slayt Silindi", "error");
-        document.getElementById('canvas-inner').innerHTML = `<svg width="1920" height="1080" viewBox="0 0 1920 1080" xmlns="http://www.w3.org/2000/svg"><rect id="canvas-background" x="0" y="0" width="1920" height="1080" fill="#020617"></rect></svg>`;
-        setTimeout(() => { if(window.loadSlide) window.loadSlide(); }, 500); 
-    }
+window.addShape = function() {
+    const svg = document.querySelector('#canvas-inner svg'); if(!svg) return; const center = window.getCanvasCenter();
+    const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect"); rect.id = "shp_" + Date.now(); rect.setAttribute("class", "duzenlenebilir"); rect.setAttribute("x", center.cx - 100); rect.setAttribute("y", center.cy - 100); rect.setAttribute("width", 200); rect.setAttribute("height", 200); window.setD(rect, 'solid-color', "#10b981"); rect.setAttribute("fill", "#10b981"); window.setD(rect, 'mask-shape', "none");
+    svg.appendChild(rect); window.selectedEl = rect; window.saveState(); window.setupLayers(); window.updateUI(rect); window.renderEditor();
 };
 
-window.loadSlide = async function() {
-    window.showToast("Slayt Yükleniyor...", "success");
+// (Video, Hava, Döviz ekleme fonksiyonları buraya dahil...)
+window.addWeather = function() {
+    const svg = document.querySelector('#canvas-inner svg'); if(!svg) return; const center = window.getCanvasCenter();
+    const fo = document.createElementNS("http://www.w3.org/2000/svg", "foreignObject");
+    fo.id = "wth_" + Date.now(); fo.setAttribute("class", "duzenlenebilir weather-widget"); fo.setAttribute("x", center.cx - 250); fo.setAttribute("y", center.cy - 250); fo.setAttribute("width", 500); fo.setAttribute("height", 500); window.setD(fo, 'city', 'Istanbul'); window.setD(fo, 'theme', 'dark'); window.setD(fo, 'mask-shape', 'circle'); window.setD(fo, 'rx', '0'); fo.setAttribute('font-family', 'sans-serif');
+    svg.appendChild(fo); window.updateWeatherDisplay(fo); window.selectedEl = fo; window.saveState(); window.setupLayers(); window.updateUI(fo); window.renderEditor();
+};
+
+window.updateWeatherDisplay = async function(el) {
+    if (!el || !el.classList.contains('weather-widget')) return;
+    const city = window.getD(el, 'city') || 'Istanbul'; const txtColor = window.getD(el, 'text-color') || '#ffffff'; const font = el.getAttribute('font-family') || 'sans-serif';
+    el.innerHTML = `<div xmlns="http://www.w3.org/1999/xhtml" style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; color:${txtColor}; font-family:${font};">Yükleniyor...</div>`;
     try {
-        const file = document.getElementById('file-selector')?.value; if(!file) return; const ci = document.getElementById('canvas-inner'); if(!ci) return;
-        if(db) {
-            const snapshot = await get(ref(db, 'sahne/slaytlar/' + file));
-            if(snapshot.exists()) { ci.innerHTML = snapshot.val(); } else { ci.innerHTML = `<svg width="1920" height="1080" viewBox="0 0 1920 1080" xmlns="http://www.w3.org/2000/svg"><rect id="canvas-background" x="0" y="0" width="1920" height="1080" fill="#020617"></rect></svg>`; }
-            const ayarSnap = await get(ref(db, 'sahne/ayarlar/' + file));
-            if(ayarSnap.exists()) {
-                const s = ayarSnap.val();
-                if(document.getElementById('slide-time')) document.getElementById('slide-time').value = s.time || 5000;
-                if(document.getElementById('slide-effect')) document.getElementById('slide-effect').value = s.effect || 'fade';
-                if(document.getElementById('start-time')) document.getElementById('start-time').value = s.startTime || '00:00';
-                if(document.getElementById('end-time')) document.getElementById('end-time').value = s.endTime || '23:59';
-                if(s.days) { document.querySelectorAll('.day-btn').forEach(b => { if(s.days.includes(parseInt(b.dataset.day))) b.classList.add('active'); else b.classList.remove('active'); }); }
+        const res = await fetch(`https://wttr.in/${encodeURIComponent(city)}?format=j1`); const data = await res.json();
+        const temp = data.current_condition[0].temp_C; el.innerHTML = `<div class="weather-inner" xmlns="http://www.w3.org/1999/xhtml" style="width:100%; height:100%; background: radial-gradient(circle, #2a2a2a 0%, #0a0a0a 100%); border-radius: 50%; display:flex; align-items:center; justify-content:center; flex-direction:column; border: 1.5cqw solid #475569; overflow: hidden; color: ${txtColor}; font-family: ${font};"><div style="font-size:30px; font-weight:bold;">${city.toUpperCase()}</div><div style="font-size:50px; font-weight:bold;">${temp}°C</div></div>`;
+    } catch(e) { el.innerHTML = `<div style="color:red; background:#000; width:100%; height:100%; display:flex; align-items:center; justify-content:center;">Veri Hatası</div>`; }
+};
+
+// --- ARAYÜZ VE ÖZELLİKLER PANELI (UI) ---
+window.refreshAutoTextFields = function() {
+    const list = document.getElementById('auto-fields-list'); const svg = document.querySelector('#canvas-inner svg'); if(!svg || !list) return;
+    const textElements = svg.querySelectorAll('text.duzenlenebilir'); list.innerHTML = ""; let hasVars = false;
+    textElements.forEach((el, index) => {
+        hasVars = true; const varName = el.getAttribute('data-var-name') || `YAZI ${index + 1}`; const currentVal = window.getD(el, 'raw-text') || el.textContent; 
+        const row = document.createElement('div'); row.style.marginBottom = "8px";
+        row.innerHTML = `<div class="label-row"><span class="label-text" style="color:#f472b6;"><i class="ph ph-text-aa"></i> ${varName}</span></div><input type="text" value="${currentVal.replace(/"/g, '&quot;')}" oninput="window.updateVarValue('${el.id}', this.value)" onchange="window.saveState()" style="border-color:rgba(244,114,182,0.3);">`; 
+        list.appendChild(row);
+    });
+    if(!hasVars) list.innerHTML = `<div style="font-size:11px; color:#64748b; text-align:center;">Sahnede henüz yazı yok. Yazı eklediğinizde burada listelenecektir.</div>`;
+};
+
+window.updateVarValue = function(id, val) { 
+    const el = document.getElementById(id); if(!el) return; window.changeSetting(id, 'raw-text', val); 
+    if(window.selectedEl && window.selectedEl.id === id) { document.querySelectorAll('input[oninput*="raw-text"]').forEach(input => { if(!input.getAttribute('oninput').includes('updateVarValue')) input.value = val; }); } 
+};
+
+window.renderEditor = function() { 
+    window.renderLayers(); window.refreshAutoTextFields(); 
+    if(window.selectedEl) window.renderProperties(); 
+    else { const ef = document.getElementById('editor-fields'); if(ef) ef.innerHTML = `<div style="text-align:center; color:#64748b; margin-top:50px; font-style:italic; font-size:13px;"><i class="ph ph-cursor-click" style="font-size:32px; display:block; margin-bottom:15px; color:var(--accent); opacity:0.5;"></i> 👆 Düzenlemek için sahneden veya katmanlardan bir nesne seçin.</div>`; } 
+};
+
+window.renderLayers = function() {
+    const list = document.getElementById('layers-list'); if(!list) return; list.innerHTML = ""; 
+    const domElements = Array.from(document.querySelectorAll('.duzenlenebilir')); const elements = [...domElements].reverse(); 
+    const sc = document.getElementById('status-count'); if(sc) sc.innerText = `Nesne Sayısı: ${elements.length}`;
+    elements.forEach((el) => {
+        const isLocked = window.getD(el, 'locked') === "true"; const isActive = window.selectedEl === el; let typeName = el.tagName.toUpperCase(); 
+        if (el.tagName === 'text') typeName = 'METİN'; if(el.tagName === 'rect') typeName = 'KUTU';
+        const item = document.createElement('div'); item.className = `layer-item ${isActive ? 'active' : ''}`; item.dataset.id = el.id;
+        item.onclick = (e) => { if(e.target.closest('.layer-btn')) return; window.selectedEl = el; window.updateUI(el); window.renderEditor(); };
+        item.innerHTML = `<div style="display:flex; align-items:center; gap:8px; flex:1; overflow:hidden;"><i class="ph ph-dots-six-vertical" style="color:#64748b;"></i><span style="flex:1;">${typeName}</span></div><div class="layer-actions"><button class="layer-btn" onclick="window.toggleLock('${el.id}')" title="Kilit"><i class="ph ${isLocked ? 'ph-lock-key' : 'ph-lock-key-open'}"></i></button><button class="layer-btn" style="color:#ef4444;" onclick="document.getElementById('${el.id}').remove(); window.selectedEl=null; window.saveState(); window.renderEditor();"><i class="ph ph-trash"></i></button></div>`; 
+        list.appendChild(item);
+    });
+};
+
+window.renderProperties = function() {
+    const f = document.getElementById('editor-fields'); if(!f) return; if (!window.selectedEl) return;
+    const el = window.selectedEl; const id = el.id; const isLocked = window.getD(el, 'locked') === "true";
+    let headerHtml = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:1px solid var(--border); padding-bottom:10px;"><div style="font-weight:bold; color:white;">ÖZELLİKLER</div></div>`;
+    if (isLocked) { f.innerHTML = headerHtml + `<div style="color:#ef4444; text-align:center;">Bu öğe kilitli.</div>`; return; }
+    
+    let propsHtml = "";
+    if (el.tagName === 'text') {
+        const rawText = window.getD(el, 'raw-text') || el.textContent;
+        propsHtml += `<div class="label-text">METİN İÇERİĞİ</div><input type="text" value="${rawText}" oninput="window.changeSetting('${id}', 'raw-text', this.value); window.refreshAutoTextFields();" onchange="window.saveState()"><br><br>`;
+    }
+    const x = parseFloat(el.getAttribute("x")) || 0; const y = parseFloat(el.getAttribute("y")) || 0;
+    propsHtml += `<div class="label-text">X KONUMU</div><input type="number" value="${Math.round(x)}" oninput="window.changeProp('${id}', 'x', this.value)" onchange="window.saveState()">`;
+    propsHtml += `<div class="label-text">Y KONUMU</div><input type="number" value="${Math.round(y)}" oninput="window.changeProp('${id}', 'y', this.value)" onchange="window.saveState()">`;
+    
+    f.innerHTML = headerHtml + propsHtml;
+};
+
+// --- MOTOR (ENGINE) ---
+window.updateUI = function(el) {
+    const ctrl = document.getElementById('control-layer'); if(!ctrl) return; ctrl.innerHTML = ""; if(!el) return;
+    let b = {x:0,y:0,width:0,height:0}; try { b = el.getBBox(); }catch(e){return;}
+    const transform = el.getAttribute("transform") || ""; 
+    const g = document.createElementNS("http://www.w3.org/2000/svg", "g"); g.setAttribute("transform", transform); ctrl.appendChild(g);
+    const r = document.createElementNS("http://www.w3.org/2000/svg", "rect"); r.setAttribute("x", b.x); r.setAttribute("y", b.y); r.setAttribute("width", b.width); r.setAttribute("height", b.height); r.setAttribute("fill", "none"); r.setAttribute("stroke", "var(--handle-move)"); r.setAttribute("stroke-width", "2"); g.appendChild(r);
+};
+
+window.setupLayers = function() {
+    const mainSvg = document.querySelector('#canvas-inner svg'); if (!mainSvg) return; 
+    mainSvg.querySelectorAll('.duzenlenebilir').forEach(el => {
+        if(!el.id) el.id = "el_" + Math.random().toString(36).substr(2,9);
+    });
+    window.initEngine(mainSvg); window.renderEditor(); window.refreshAutoTextFields();
+};
+
+window.initEngine = function(svg) {
+    const wrapper = document.getElementById('svg-wrapper');
+    const getCoords = (e) => { const pt = svg.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY; const ctm = svg.getScreenCTM(); return pt.matrixTransform(ctm.inverse()); };
+    if(wrapper) {
+        wrapper.onpointerdown = (e) => {
+            const target = e.target; const el = target.closest('.duzenlenebilir');
+            if (el) { window.selectedEl = el; window.isDraggingElement = true; const p = getCoords(e); window.offset.x = p.x - (parseFloat(el.getAttribute("x")) || 0); window.offset.y = p.y - (parseFloat(el.getAttribute("y")) || 0); window.updateUI(el); window.renderEditor(); try { wrapper.setPointerCapture(e.pointerId); } catch(err){} }
+            else { if(!e.target.closest('#sidebar')) { window.selectedEl = null; const ctrl = document.getElementById('control-layer'); if(ctrl) ctrl.innerHTML = ""; window.renderEditor(); } }
+        };
+        wrapper.onpointermove = (e) => {
+            if (window.selectedEl && window.isDraggingElement) {
+                const p = getCoords(e); window.selectedEl.setAttribute("x", p.x - window.offset.x); window.selectedEl.setAttribute("y", p.y - window.offset.y); window.updateUI(window.selectedEl); window.isModified = true;
             }
-        } 
-        window.historyStack = []; window.historyIndex = -1; window.selectedEl = null;
-        setTimeout(() => { 
-            if(window.setupLayers) window.setupLayers(); 
-            if(window.initCanvasSettings) window.initCanvasSettings(); 
-            if(window.resetZoom) window.resetZoom(); 
-            if(window.saveState) window.saveState(); 
-        }, 200);
-    } catch(e) { window.showToast("Veritabanı Hatası!", "error"); }
-};
-
-window.syncToFirebase = function() {
-    if(!db) return; const file = document.getElementById('file-selector')?.value; if(!file) return; const svg = document.querySelector('#canvas-inner svg'); if (!svg) return;
-    const ctrl = document.getElementById('control-layer'); 
-    if(ctrl) { const ctrlHTML = ctrl.innerHTML; ctrl.innerHTML = ""; const tamSvgKodu = svg.outerHTML; ctrl.innerHTML = ctrlHTML; set(ref(db, 'sahne/slaytlar/' + file), tamSvgKodu).catch(e => console.error(e)); }
-    const st = document.getElementById('status-time'); const now = new Date(); if(st) st.innerText = `Son Kayıt: ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`; 
-};
-
-window.saveData = function() { 
-    if(window.syncToFirebase) window.syncToFirebase(); 
-    window.showToast("Tasarım Yayına Gönderildi!"); 
-};
-
-window.saveSlideSettings = function() {
-    if(!db) return; const file = document.getElementById('file-selector')?.value; if(!file) return;
-    const time = document.getElementById('slide-time')?.value || 5000; const effect = document.getElementById('slide-effect')?.value || 'fade'; const startTime = document.getElementById('start-time')?.value || '00:00'; const endTime = document.getElementById('end-time')?.value || '23:59'; const activeDays = Array.from(document.querySelectorAll('.day-btn.active')).map(b => parseInt(b.dataset.day));
-    set(ref(db, 'sahne/ayarlar/' + file), { time: parseInt(time), effect: effect, startTime: startTime, endTime: endTime, days: activeDays });
-    window.showToast("Ayarlar Kaydedildi!");
+        };
+        wrapper.onpointerup = (e) => { try { wrapper.releasePointerCapture(e.pointerId); } catch(err){} window.isDraggingElement = false; if (window.isModified) { window.saveState(); window.renderProperties(); window.isModified = false; } };
+    }
 };
 
 window.saveState = function() {
     const svg = document.querySelector('#canvas-inner svg'); if (!svg) return; 
-    const ctrl = document.getElementById('control-layer'); 
-    if(ctrl) { 
-        const ctrlHTML = ctrl.innerHTML; ctrl.innerHTML = ""; 
-        const state = svg.innerHTML; ctrl.innerHTML = ctrlHTML; 
-        if (window.historyIndex < window.historyStack.length - 1) {
-            window.historyStack = window.historyStack.slice(0, window.historyIndex + 1);
-        }
-        window.historyStack.push(state); window.historyIndex++; 
-        if(window.renderLayers) window.renderLayers(); 
-        if(window.syncToFirebase) window.syncToFirebase(); 
-    }
+    const ctrl = document.getElementById('control-layer'); if(ctrl) { const ctrlHTML = ctrl.innerHTML; ctrl.innerHTML = ""; const state = svg.innerHTML; ctrl.innerHTML = ctrlHTML; if (window.historyIndex < window.historyStack.length - 1) window.historyStack = window.historyStack.slice(0, window.historyIndex + 1); window.historyStack.push(state); window.historyIndex++; window.renderLayers(); }
 };
 
-window.undo = function() { if (window.historyIndex > 0) { window.historyIndex--; if(window.restoreState) window.restoreState(); } };
-window.redo = function() { if (window.historyIndex < window.historyStack.length - 1) { window.historyIndex++; if(window.restoreState) window.restoreState(); } };
-window.restoreState = function() { 
-    const svg = document.querySelector('#canvas-inner svg'); if(!svg) return; 
-    svg.innerHTML = window.historyStack[window.historyIndex]; 
-    const ctrl = document.getElementById('control-layer'); if(ctrl) ctrl.innerHTML = ""; 
-    window.selectedEl = null; 
-    if(window.setupLayers) window.setupLayers(); 
-    if(window.syncToFirebase) window.syncToFirebase(); 
+window.changeSetting = function(id, key, val) {
+    const el = document.getElementById(id); if(!el) return; window.setD(el, key, val);
+    if (key === 'raw-text' && el.tagName === 'text') { el.textContent = val; }
+    window.updateUI(el);
 };
 
-// Cihaz dinleme
-window.listenDevices = function() {
-    if(!db) return;
-    onValue(ref(db, 'sahne/cihazlar'), (snapshot) => {
-        const list = document.getElementById('device-list'); if(!list) return; list.innerHTML = "";
-        if(snapshot.exists()) {
-            const devices = snapshot.val(); const now = Date.now();
-            Object.keys(devices).forEach(id => {
-                const dev = devices[id]; const isOnline = (now - dev.lastSeen) < 15000;
-                const card = document.createElement('div'); card.className = `device-card ${isOnline ? 'online' : 'offline'}`;
-                card.innerHTML = `<div style="display:flex;justify-content:space-between;"><strong>📺 ${id}</strong><span>${isOnline ? '🟢 Çevrimiçi' : '🔴 Koptu'}</span></div><div style="color:#94a3b8;margin-top:4px;">Sürüm: ${dev.version || 'Bilinmiyor'} | Oynatılan: ${dev.playing || 'Yok'}</div>`;
-                list.appendChild(card);
-            });
-        } else { list.innerHTML = '<div style="font-size:11px;color:#64748b;text-align:center;padding:10px;">Cihazlar bekleniyor...</div>'; }
-    });
+window.changeProp = function(id, prop, val) {
+    const el = document.getElementById(id); if(!el) return;
+    if(prop === 'x') el.setAttribute('x', val); if(prop === 'y') el.setAttribute('y', val);
+    window.updateUI(el);
 };
 
-window.onload = function() { 
-    if(window.listenDevices) window.listenDevices(); 
-}
+window.onload = function() { window.setupLayers(); };
