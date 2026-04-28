@@ -3,111 +3,135 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>SVG Pro Studio | Ultimate Sürüm V49 (Gelişmiş Medya & Font)</title>
+    <title>SVG Pro Studio | Ultimate Sürüm V49 (Tam ve Stabil)</title>
     <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&family=Merriweather:wght@400;700&family=Montserrat:wght@400;700;800&family=Nunito:wght@400;700&family=Open+Sans:wght@400;700&family=Oswald:wght@400;700&family=Pacifico&family=Playfair+Display:wght@400;700&family=Poppins:wght@400;700&family=Raleway:wght@400;700&family=Roboto:wght@400;700&family=Ubuntu:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-    
     <style>
-        :root{--accent:#10b981;--bg:#0f172a;--panel:#1e293b;--border:#334155;--handle-move:#3b82f6;--handle-rotate:#f59e0b;--handle-radius:#ec4899;--error:#ef4444}
-        *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-        html,body{margin:0;padding:0;width:100%;height:100vh;height:100dvh;overflow:hidden;background:var(--bg);color:#fff;font-family:'Inter', 'Roboto', sans-serif;overscroll-behavior-y:none}
+        :root {
+            --accent: #10b981;
+            --bg: #0f172a;
+            --panel: #1e293b;
+            --border: #334155;
+            --handle-move: #3b82f6;
+            --handle-rotate: #f59e0b;
+            --handle-radius: #ec4899;
+            --error: #ef4444;
+        }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        html, body {
+            margin: 0; padding: 0; width: 100%; height: 100vh; height: 100dvh;
+            overflow: hidden; background: var(--bg); color: #fff;
+            font-family: 'Inter', 'Roboto', sans-serif; overscroll-behavior-y: none;
+        }
         
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: var(--bg); }
         ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
 
-        #app-container{display:flex; height:100%; width:100%; flex-direction:row; filter: blur(0px); transition: filter 0.3s;}
+        #app-container { display: flex; height: 100%; width: 100%; flex-direction: row; filter: blur(0px); transition: filter 0.3s; }
+        #sidebar { width: 480px; background: var(--panel); border-left: 1px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; height: 100%; z-index: 100; position: relative; }
+        .sidebar-scroll-area { flex-shrink: 0; max-height: 60%; overflow-y: auto; background: #111827; padding: 15px; border-bottom: 2px solid var(--border); }
+        #editor-fields { flex: 1; min-height: 0; overflow-y: auto; padding: 20px; background: rgba(0,0,0,.2); padding-bottom: 80px; }
         
-        #sidebar{width:480px;background:var(--panel);border-left:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;height:100%;z-index:100;position:relative}
-        .sidebar-scroll-area{flex-shrink:0;max-height:60%;overflow-y:auto;background:#111827;padding:15px;border-bottom:2px solid var(--border)}
-        #editor-fields{flex:1;min-height:0;overflow-y:auto;padding:20px;background:rgba(0,0,0,.2);padding-bottom:80px}
+        #layers-wrapper { background: #0f172a; border-bottom: 2px solid var(--border); flex-shrink: 0; display: flex; flex-direction: column; }
+        #layers-header { padding: 12px 15px; font-size: 11px; font-weight: 700; color: var(--accent); background: #111827; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; outline: none; user-select: none; }
+        #layers-list { flex: 1; overflow-y: auto; }
         
-        #layers-wrapper{background:#0f172a;border-bottom:2px solid var(--border);flex-shrink:0;display:flex;flex-direction:column}
-        #layers-wrapper[open]{height:35%} #layers-wrapper:not([open]){height:auto}
-        #layers-header{padding:12px 15px;font-size:11px;font-weight:700;color:var(--accent);background:#111827;cursor:pointer;text-transform:uppercase;letter-spacing:1px;outline:none;user-select:none}
-        #layers-list{flex:1;overflow-y:auto}
+        .layer-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 15px; border-bottom: 1px solid var(--border); cursor: grab; font-size: 12px; transition: .2s; background: #1e293b; color: #cbd5e1; }
+        .layer-item:hover { background: #334155; } 
+        .layer-item.active { border-left: 4px solid var(--accent); background: rgba(16,185,129,.15); color: #fff; font-weight: 700; }
+        .layer-item:active { cursor: grabbing; }
+        .layer-actions { display: flex; gap: 4px; align-items: center; }
+        .layer-btn { background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 16px; padding: 2px; transition: .2s; display: flex; align-items: center; justify-content: center; }
+        .layer-btn:hover { color: #fff; transform: scale(1.1); }
         
-        .layer-item{display:flex;align-items:center;justify-content:space-between;padding:10px 15px;border-bottom:1px solid var(--border);cursor:grab;font-size:12px;transition:.2s;background:#1e293b;color:#cbd5e1}
-        .layer-item:hover{background:#334155} .layer-item.active{border-left:4px solid var(--accent);background:rgba(16,185,129,.15);color:#fff;font-weight:700}
-        .layer-item:active{cursor:grabbing}
-        .layer-actions{display:flex;gap:4px;align-items:center}
-        .layer-btn{background:none;border:none;color:#94a3b8;cursor:pointer;font-size:16px;padding:2px;transition:.2s; display:flex; align-items:center; justify-content:center;}
-        .layer-btn:hover{color:#fff;transform:scale(1.1)}
+        #main-view { flex: 1; background: #020617; overflow: hidden; position: relative; height: calc(100% - 25px); display: flex; }
+        #zoom-container { flex: 1; display: flex; align-items: center; justify-content: center; transform-origin: center center; transition: transform .2s ease-out; position: relative; margin-left: 20px; margin-top: 20px; width: calc(100% - 20px); height: calc(100% - 20px); }
+        #svg-wrapper { position: relative; background: #fff; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 50px #000; touch-action: none; transition: transform .1s; }
+        #canvas-inner { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
+        #canvas-inner svg { width: auto; height: auto; max-width: 100%; max-height: 100%; object-fit: contain; overflow: visible; }
         
-        #main-view{flex:1;background:#020617;overflow:hidden;position:relative;height:calc(100% - 25px);display:flex}
-        #zoom-container{flex:1;display:flex;align-items:center;justify-content:center;transform-origin:center center;transition:transform .2s ease-out;position:relative; margin-left: 20px; margin-top: 20px; width: calc(100% - 20px); height: calc(100% - 20px);}
-        #svg-wrapper{position:relative;background:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 0 50px #000;touch-action:none;transition:transform .1s}
-        #canvas-inner{width:100%;height:100%;display:flex;align-items:center;justify-content:center}
-        #canvas-inner svg{width:auto;height:auto;max-width:100%;max-height:100%;object-fit:contain;overflow:visible}
+        .draw-mode { cursor: crosshair !important; } 
+        .pan-mode { cursor: grab !important; } 
+        .panning { cursor: grabbing !important; }
         
-        .draw-mode{cursor:crosshair!important} .pan-mode{cursor:grab!important} .panning{cursor:grabbing!important}
+        .ruler { position: absolute; background: #111827; border: 1px solid var(--border); z-index: 40; pointer-events: none; overflow: hidden; }
+        .ruler-h { top: 0; left: 20px; right: 0; height: 20px; border-left: none; } 
+        .ruler-v { top: 20px; left: 0; bottom: 0; width: 20px; border-top: none; }
+        .ruler svg { position: absolute; top: 0; left: 0; }
         
-        .ruler{position:absolute;background:#111827;border:1px solid var(--border);z-index:40;pointer-events:none;overflow:hidden}
-        .ruler-h{top:0;left:20px;right:0;height:20px;border-left:none} .ruler-v{top:20px;left:0;bottom:0;width:20px;border-top:none}
-        .ruler svg{position:absolute;top:0;left:0}
+        .floating-tools { position: fixed; bottom: 45px; left: 40px; background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 8px; display: flex; gap: 8px; box-shadow: 0 10px 25px rgba(0,0,0,.5); z-index: 500; align-items: center; }
+        .tool-btn { background: #0f172a; color: #fff; border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; cursor: pointer; font-weight: 700; transition: .2s; display: flex; align-items: center; gap: 6px; }
+        .tool-btn:hover { background: var(--accent); border-color: var(--accent); }
         
-        .floating-tools{position:fixed;bottom:45px;left:40px;background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:8px;display:flex;gap:8px;box-shadow:0 10px 25px rgba(0,0,0,.5);z-index:500;align-items:center}
-        .tool-btn{background:#0f172a;color:#fff;border:1px solid var(--border);border-radius:8px;padding:8px 12px;cursor:pointer;font-weight:700;transition:.2s; display:flex; align-items:center; gap:6px;}
-        .tool-btn:hover{background:var(--accent);border-color:var(--accent)}
+        .duzenlenebilir { cursor: move; pointer-events: all; } 
+        .locked { cursor: not-allowed !important; }
+        #control-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 50; overflow: visible; }
+        .handle { fill: #fff; stroke-width: 2; pointer-events: all; transition: fill .2s, stroke-width .2s; }
+        .handle:hover { fill: var(--accent); stroke-width: 4; }
+        .handle-resize { stroke: var(--handle-move); cursor: nwse-resize; } 
+        .handle-rotate { stroke: var(--handle-rotate); cursor: crosshair; fill: var(--handle-rotate); } 
+        .handle-radius { stroke: var(--handle-radius); cursor: nwse-resize; fill: var(--handle-radius); }
+        .snap-line { stroke: #ec4899; stroke-width: 1.5; stroke-dasharray: 4,4; pointer-events: none; z-index: 60; opacity: 0.8; }
+        .guide-line { stroke: #06b6d4; stroke-width: 3; stroke-dasharray: 8,4; cursor: grab; pointer-events: all; }
         
-        .duzenlenebilir{cursor:move;pointer-events:all} .locked{cursor:not-allowed!important}
-        #control-layer{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:50;overflow:visible}
-        .handle{fill:#fff;stroke-width:2;pointer-events:all;transition:fill .2s,stroke-width .2s}
-        .handle:hover{fill:var(--accent);stroke-width:4}
-        .handle-resize{stroke:var(--handle-move);cursor:nwse-resize} 
-        .handle-rotate{stroke:var(--handle-rotate);cursor:crosshair;fill:var(--handle-rotate)} 
-        .handle-radius{stroke:var(--handle-radius);cursor:nwse-resize;fill:var(--handle-radius)}
-        .snap-line{stroke:#ec4899;stroke-width:1.5;stroke-dasharray:4,4;pointer-events:none;z-index:60; opacity: 0.8;}
-        .guide-line{stroke:#06b6d4;stroke-width:3;stroke-dasharray:8,4;cursor:grab;pointer-events:all}
+        input[type="range"] { width: 100%; accent-color: var(--accent); height: 6px; cursor: pointer; margin: 0; }
+        input[type="text"], input[type="number"], input[type="time"], textarea, select { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: #000; color: #fff; outline: none; font-size: 13px; margin-bottom: 5px; }
+        input[type="password"] { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: #000; color: #fff; outline: none; font-size: 16px; letter-spacing: 5px; text-align: center; }
+        input[type="text"]:focus, input[type="number"]:focus, input[type="time"]:focus, textarea:focus, input[type="password"]:focus { border-color: var(--accent); }
+        .font-select { cursor: pointer; }
         
-        input[type="range"]{width:100%;accent-color:var(--accent);height:6px;cursor:pointer;margin:0}
-        input[type="text"],input[type="number"],input[type="time"],textarea{width:100%;padding:12px;border-radius:8px;border:1px solid var(--border);background:#000;color:#fff;outline:none;font-size:13px; margin-bottom:5px;}
-        input[type="password"]{width:100%;padding:12px;border-radius:8px;border:1px solid var(--border);background:#000;color:#fff;outline:none;font-size:16px; letter-spacing: 5px; text-align: center;}
-        input[type="text"]:focus,input[type="number"]:focus,input[type="time"]:focus,textarea:focus,input[type="password"]:focus{border-color:var(--accent)}
-        .font-select{width:100%;padding:12px;border-radius:8px;border:1px solid var(--border);background:#000;color:#fff;margin-bottom:5px;outline:none;font-size:13px;cursor:pointer}
+        .action-row { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+        .action-btn { flex: 1; background: #334155; color: #fff; border: none; border-radius: 8px; padding: 10px 15px; font-size: 12px; font-weight: 700; cursor: pointer; text-align: center; display: flex; align-items: center; justify-content: center; gap: 6px; }
+        .action-btn:hover { background: #475569; } 
+        .action-btn.active { background: var(--accent); color: #fff; } 
+        .action-btn.danger { background: #991b1b; } 
+        .action-btn.special { background: #0284c7; }
         
-        .action-row{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap}
-        .action-btn{flex:1;background:#334155;color:#fff;border:none;border-radius:8px;padding:10px 15px;font-size:12px;font-weight:700;cursor:pointer;text-align:center; display:flex; align-items:center; justify-content:center; gap:6px;}
-        .action-btn:hover{background:#475569} .action-btn.active{background:var(--accent);color:#fff} .action-btn.danger{background:#991b1b} .action-btn.special{background:#0284c7}
+        .group-box { background: rgba(0,0,0,.2); padding: 12px; border-radius: 10px; border: 1px solid #1e293b; margin-top: 10px; margin-bottom: 15px; }
+        .prop-group { margin-bottom: 20px; }
+        .prop-group-title { font-size: 11px; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; border-bottom: 1px solid var(--border); padding-bottom: 6px; display: flex; align-items: center; gap: 6px; }
         
-        .group-box{background:rgba(0,0,0,.2);padding:12px;border-radius:10px;border:1px solid #1e293b;margin-top:10px;margin-bottom:15px}
-        .prop-group{margin-bottom:20px;}
-        .prop-group-title{font-size:11px; font-weight:700; color:var(--accent); text-transform:uppercase; letter-spacing:1px; margin-bottom:12px; border-bottom:1px solid var(--border); padding-bottom:6px; display:flex; align-items:center; gap:6px;}
-        
-        .tabs-header { display: flex; gap: 4px; margin-bottom: 15px; background: #0f172a; padding: 4px; border-radius: 8px; border: 1px solid var(--border); flex-wrap:wrap;}
-        .tab-btn { flex: 1; background: transparent; border: none; color: #94a3b8; font-size: 11px; font-weight: 700; padding: 10px 4px; cursor: pointer; border-radius: 6px; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 6px; min-width: 60px;}
-        .tab-btn:hover { color: #fff; background: rgba(255,255,255,0.05); } .tab-btn.active { background: var(--panel); color: var(--accent); box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
-        .tab-content { display: none; animation: fadeIn 0.3s; } .tab-content.active { display: block; }
+        .tabs-header { display: flex; gap: 4px; margin-bottom: 15px; background: #0f172a; padding: 4px; border-radius: 8px; border: 1px solid var(--border); flex-wrap: wrap; }
+        .tab-btn { flex: 1; background: transparent; border: none; color: #94a3b8; font-size: 11px; font-weight: 700; padding: 10px 4px; cursor: pointer; border-radius: 6px; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 6px; min-width: 60px; }
+        .tab-btn:hover { color: #fff; background: rgba(255,255,255,0.05); } 
+        .tab-btn.active { background: var(--panel); color: var(--accent); box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        .tab-content { display: none; animation: fadeIn 0.3s; } 
+        .tab-content.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
-        .label-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;width:100%}
-        .label-text{font-size:11px;color:#94a3b8;font-weight:700;text-transform:uppercase;letter-spacing:.5px}
-        .value-badge{background:#000;color:var(--accent);font-size:11px;padding:3px 6px;border-radius:4px;font-family:monospace;font-weight:700}
+        .label-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; width: 100%; }
+        .label-text { font-size: 11px; color: #94a3b8; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; }
+        .value-badge { background: #000; color: var(--accent); font-size: 11px; padding: 3px 6px; border-radius: 4px; font-family: monospace; font-weight: 700; }
         
-        #context-menu{display:none;position:absolute;background:#1e293b;border:1px solid var(--border);box-shadow:0 10px 30px rgba(0,0,0,.7);border-radius:8px;padding:5px;z-index:20000;min-width:200px}
-        .ctx-item{padding:10px 15px;font-size:13px;cursor:pointer;color:#e2e8f0;border-radius:4px;display:flex;justify-content:space-between;align-items:center; gap:10px;}
-        .ctx-item:hover{background:var(--accent);color:#fff} .ctx-item.danger:hover{background:#ef4444}
+        #context-menu { display: none; position: absolute; background: #1e293b; border: 1px solid var(--border); box-shadow: 0 10px 30px rgba(0,0,0,.7); border-radius: 8px; padding: 5px; z-index: 20000; min-width: 200px; }
+        .ctx-item { padding: 10px 15px; font-size: 13px; cursor: pointer; color: #e2e8f0; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+        .ctx-item:hover { background: var(--accent); color: #fff; } 
+        .ctx-item.danger:hover { background: #ef4444; }
         
-        #status-bar{position:absolute;bottom:0;left:0;width:100%;height:25px;background:#0f172a;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;padding:0 20px;font-size:11px;color:#94a3b8;z-index:400;font-family:monospace}
+        #status-bar { position: absolute; bottom: 0; left: 0; width: 100%; height: 25px; background: #0f172a; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; padding: 0 20px; font-size: 11px; color: #94a3b8; z-index: 400; font-family: monospace; }
         
-        #toast-container { position: fixed; top: 20px; right: 20px; z-index: 99999; display: flex; flex-direction: column; gap: 10px; pointer-events:none;}
-        .toast { background: var(--panel); border: 1px solid var(--border); color: #fff; padding: 14px 24px; border-radius: 12px; display: flex; align-items: center; gap: 12px; box-shadow: 0 15px 35px rgba(0,0,0,0.5); transform: translateX(120%); animation: slideIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; font-size: 13px; font-weight: 700; transition: all 0.3s ease;}
-        .toast.success i { color: var(--accent); font-size: 22px; } .toast.error i { color: #ef4444; font-size: 22px; }
+        #toast-container { position: fixed; top: 20px; right: 20px; z-index: 99999; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
+        .toast { background: var(--panel); border: 1px solid var(--border); color: #fff; padding: 14px 24px; border-radius: 12px; display: flex; align-items: center; gap: 12px; box-shadow: 0 15px 35px rgba(0,0,0,0.5); transform: translateX(120%); animation: slideIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; font-size: 13px; font-weight: 700; transition: all 0.3s ease; }
+        .toast.success i { color: var(--accent); font-size: 22px; } 
+        .toast.error i { color: #ef4444; font-size: 22px; }
         @keyframes slideIn { to { transform: translateX(0); } }
 
-        .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:30000;align-items:center;justify-content:center;backdrop-filter:blur(5px)}
-        .modal-content{background:#1e293b;border:1px solid var(--border);padding:30px;border-radius:16px;width:450px;box-shadow:0 25px 50px rgba(0,0,0,.5);position:relative;max-height:90vh;display:flex;flex-direction:column}
-        .close-modal{position:absolute;top:15px;right:15px;cursor:pointer;color:#94a3b8;font-size:24px;font-weight:700;line-height:1} .close-modal:hover{color:#fff}
-        .shortcut-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px; align-items:center;}
-        .kbd{background:#0f172a;padding:4px 10px;border-radius:6px;border:1px solid var(--border);color:var(--accent);font-family:monospace; font-size:11px;}
+        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.8); z-index: 30000; align-items: center; justify-content: center; backdrop-filter: blur(5px); }
+        .modal-content { background: #1e293b; border: 1px solid var(--border); padding: 30px; border-radius: 16px; width: 450px; box-shadow: 0 25px 50px rgba(0,0,0,.5); position: relative; max-height: 90vh; display: flex; flex-direction: column; }
+        .close-modal { position: absolute; top: 15px; right: 15px; cursor: pointer; color: #94a3b8; font-size: 24px; font-weight: 700; line-height: 1; } 
+        .close-modal:hover { color: #fff; }
+        .shortcut-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px; align-items: center; }
+        .kbd { background: #0f172a; padding: 4px 10px; border-radius: 6px; border: 1px solid var(--border); color: var(--accent); font-family: monospace; font-size: 11px; }
         
-        .swatch-container{display:flex;gap:6px;margin-top:5px;flex-wrap:wrap}
-        .color-swatch{width:26px;height:26px;border-radius:6px;cursor:pointer;border:1px solid var(--border);transition:transform .1s} .color-swatch:hover{transform:scale(1.2);border-color:#fff; z-index:2;}
+        .swatch-container { display: flex; gap: 6px; margin-top: 5px; flex-wrap: wrap; }
+        .color-swatch { width: 26px; height: 26px; border-radius: 6px; cursor: pointer; border: 1px solid var(--border); transition: transform .1s; } 
+        .color-swatch:hover { transform: scale(1.2); border-color: #fff; z-index: 2; }
 
-        .day-btn { padding: 6px; font-size: 10px; border: 1px solid var(--border); background: #0f172a; color: #fff; cursor: pointer; border-radius: 4px; transition: 0.2s;}
-        .day-btn.active { background: var(--accent); border-color: var(--accent); color: white; font-weight: bold;}
+        .day-btn { padding: 6px; font-size: 10px; border: 1px solid var(--border); background: #0f172a; color: #fff; cursor: pointer; border-radius: 4px; transition: 0.2s; }
+        .day-btn.active { background: var(--accent); border-color: var(--accent); color: white; font-weight: bold; }
         .device-card { background: #0f172a; padding: 10px; border-radius: 8px; margin-bottom: 8px; border-left: 4px solid #64748b; font-size: 12px; }
         .device-card.online { border-left-color: var(--accent); }
         .device-card.offline { border-left-color: var(--error); }
@@ -177,7 +201,7 @@
         </div>
         <div id="status-bar">
             <div id="status-count">Nesne Sayısı: 0</div>
-            <div>SVG Pro Studio Ultimate V49 (Gelişmiş Medya & Font)</div>
+            <div>SVG Pro Studio Ultimate V49 (Stabil Widget & Font)</div>
             <div id="status-time">Son Kayıt: Bekleniyor...</div>
         </div>
     </div>
@@ -314,7 +338,6 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getDatabase, ref, set, get, onValue, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-    // ⚠️ DİKKAT: KENDİ FIREBASE BİLGİLERİNİ BURAYA YAPIŞTIR
     const firebaseConfig = {
         apiKey: "AIzaSyCFBrHqXdRVdbtaqyKCQAgJ4U8no9cDIF8",
         authDomain: "svg-pro-studio.firebaseapp.com",
@@ -339,6 +362,7 @@
             document.getElementById('pin-input').value = "";
         }
     };
+    
     document.getElementById('app-container').style.filter = 'blur(10px)'; 
 
     window.showToast = function(msg, type = 'success') {
@@ -424,7 +448,7 @@
     
     let recentColors = ['#10b981', '#3b82f6', '#ef4444', '#f59e0b', '#8b5cf6', '#ffffff'];
     window.addRecentColor = function(c) { if(!recentColors.includes(c)) { recentColors.unshift(c); if(recentColors.length > 10) recentColors.pop(); if(window.selectedEl) window.renderProperties(); } };
-    function safeColor(c) { if(!c) return "#ffffff"; if(c.length === 4 && c.startsWith('#')) return "#" + c[1] + c[1] + c[2] + c[2] + c[3] + c[3]; return c.startsWith('#') && c.length === 7 ? c : "#ffffff"; }
+    window.safeColor = function(c) { if(!c) return "#ffffff"; if(c.length === 4 && c.startsWith('#')) return "#" + c[1] + c[1] + c[2] + c[2] + c[3] + c[3]; return c.startsWith('#') && c.length === 7 ? c : "#ffffff"; };
 
     window.selectedEl = null; 
     window.activeTabId = 'tab-layout'; 
@@ -657,7 +681,7 @@
         const svg = document.querySelector('#canvas-inner svg'); if(!svg) return;
         let bgRect = svg.querySelector('#canvas-background');
         if (!bgRect) { bgRect = document.createElementNS("http://www.w3.org/2000/svg", "rect"); bgRect.id = "canvas-background"; bgRect.setAttribute("x", "0"); bgRect.setAttribute("y", "0"); bgRect.setAttribute("width", dim.w); bgRect.setAttribute("height", dim.h); bgRect.setAttribute("fill", "#020617"); svg.insertBefore(bgRect, svg.firstChild); }
-        const cbc = document.getElementById('canvas-bg-color'); if(cbc) cbc.value = safeColor(bgRect.getAttribute("fill"));
+        const cbc = document.getElementById('canvas-bg-color'); if(cbc) cbc.value = window.safeColor(bgRect.getAttribute("fill"));
         window.updateRulers();
     };
 
@@ -676,63 +700,41 @@
         svg.appendChild(rect); window.selectedEl = rect; window.saveState(); window.setupLayers(); window.updateUI(rect); window.renderEditor();
     };
 
-    // 🎥 VİDEO VE YOUTUBE MOTORU
     window.addVideo = function() {
         const svg = document.querySelector('#canvas-inner svg'); if(!svg) return;
         const dim = window.getSvgDim();
         const fo = document.createElementNS("http://www.w3.org/2000/svg", "foreignObject");
         fo.id = "vid_" + Date.now();
         fo.setAttribute("class", "duzenlenebilir video-obj");
-        fo.setAttribute("x", dim.w/2 - 400);
-        fo.setAttribute("y", dim.h/2 - 225);
-        fo.setAttribute("width", 800);
-        fo.setAttribute("height", 450);
-        
+        fo.setAttribute("x", dim.w/2 - 400); fo.setAttribute("y", dim.h/2 - 225);
+        fo.setAttribute("width", 800); fo.setAttribute("height", 450);
         window.setD(fo, 'video-url', 'https://www.w3schools.com/html/mov_bbb.mp4');
-        window.setD(fo, 'video-muted', 'true');
-        window.setD(fo, 'video-loop', 'true');
-        window.setD(fo, 'mask-shape', 'none');
-        window.setD(fo, 'rx', '0');
-        
+        window.setD(fo, 'video-muted', 'true'); window.setD(fo, 'video-loop', 'true');
+        window.setD(fo, 'mask-shape', 'none'); window.setD(fo, 'rx', '0');
         svg.appendChild(fo); window.updateVideoDisplay(fo);
         window.selectedEl = fo; window.saveState(); window.setupLayers(); window.updateUI(fo); window.renderEditor();
     };
 
     window.updateVideoDisplay = function(el) {
         if (!el || !el.classList.contains('video-obj')) return;
-        const url = window.getD(el, 'video-url') || '';
-        const muted = window.getD(el, 'video-muted') === 'true' ? 'muted' : '';
-        const loop = window.getD(el, 'video-loop') === 'true' ? 'loop' : '';
-        
-        const isYT = url.includes('youtube.com') || url.includes('youtu.be');
-        const isHLS = url.includes('.m3u8');
-        
+        const url = window.getD(el, 'video-url') || ''; const muted = window.getD(el, 'video-muted') === 'true' ? 'muted' : ''; const loop = window.getD(el, 'video-loop') === 'true' ? 'loop' : '';
+        const isYT = url.includes('youtube.com') || url.includes('youtu.be'); const isHLS = url.includes('.m3u8');
         let innerHTMLString = '';
-        
         if (isYT) {
             const ytMatch = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|shorts\/|watch\?v=|watch\?.+&v=))((\w|-){11})/);
-            const ytId = ytMatch ? ytMatch[1] : '';
-            const muteParam = window.getD(el, 'video-muted') === 'true' ? '&mute=1' : '';
-            const loopParam = window.getD(el, 'video-loop') === 'true' ? `&loop=1&playlist=${ytId}` : '';
-            
-            innerHTMLString = `<iframe style="width:100%; height:100%; pointer-events:none; border:none; background:#000;" src="https://www.youtube.com/embed/${ytId}?autoplay=1&controls=0&disablekb=1&fs=0&modestbranding=1&playsinline=1&rel=0&showinfo=0&enablejsapi=1&iv_load_policy=3${muteParam}${loopParam}&origin=${window.location.origin}" allow="autoplay; encrypted-media"></iframe>`;
+            const ytId = ytMatch ? ytMatch[1] : ''; const muteParam = window.getD(el, 'video-muted') === 'true' ? '&mute=1' : ''; const loopParam = window.getD(el, 'video-loop') === 'true' ? `&loop=1&playlist=${ytId}` : '';
+            innerHTMLString = `<iframe style="width:100%; height:100%; pointer-events:none; border:none; background:#000;" src="https://www.youtube-nocookie.com/embed/${ytId}?autoplay=1&controls=0&disablekb=1&fs=0&modestbranding=1&playsinline=1&rel=0&showinfo=0&enablejsapi=1&iv_load_policy=3${muteParam}${loopParam}&origin=${window.location.origin}" allow="autoplay; encrypted-media"></iframe>`;
         } else if (isHLS) {
             const vidId = "v_" + Date.now() + Math.floor(Math.random()*1000);
             innerHTMLString = `<video id="${vidId}" style="width:100%; height:100%; object-fit:cover; pointer-events:none; background:#000;" autoplay playsinline ${muted} ${loop}></video>`;
-            
             setTimeout(() => {
                 const vEl = document.getElementById(vidId);
-                if (vEl && window.Hls && Hls.isSupported()) {
-                    const hls = new Hls({ maxBufferLength: 60, liveSyncDurationCount: 3 });
-                    hls.loadSource(url); hls.attachMedia(vEl);
-                } else if (vEl && vEl.canPlayType('application/vnd.apple.mpegurl')) {
-                    vEl.src = url; 
-                }
+                if (vEl && window.Hls && Hls.isSupported()) { const hls = new Hls(); hls.loadSource(url); hls.attachMedia(vEl); } 
+                else if (vEl && vEl.canPlayType('application/vnd.apple.mpegurl')) { vEl.src = url; }
             }, 100);
         } else {
             innerHTMLString = `<video style="width:100%; height:100%; object-fit:cover; pointer-events:none; background:#000;" src="${url}" autoplay playsinline ${muted} ${loop}></video>`;
         }
-        
         el.innerHTML = `<div xmlns="http://www.w3.org/1999/xhtml" style="width:100%; height:100%; background:#000; overflow:hidden;">${innerHTMLString}</div>`;
         window.applyShapeMask(el); 
     };
@@ -741,149 +743,75 @@
         const svg = document.querySelector('#canvas-inner svg'); if(!svg) return; 
         const dim = window.getSvgDim();
         const fo = document.createElementNS("http://www.w3.org/2000/svg", "foreignObject");
-        fo.id = "rss_" + Date.now();
-        fo.setAttribute("class", "duzenlenebilir rss-band");
-        fo.setAttribute("x", 0);
-        fo.setAttribute("y", dim.h - 80);
-        fo.setAttribute("width", dim.w);
-        fo.setAttribute("height", 80);
-        
-        window.setD(fo, 'rss-url', 'https://www.cnnturk.com/feed/rss/all/news');
-        window.setD(fo, 'rss-speed', '35');
-        window.setD(fo, 'solid-color', '#dc2626');
-        window.setD(fo, 'text-color', '#ffffff');
-        window.setD(fo, 'base-font-size', '30');
-        
+        fo.id = "rss_" + Date.now(); fo.setAttribute("class", "duzenlenebilir rss-band");
+        fo.setAttribute("x", 0); fo.setAttribute("y", dim.h - 80); fo.setAttribute("width", dim.w); fo.setAttribute("height", 80);
+        window.setD(fo, 'rss-url', 'https://www.cnnturk.com/feed/rss/all/news'); window.setD(fo, 'rss-speed', '35'); window.setD(fo, 'solid-color', '#dc2626'); window.setD(fo, 'text-color', '#ffffff'); window.setD(fo, 'base-font-size', '30');
         svg.appendChild(fo); window.updateRssDisplay(fo);
         window.selectedEl = fo; window.saveState(); window.setupLayers(); window.updateUI(fo); window.renderEditor();
     };
 
     window.updateRssDisplay = function(el) {
         if (!el || !el.classList.contains('rss-band')) return;
-        const url = window.getD(el, 'rss-url') || '';
-        const speed = window.getD(el, 'rss-speed') || '35';
-        const bgColor = window.getD(el, 'solid-color') || '#dc2626';
-        const txtColor = window.getD(el, 'text-color') || '#ffffff';
-        const fSize = window.getD(el, 'base-font-size') || '30';
-        
+        const url = window.getD(el, 'rss-url') || ''; const speed = window.getD(el, 'rss-speed') || '35'; const bgColor = window.getD(el, 'solid-color') || '#dc2626'; const txtColor = window.getD(el, 'text-color') || '#ffffff'; const fSize = window.getD(el, 'base-font-size') || '30';
         el.innerHTML = `<div xmlns="http://www.w3.org/1999/xhtml" style="width:100%; height:100%; display:flex; align-items:center; overflow:hidden; background:${bgColor}; border-top:3px solid #fff;"><div class="rss-scroller" style="white-space:nowrap; color:${txtColor}; font-size:${fSize}px; font-weight:800; font-family:sans-serif; animation: scrollNews ${speed}s linear infinite; padding-left:100vw; letter-spacing:1px;">🔴 HABER BANT ÖNİZLEMESİ (${url || 'Link Yok'})</div></div>`;
     };
 
-    // 🌟 YENİ: HAVA DURUMU (WEATHER) WIDGET (Tamamen Ölçeklenebilir)
     window.addWeather = function() {
-        const svg = document.querySelector('#canvas-inner svg'); if(!svg) return;
-        const dim = window.getSvgDim();
+        const svg = document.querySelector('#canvas-inner svg'); if(!svg) return; const dim = window.getSvgDim();
         const fo = document.createElementNS("http://www.w3.org/2000/svg", "foreignObject");
-        fo.id = "wth_" + Date.now();
-        fo.setAttribute("class", "duzenlenebilir weather-widget");
-        fo.setAttribute("x", dim.w/2 - 200); fo.setAttribute("y", dim.h/2 - 100);
-        fo.setAttribute("width", 400); fo.setAttribute("height", 200);
-        
-        window.setD(fo, 'city', 'Istanbul');
-        window.setD(fo, 'solid-color', '#000000');
-        window.setD(fo, 'bg-opacity', '0.6');
-        window.setD(fo, 'text-color', '#ffffff');
-        window.setD(fo, 'mask-shape', 'none');
-        fo.setAttribute('font-family', 'sans-serif');
-        
+        fo.id = "wth_" + Date.now(); fo.setAttribute("class", "duzenlenebilir weather-widget");
+        fo.setAttribute("x", dim.w/2 - 200); fo.setAttribute("y", dim.h/2 - 100); fo.setAttribute("width", 400); fo.setAttribute("height", 200);
+        window.setD(fo, 'city', 'Istanbul'); window.setD(fo, 'theme', 'dark'); window.setD(fo, 'mask-shape', 'none'); window.setD(fo, 'rx', '15'); fo.setAttribute('font-family', 'sans-serif');
         svg.appendChild(fo); window.updateWeatherDisplay(fo);
         window.selectedEl = fo; window.saveState(); window.setupLayers(); window.updateUI(fo); window.renderEditor();
     };
 
     window.updateWeatherDisplay = async function(el) {
         if (!el || !el.classList.contains('weather-widget')) return;
-        const city = window.getD(el, 'city') || 'Istanbul';
-        const txtColor = window.getD(el, 'text-color') || '#ffffff';
-        const font = el.getAttribute('font-family') || 'sans-serif';
-        
+        const city = window.getD(el, 'city') || 'Istanbul'; const theme = window.getD(el, 'theme') || 'dark'; const txtColor = window.getD(el, 'text-color') || (theme === 'dark' ? '#ffffff' : '#000000'); const font = el.getAttribute('font-family') || 'sans-serif';
         el.innerHTML = `<div class="weather-inner" style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; color:${txtColor}; font-family:${font}; container-type: size; box-sizing:border-box; padding: 5cqw;">Yükleniyor...</div>`;
-        window.applyFill(el); window.applyShapeMask(el);
-
+        window.applyShapeMask(el);
         try {
-            const res = await fetch(`https://wttr.in/${encodeURIComponent(city)}?format=j1`);
-            const data = await res.json();
-            const temp = data.current_condition[0].temp_C;
-            const desc = data.current_condition[0].lang_tr?.[0]?.value || data.current_condition[0].weatherDesc[0].value;
-            const engDesc = data.current_condition[0].weatherDesc[0].value;
-            
+            const res = await fetch(`https://wttr.in/${encodeURIComponent(city)}?format=j1`); const data = await res.json();
+            const temp = data.current_condition[0].temp_C; const desc = data.current_condition[0].lang_tr?.[0]?.value || data.current_condition[0].weatherDesc[0].value; const engDesc = data.current_condition[0].weatherDesc[0].value;
             const iconMap = { "Sunny": "☀️", "Clear": "🌙", "Partly cloudy": "⛅", "Cloudy": "☁️", "Overcast": "☁️", "Mist": "🌫️", "Patchy rain possible": "🌦️", "Light rain": "🌧️", "Heavy rain": "🌧️", "Light snow": "🌨️", "Heavy snow": "❄️", "Moderate or heavy rain with thunder": "⛈️", "Fog": "🌫️" };
             const emoji = iconMap[engDesc] || "🌤️";
-
-            el.innerHTML = `<div class="weather-inner" style="width:100%; height:100%; display:flex; justify-content:space-between; align-items:center; color:${txtColor}; font-family:${font}; container-type: size; box-sizing:border-box; padding: 5cqw 8cqw;">
-                <div style="display:flex; flex-direction:column; align-items:flex-start; justify-content:center;">
-                    <div style="font-size: 25cqh; font-weight:800; letter-spacing:0.05em; margin-bottom: 2cqh; line-height: 1;">${city.toUpperCase()}</div>
-                    <div style="font-size: 12cqh; font-weight:400; opacity:0.8; line-height: 1;">${desc}</div>
-                </div>
-                <div style="display:flex; align-items:center; gap: 3cqw;">
-                    <span style="font-size: 40cqh; line-height: 1;">${emoji}</span>
-                    <span style="font-size: 45cqh; font-weight:800; line-height: 1;">${temp}°</span>
-                </div>
-            </div>`;
-            window.applyFill(el); window.applyShapeMask(el);
+            el.innerHTML = `<div class="weather-inner" style="width:100%; height:100%; display:flex; justify-content:space-between; align-items:center; color:${txtColor}; font-family:${font}; container-type: size; box-sizing:border-box; padding: 5cqw 8cqw;"><div style="display:flex; flex-direction:column; align-items:flex-start; justify-content:center;"><div style="font-size: 25cqh; font-weight:800; letter-spacing:0.05em; margin-bottom: 2cqh; line-height: 1;">${city.toUpperCase()}</div><div style="font-size: 12cqh; font-weight:400; opacity:0.8; line-height: 1;">${desc}</div></div><div style="display:flex; align-items:center; gap: 3cqw;"><span style="font-size: 40cqh; line-height: 1;">${emoji}</span><span style="font-size: 45cqh; font-weight:800; line-height: 1;">${temp}°</span></div></div>`;
+            window.applyShapeMask(el);
         } catch(e) {
             el.innerHTML = `<div class="weather-inner" style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; color:${txtColor}; font-family:${font}; container-type: size;">Hata: Veri Alınamadı</div>`;
-            window.applyFill(el); window.applyShapeMask(el);
+            window.applyShapeMask(el);
         }
     };
 
-    // 🌟 YENİ: CANLI DÖVİZ (CURRENCY) WIDGET (Tamamen Ölçeklenebilir)
     window.addCurrency = function() {
-        const svg = document.querySelector('#canvas-inner svg'); if(!svg) return;
-        const dim = window.getSvgDim();
+        const svg = document.querySelector('#canvas-inner svg'); if(!svg) return; const dim = window.getSvgDim();
         const fo = document.createElementNS("http://www.w3.org/2000/svg", "foreignObject");
-        fo.id = "cur_" + Date.now();
-        fo.setAttribute("class", "duzenlenebilir currency-widget");
-        fo.setAttribute("x", dim.w/2 - 300); fo.setAttribute("y", dim.h/2 - 75);
-        fo.setAttribute("width", 600); fo.setAttribute("height", 150);
-        
-        window.setD(fo, 'currencies', 'USD,EUR,GBP');
-        window.setD(fo, 'solid-color', '#000000');
-        window.setD(fo, 'bg-opacity', '0.6');
-        window.setD(fo, 'text-color', '#ffffff');
-        window.setD(fo, 'mask-shape', 'none');
-        fo.setAttribute('font-family', 'sans-serif');
-        
+        fo.id = "cur_" + Date.now(); fo.setAttribute("class", "duzenlenebilir currency-widget");
+        fo.setAttribute("x", dim.w/2 - 300); fo.setAttribute("y", dim.h/2 - 75); fo.setAttribute("width", 600); fo.setAttribute("height", 150);
+        window.setD(fo, 'currencies', 'USD,EUR,GBP'); window.setD(fo, 'solid-color', '#000000'); window.setD(fo, 'bg-opacity', '0.6'); window.setD(fo, 'text-color', '#ffffff'); window.setD(fo, 'mask-shape', 'none'); window.setD(fo, 'rx', '15'); fo.setAttribute('font-family', 'sans-serif');
         svg.appendChild(fo); window.updateCurrencyDisplay(fo);
         window.selectedEl = fo; window.saveState(); window.setupLayers(); window.updateUI(fo); window.renderEditor();
     };
 
     window.updateCurrencyDisplay = async function(el) {
         if (!el || !el.classList.contains('currency-widget')) return;
-        const curs = (window.getD(el, 'currencies') || 'USD,EUR,GBP').split(',').map(c=>c.trim().toUpperCase());
-        const txtColor = window.getD(el, 'text-color') || '#ffffff';
-        const font = el.getAttribute('font-family') || 'sans-serif';
-        
+        const curs = (window.getD(el, 'currencies') || 'USD,EUR,GBP').split(',').map(c=>c.trim().toUpperCase()); const txtColor = window.getD(el, 'text-color') || '#ffffff'; const font = el.getAttribute('font-family') || 'sans-serif';
         el.innerHTML = `<div class="currency-inner" style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; color:${txtColor}; font-family:${font}; container-type: size; box-sizing:border-box; padding:2cqw;">Yükleniyor...</div>`;
-        window.applyFill(el); window.applyShapeMask(el);
-
+        window.applyShapeMask(el);
         try {
-            const res = await fetch('https://open.er-api.com/v6/latest/USD');
-            const data = await res.json();
-            const tryRate = data.rates['TRY'];
-            
+            const res = await fetch('https://open.er-api.com/v6/latest/USD'); const data = await res.json(); const tryRate = data.rates['TRY'];
             let htmlBlocks = '';
             curs.forEach(c => {
-                let val = "0.00";
-                if(c === 'USD') val = tryRate.toFixed(2);
-                else if(data.rates[c]) { val = (tryRate / data.rates[c]).toFixed(2); }
-                
-                let flag = "💰";
-                if(c==='USD') flag="🇺🇸"; if(c==='EUR') flag="🇪🇺"; if(c==='GBP') flag="🇬🇧"; if(c==='CHF') flag="🇨🇭"; if(c==='JPY') flag="🇯🇵"; if(c==='SAR' || c==='AED') flag="🇸🇦";
-                
-                htmlBlocks += `<div style="display:flex; flex-direction:column; align-items:center; background:rgba(255,255,255,0.15); padding:3cqh 2cqw; border-radius:1cqw; min-width:25cqw;">
-                    <span style="font-size:15cqh; margin-bottom:1cqh; line-height:1;">${flag}</span>
-                    <span style="font-size:10cqh; color:var(--accent); font-weight:bold; line-height:1;">${c}</span>
-                    <span style="font-size:16cqh; font-weight:800; line-height:1;">₺${val}</span>
-                </div>`;
+                let val = "0.00"; if(c === 'USD') val = tryRate.toFixed(2); else if(data.rates[c]) { val = (tryRate / data.rates[c]).toFixed(2); }
+                let flag = "💰"; if(c==='USD') flag="🇺🇸"; if(c==='EUR') flag="🇪🇺"; if(c==='GBP') flag="🇬🇧"; if(c==='CHF') flag="🇨🇭"; if(c==='JPY') flag="🇯🇵"; if(c==='SAR' || c==='AED') flag="🇸🇦";
+                htmlBlocks += `<div style="display:flex; flex-direction:column; align-items:center; background:rgba(255,255,255,0.15); padding:3cqh 2cqw; border-radius:1cqw; min-width:25cqw;"><span style="font-size:15cqh; margin-bottom:1cqh; line-height:1;">${flag}</span><span style="font-size:10cqh; color:var(--accent); font-weight:bold; line-height:1;">${c}</span><span style="font-size:16cqh; font-weight:800; line-height:1;">₺${val}</span></div>`;
             });
-
-            el.innerHTML = `<div class="currency-inner" style="width:100%; height:100%; display:flex; align-items:center; justify-content:space-evenly; color:${txtColor}; font-family:${font}; container-type: size; box-sizing:border-box; padding:2cqw;">
-                ${htmlBlocks}
-            </div>`;
-            window.applyFill(el); window.applyShapeMask(el);
+            el.innerHTML = `<div class="currency-inner" style="width:100%; height:100%; display:flex; align-items:center; justify-content:space-evenly; color:${txtColor}; font-family:${font}; container-type: size; box-sizing:border-box; padding:2cqw;">${htmlBlocks}</div>`;
+            window.applyShapeMask(el);
         } catch(e) {
             el.innerHTML = `<div class="currency-inner" style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; color:${txtColor}; font-family:${font}; container-type: size;">Hata: Kurlar Alınamadı</div>`;
-            window.applyFill(el); window.applyShapeMask(el);
+            window.applyShapeMask(el);
         }
     };
 
@@ -928,23 +856,14 @@
     window.applyRecentColor = function(id, color) { const el = document.getElementById(id); if(!el) return; const fillType = window.getD(el, 'fill-type') || 'solid'; if(fillType === 'solid') { window.setD(el, 'solid-color', color); window.applyFill(el); } else { window.setD(el, 'color1', color); window.applyFill(el); } window.saveState(); window.renderProperties(); };
 
     window.refreshAutoTextFields = function() {
-        const list = document.getElementById('auto-fields-list'); 
-        const svg = document.querySelector('#canvas-inner svg'); 
-        if(!svg || !list) return;
-        
-        const textElements = svg.querySelectorAll('text.duzenlenebilir'); 
-        list.innerHTML = ""; 
-        let hasVars = false;
-        
+        const list = document.getElementById('auto-fields-list'); const svg = document.querySelector('#canvas-inner svg'); if(!svg || !list) return;
+        const textElements = svg.querySelectorAll('text.duzenlenebilir'); list.innerHTML = ""; let hasVars = false;
         textElements.forEach((el, index) => {
-            hasVars = true;
-            const varName = el.getAttribute('data-var-name') || `YAZI ${index + 1}`;
-            const currentVal = window.getD(el, 'raw-text') || el.textContent; 
+            hasVars = true; const varName = el.getAttribute('data-var-name') || `YAZI ${index + 1}`; const currentVal = window.getD(el, 'raw-text') || el.textContent; 
             const row = document.createElement('div'); row.style.marginBottom = "8px";
             row.innerHTML = `<div class="label-row"><span class="label-text" style="color:#f472b6;"><i class="ph ph-text-aa"></i> ${varName}</span></div><input type="text" value="${currentVal.replace(/"/g, '&quot;')}" oninput="window.updateVarValue('${el.id}', this.value)" onchange="window.saveState()" style="border-color:rgba(244,114,182,0.3);">`; 
             list.appendChild(row);
         });
-        
         if(!hasVars) list.innerHTML = `<div style="font-size:11px; color:#64748b; text-align:center;">Sahnede henüz yazı yok. Yazı eklediğinizde burada listelenecektir.</div>`;
     };
     
@@ -958,8 +877,6 @@
         if (elUI) { const badge = document.getElementById('val-' + prop + '-' + id); if (badge) badge.innerText = val + 'px'; if (elUI.type === 'range' && elUI.nextElementSibling && elUI.nextElementSibling.type === 'number') elUI.nextElementSibling.value = val; else if (elUI.type === 'number' && elUI.previousElementSibling && elUI.previousElementSibling.type === 'range') elUI.previousElementSibling.value = val; }
         if(el.tagName === 'text') window.applyTextCurve(el); 
         if(el.tagName === 'image' || el.tagName === 'rect' || el.classList.contains('video-obj') || el.classList.contains('weather-widget') || el.classList.contains('currency-widget')) window.applyShapeMask(el); 
-        if(el.classList.contains('rss-band')) window.updateRssDisplay(el);
-        if(el.classList.contains('video-obj')) window.updateVideoDisplay(el);
         window.updateUI(el);
     };
 
@@ -969,10 +886,47 @@
         if(key === 'curve' || key === 'raw-text' || key === 'letter-spacing' || key === 'max-width' || key === 'max-height') { if(key === 'letter-spacing') el.setAttribute('letter-spacing', val); window.applyTextCurve(el); }
         if(key === 'rx' || key === 'mask-shape') window.applyShapeMask(el); if(key === 'angle') window.applyTransforms(el);
         if(['solid-color', 'color1', 'color2', 'fill-type', 'bg-opacity'].includes(key)) window.applyFill(el); 
+        
+        // SADECE GEREKEN AYAR DEĞİŞİNCE API TETİKLE (HATA DÜZELTİLDİ: SADECE AYAR DEĞİŞİMİNDE ÇALIŞIR, SÜREKLİ DEĞİL)
+        if(key === 'rss-url' || key === 'rss-speed' || key === 'text-color') { if(el.classList.contains('rss-band')) window.updateRssDisplay(el); }
+        if(key === 'video-url' || key === 'video-muted' || key === 'video-loop') { if(el.classList.contains('video-obj')) window.updateVideoDisplay(el); }
+        
         if (elUI) { const badge = document.getElementById('val-' + key + '-' + id); if (badge) badge.innerText = val + (key === 'angle' ? '°' : (key === 'curve' ? '' : 'px')); if (elUI.type === 'range' && elUI.nextElementSibling && elUI.nextElementSibling.type === 'number') elUI.nextElementSibling.value = val; else if (elUI.type === 'number' && elUI.previousElementSibling && elUI.previousElementSibling.type === 'range') elUI.previousElementSibling.value = val; }
-        if(el.classList.contains('rss-band')) window.updateRssDisplay(el);
-        if(el.classList.contains('video-obj')) window.updateVideoDisplay(el);
         window.updateUI(el);
+    };
+
+    // 💥 SONSUZ DÖNGÜ VE DONMA HATASI BURADA DÜZELTİLDİ 💥
+    window.applyFill = function(el) {
+        // SVG içi objelerin arka planını saydamlaştırma işlemi sadece stillerle oynar, API ÇAĞIRMAZ!
+        if(el.tagName === 'image' || el.classList.contains('rss-band') || el.classList.contains('video-obj') || el.classList.contains('weather-widget') || el.classList.contains('currency-widget')) {
+            if (el.classList.contains('weather-widget') || el.classList.contains('currency-widget') || el.classList.contains('rss-band')) {
+                const type = window.getD(el, 'fill-type') || 'solid'; let fillVal = window.getD(el, 'solid-color') || '#000000';
+                const innerDiv = el.querySelector('div');
+                if (innerDiv) {
+                    const bgOpacity = window.getD(el, 'bg-opacity') !== null ? parseFloat(window.getD(el, 'bg-opacity')) : (el.classList.contains('rss-band') ? 1 : 0.6);
+                    let finalBg = fillVal;
+                    if (type === 'solid' && fillVal.startsWith('#')) {
+                        let hex = fillVal; if(hex.length === 4) hex = "#" + hex[1] + hex[1] + hex[2] + hex[2] + hex[3] + hex[3];
+                        let r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16);
+                        finalBg = `rgba(${r}, ${g}, ${b}, ${bgOpacity})`;
+                    }
+                    innerDiv.style.background = finalBg;
+                }
+            }
+            return; // ÇOK ÖNEMLİ: İşlem bittikten sonra dur, aşağı inme!
+        }
+        
+        const type = window.getD(el, 'fill-type') || 'solid'; let fillVal = '';
+        if (type === 'gradient') {
+            const c1 = window.getD(el, 'color1') || '#10b981'; const c2 = window.getD(el, 'color2') || '#3b82f6';
+            const svg = document.querySelector('#canvas-inner svg'); let defs = svg.querySelector('defs'); if (!defs) { defs = document.createElementNS("http://www.w3.org/2000/svg", "defs"); svg.prepend(defs); }
+            let gradId = "grad_" + el.id; let grad = defs.querySelector("#" + gradId);
+            if (!grad) { grad = document.createElementNS("http://www.w3.org/2000/svg", "linearGradient"); grad.id = gradId; grad.setAttribute("x1", "0%"); grad.setAttribute("y1", "0%"); grad.setAttribute("x2", "100%"); grad.setAttribute("y2", "100%"); const stop1 = document.createElementNS("http://www.w3.org/2000/svg", "stop"); stop1.setAttribute("offset", "0%"); stop1.className = "stop1"; const stop2 = document.createElementNS("http://www.w3.org/2000/svg", "stop"); stop2.setAttribute("offset", "100%"); stop2.className = "stop2"; grad.appendChild(stop1); grad.appendChild(stop2); defs.appendChild(grad); }
+            grad.querySelector(".stop1").setAttribute("stop-color", c1); grad.querySelector(".stop2").setAttribute("stop-color", c2); fillVal = `url(#${gradId})`;
+        } else { fillVal = window.getD(el, 'solid-color'); }
+        if (!fillVal && type !== 'gradient') return;
+        el.setAttribute("fill", fillVal); if(el.tagName !== 'path') el.style.fill = fillVal;
+        if(el.tagName === 'g' || el.tagName === 'svg') { el.querySelectorAll('path, circle, rect, polygon').forEach(child => { child.style.fill = fillVal; child.setAttribute('fill', fillVal); }); }
     };
 
     window.changeFilter = function(id, filterType, val, elUI) {
@@ -999,7 +953,7 @@
         let bbox = {x:0, y:0, width:0, height:0}; try { bbox = el.getBBox(); } catch(e){}
         if (el.tagName === 'text') { if(type === 'center-h') el.setAttribute('x', w/2); if(type === 'center-v') el.setAttribute('y', h/2); if(type === 'left') el.setAttribute('x', bbox.width/2); if(type === 'right') el.setAttribute('x', w - bbox.width/2); } 
         else { let nw = parseFloat(el.getAttribute('width')) || bbox.width; let nh = parseFloat(el.getAttribute('height')) || bbox.height; if(type === 'center-h') el.setAttribute('x', (w/2) - (nw/2)); if(type === 'center-v') el.setAttribute('y', (h/2) - (nh/2)); if(type === 'left') el.setAttribute('x', 0); if(type === 'right') el.setAttribute('x', w - nw); } 
-        if(el.tagName === 'image' || el.tagName === 'rect' || el.classList.contains('video-obj') || el.classList.contains('weather-widget') || el.classList.contains('currency-widget')) window.applyShapeMask(el); window.saveState(); window.updateUI(el);
+        if(el.tagName === 'image' || el.tagName === 'rect' || el.classList.contains('video-obj')) window.applyShapeMask(el); window.saveState(); window.updateUI(el);
     };
 
     window.toggleFlip = function(id, dir) { const el = document.getElementById(id); if(!el) return; if(dir === 'x') window.setD(el, 'flip-x', window.getD(el, 'flip-x') === "-1" ? "1" : "-1"); else window.setD(el, 'flip-y', window.getD(el, 'flip-y') === "-1" ? "1" : "-1"); window.applyTransforms(el); window.saveState(); };
@@ -1019,76 +973,8 @@
         el.style.filter = filterStr.trim(); el.style.mixBlendMode = blend; el.setAttribute('style', el.getAttribute('style') || ''); 
     };
 
-    // --- YENİ WIDGETLAR İÇİN ARKAPLAN SAYDAMLIĞI (RGBA) MOTORU EKLENDİ ---
-    window.applyFill = function(el) {
-        if(el.tagName === 'image' || el.classList.contains('rss-band') || el.classList.contains('video-obj') || el.classList.contains('weather-widget') || el.classList.contains('currency-widget')) {
-            if(el.classList.contains('rss-band')) window.updateRssDisplay(el);
-            if(el.classList.contains('video-obj')) window.updateVideoDisplay(el);
-            if(el.classList.contains('weather-widget')) window.updateWeatherDisplay(el);
-            if(el.classList.contains('currency-widget')) window.updateCurrencyDisplay(el);
-            
-            // Eğer Widget ise arka planı saydamlaştır (Stil menüsünden)
-            if (el.classList.contains('weather-widget') || el.classList.contains('currency-widget')) {
-                const type = window.getD(el, 'fill-type') || 'solid';
-                let fillVal = window.getD(el, 'solid-color') || '#000000';
-                const innerDiv = el.querySelector('div');
-                if (innerDiv) {
-                    const bgOpacity = window.getD(el, 'bg-opacity') !== null ? parseFloat(window.getD(el, 'bg-opacity')) : 0.6;
-                    let finalBg = fillVal;
-                    if (type === 'solid' && fillVal.startsWith('#')) {
-                        let hex = fillVal;
-                        if(hex.length === 4) hex = "#" + hex[1] + hex[1] + hex[2] + hex[2] + hex[3] + hex[3];
-                        let r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16);
-                        finalBg = `rgba(${r}, ${g}, ${b}, ${bgOpacity})`;
-                    }
-                    innerDiv.style.background = finalBg;
-                }
-            }
-            return;
-        }
-        
-        const type = window.getD(el, 'fill-type') || 'solid';
-        let fillVal = '';
-        if (type === 'gradient') {
-            const c1 = window.getD(el, 'color1') || '#10b981'; const c2 = window.getD(el, 'color2') || '#3b82f6';
-            const svg = document.querySelector('#canvas-inner svg'); let defs = svg.querySelector('defs'); if (!defs) { defs = document.createElementNS("http://www.w3.org/2000/svg", "defs"); svg.prepend(defs); }
-            let gradId = "grad_" + el.id; let grad = defs.querySelector("#" + gradId);
-            if (!grad) { grad = document.createElementNS("http://www.w3.org/2000/svg", "linearGradient"); grad.id = gradId; grad.setAttribute("x1", "0%"); grad.setAttribute("y1", "0%"); grad.setAttribute("x2", "100%"); grad.setAttribute("y2", "100%"); const stop1 = document.createElementNS("http://www.w3.org/2000/svg", "stop"); stop1.setAttribute("offset", "0%"); stop1.className = "stop1"; const stop2 = document.createElementNS("http://www.w3.org/2000/svg", "stop"); stop2.setAttribute("offset", "100%"); stop2.className = "stop2"; grad.appendChild(stop1); grad.appendChild(stop2); defs.appendChild(grad); }
-            grad.querySelector(".stop1").setAttribute("stop-color", c1); grad.querySelector(".stop2").setAttribute("stop-color", c2); fillVal = `url(#${gradId})`;
-        } else { fillVal = window.getD(el, 'solid-color'); }
-        if (!fillVal && type !== 'gradient') return;
-        el.setAttribute("fill", fillVal); if(el.tagName !== 'path') el.style.fill = fillVal;
-        if(el.tagName === 'g' || el.tagName === 'svg') { el.querySelectorAll('path, circle, rect, polygon').forEach(child => { child.style.fill = fillVal; child.setAttribute('fill', fillVal); }); }
-    };
-
-    window.autoFitText = function(el) { 
-        if (el.tagName !== 'text') return; const boundRectId = window.getD(el, 'bound-rect');
-        if (boundRectId) { const rect = document.getElementById(boundRectId); if (rect && (rect.tagName === 'rect' || rect.tagName === 'image')) { const rx = parseFloat(rect.getAttribute('x')) || 0; const ry = parseFloat(rect.getAttribute('y')) || 0; const rw = parseFloat(rect.getAttribute('width')) || 0; const rh = parseFloat(rect.getAttribute('height')) || 0; el.setAttribute('x', rx + rw / 2); el.setAttribute('y', ry + rh / 2); el.setAttribute('text-anchor', 'middle'); el.setAttribute('dominant-baseline', 'central'); window.setD(el, 'max-width', Math.max(10, rw - 40));  window.setD(el, 'max-height', Math.max(10, rh - 40));  el.removeAttribute('textLength'); el.removeAttribute('lengthAdjust'); const tp = el.querySelector('textPath'); if (tp) { tp.removeAttribute('textLength'); tp.removeAttribute('lengthAdjust'); } } }
-        const mw = parseFloat(window.getD(el, 'max-width')) || 0; const mh = parseFloat(window.getD(el, 'max-height')) || 0; const baseFs = parseFloat(window.getD(el, 'base-font-size')) || 60; 
-        if (mw > 0 || mh > 0) { el.removeAttribute('textLength'); el.removeAttribute('lengthAdjust'); const tp = el.querySelector('textPath'); if (tp) { tp.removeAttribute('textLength'); tp.removeAttribute('lengthAdjust'); } }
-        el.style.fontSize = baseFs + "px"; el.setAttribute("font-size", baseFs); 
-        if (mw > 0 || mh > 0) { let bbox = {width:0, height:0}; try { bbox = el.getBBox(); } catch(e){} let scaleW = 1; let scaleH = 1; if (mw > 0 && bbox.width > mw && bbox.width > 0) { scaleW = mw / bbox.width; } if (mh > 0 && bbox.height > mh && bbox.height > 0) { scaleH = mh / bbox.height; } const finalScale = Math.min(scaleW, scaleH); if(finalScale < 1) { const newFs = baseFs * finalScale;  el.style.fontSize = newFs + "px"; el.setAttribute("font-size", newFs);  } }
-    };
+    window.describeRoundedRect = function(r, s, x, y, w, h) { if (r <= 0) return `M ${x} ${y} H ${x + w} V ${y + h} H ${x} Z`; r = Math.min(r, w / 2, h / 2); const kappa = (4 * (r * (1 - s)) * Math.tan(Math.PI / 4)) / 3; const pts = [ [x + r, y], [x + w - r, y], [x + w, y + r], [x + w, y + h - r], [x + w - r, y + h], [x + r, y + h], [x, y + h - r], [x, y + r] ]; return `M ${pts[0][0]} ${pts[0][1]} L ${pts[1][0]} ${pts[1][1]} C ${pts[1][0] + kappa} ${pts[1][1]} ${pts[2][0]} ${pts[2][1] - kappa} ${pts[2][0]} ${pts[2][1]} L ${pts[3][0]} ${pts[3][1]} C ${pts[3][0]} ${pts[3][1] + kappa} ${pts[4][0] + kappa} ${pts[4][1]} ${pts[4][0]} ${pts[4][1]} L ${pts[5][0]} ${pts[5][1]} C ${pts[5][0] - kappa} ${pts[5][1]} ${pts[6][0]} ${pts[6][1] + kappa} ${pts[6][0]} ${pts[6][1]} L ${pts[7][0]} ${pts[7][1]} C ${pts[7][0]} ${pts[7][1] - kappa} ${pts[0][0] - kappa} ${pts[0][1]} ${pts[0][0]} ${pts[0][1]} Z`; };
     
-    window.applyTextCurve = function(el) {
-        if (el.tagName !== 'text') return; const curve = parseFloat(window.getD(el, 'curve')) || 0; if(!window.getD(el, 'raw-text')) window.setD(el, 'raw-text', el.textContent); const rawText = window.getD(el, 'raw-text');
-        el.innerHTML = ''; el.textContent = rawText; 
-        if (curve === 0) { const style = window.getD(el, 'text-style') || 'normal'; if(style !== 'normal') window.applyTextStyle(el.id, style, el.getAttribute('text-anchor')); } else {
-            const svg = document.querySelector('#canvas-inner svg'); let defs = svg.querySelector('defs'); if (!defs) { defs = document.createElementNS("http://www.w3.org/2000/svg", "defs"); svg.prepend(defs); }
-            const pathId = "curve_" + el.id; let curvePath = defs.querySelector("#" + pathId); if (!curvePath) { curvePath = document.createElementNS("http://www.w3.org/2000/svg", "path"); curvePath.id = pathId; curvePath.setAttribute("fill", "none"); defs.appendChild(curvePath); }
-            const x = parseFloat(el.getAttribute('x')) || 0; const y = parseFloat(el.getAttribute('y')) || 0; const curveStrength = curve * 2.5; 
-            curvePath.setAttribute("d", `M ${x - 1500}, ${y - curveStrength/2} Q ${x}, ${y + curveStrength} ${x + 1500}, ${y - curveStrength/2}`); 
-            el.innerHTML = ''; const tp = document.createElementNS("http://www.w3.org/2000/svg", "textPath"); tp.setAttribute("href", "#" + pathId); tp.setAttribute("startOffset", "50%"); tp.setAttribute("text-anchor", "middle"); tp.textContent = rawText;
-            const style = window.getD(el, 'text-style') || 'normal';
-            if(style === 'neon') { tp.setAttribute("font-weight", "bold"); tp.setAttribute("fill", "#ffffff"); tp.setAttribute("stroke", window.getD(el, 'solid-color')||"#000"); tp.setAttribute("stroke-width", "2"); tp.setAttribute("filter", `drop-shadow(0 0 15px ${window.getD(el, 'solid-color')||'#000'})`); } 
-            else if(style === '3d') { tp.setAttribute("font-weight", "bold"); tp.setAttribute("fill", window.getD(el, 'solid-color')||"#000"); tp.setAttribute("stroke", "#000000"); tp.setAttribute("stroke-width", "3"); tp.setAttribute("filter", `drop-shadow(6px 6px 0 #000000)`); } 
-            else if (style === 'hollow') { tp.setAttribute("fill", "none"); tp.setAttribute("stroke", window.getD(el, 'solid-color')||"#000"); tp.setAttribute("stroke-width", "4"); }
-            const w = el.getAttribute('textLength'); if (w) { tp.setAttribute('textLength', w); tp.setAttribute('lengthAdjust', 'spacingAndGlyphs'); } el.appendChild(tp);
-        } window.autoFitText(el);
-    };
-
-    // ... (Eski SVG Maske Kodunun Devamı İçin Sadece Aşağıdaki Kısmı Yazdım)
-    window.describeRoundedRect = function(r, s, x, y, w, h) { if (r <= 0) return `M ${x} ${y} H ${x + w} V ${y + h} H ${x} Z`; r = Math.min(r, w / 2, h / 2); const kappa = (4 * (r * (1 - s)) * Math.tan(Math.PI / 4)) / 3; const pts = [ [x + r, y], [x + w - r, y], [x + w, y + r], [x + w, y + h - r], [x + w - r, y + h], [x + r, y + h], [x, y + h - r], [x, y + r] ]; return `M ${pts[0][0]} ${pts[0][1]} L ${pts[1][0]} ${pts[1][1]} C ${pts[1][0] + kappa} ${pts[1][1]} ${pts[2][0]} ${pts[2][1] - kappa} ${pts[2][0]} ${pts[2][1]} L ${pts[3][0]} ${pts[3][1]} C ${pts[3][0]} ${pts[3][1] + kappa} ${pts[4][0] + kappa} ${pts[4][1]} ${pts[4][0]} ${pts[4][1]} L ${pts[5][0]} ${pts[5][1]} C ${pts[5][0] - kappa} ${pts[5][1]} ${pts[6][0]} ${pts[6][1] + kappa} ${pts[6][0]} ${pts[6][1]} L ${pts[7][0]} ${pts[7][1]} C ${pts[7][0]} ${pts[7][1] - kappa} ${pts[0][0] - kappa} ${pts[0][1]} ${pts[0][0]} ${pts[0][1]} Z`; };// --- V49: WIDGET VE VİDEO İÇİN MASKELEME (KÖŞE YUVARLAMA VE CAM EFEKTİ) ---
     window.applyShapeMask = function(el) { 
         if (el.tagName !== 'image' && el.tagName !== 'rect' && !el.classList.contains('video-obj') && !el.classList.contains('weather-widget') && !el.classList.contains('currency-widget')) return; 
 
@@ -1204,6 +1090,153 @@
             item.onclick = (e) => { if(e.target.closest('.layer-btn')) return; window.selectedEl = el; isDraggingElement = false; window.updateUI(el); window.renderEditor(); };
             item.innerHTML = `<div style="display:flex; align-items:center; gap:8px; flex:1; overflow:hidden; pointer-events:none;"><i class="ph ph-dots-six-vertical" style="color:#64748b;"></i><i class="ph ${icon}" style="color:var(--accent);"></i><span style="flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; ${isLocked ? 'text-decoration:line-through; opacity:0.5;' : ''} ${isHidden ? 'opacity:0.3;' : ''}">${typeName}</span></div><div class="layer-actions"><button class="layer-btn" onclick="window.toggleVisibility('${el.id}')" title="Göster/Gizle"><i class="ph ${isHidden ? 'ph-eye-closed' : 'ph-eye'}"></i></button><button class="layer-btn" onclick="window.moveLayer('${el.id}', 'top')" title="En Üste"><i class="ph ph-caret-double-up"></i></button><button class="layer-btn" onclick="window.moveLayer('${el.id}', 1)" title="Yukarı"><i class="ph ph-caret-up"></i></button><button class="layer-btn" onclick="window.moveLayer('${el.id}', -1)" title="Aşağı"><i class="ph ph-caret-down"></i></button><button class="layer-btn" onclick="window.moveLayer('${el.id}', 'bottom')" title="En Alta"><i class="ph ph-caret-double-down"></i></button><button class="layer-btn" onclick="window.toggleLock('${el.id}')" title="Kilit"><i class="ph ${isLocked ? 'ph-lock-key' : 'ph-lock-key-open'}"></i></button><button class="layer-btn" style="color:#ef4444;" onclick="if(confirm('Silinecek?')){ const delId='${el.id}'; if(window.selectedEl && window.selectedEl.id===delId) window.selectedEl=null; document.getElementById(delId).remove(); window.saveState(); window.renderEditor(); const cl=document.getElementById('control-layer'); if(cl) cl.innerHTML=''; event.stopPropagation(); }"><i class="ph ph-trash"></i></button></div>`; list.appendChild(item);
         });
+    };
+
+    function createPropGroup(title, content) { return `<div class="prop-group"><div class="prop-group-title">${title}</div>${content}</div>`; }
+
+    window.renderProperties = function() {
+        const f = document.getElementById('editor-fields'); if(!f) return; if (!window.selectedEl || !window.selectedEl.tagName) { window.renderEditor(); return; }
+        try {
+            const el = window.selectedEl; const id = el.id; const tag = el.tagName.toLowerCase();
+            const isLocked = window.getD(el, 'locked') === "true"; const isPath = tag === 'path'; const isShape = tag === 'rect'; const isImage = tag === 'image'; const isIcon = tag === 'svg' || tag === 'g';
+            const isRss = el.classList.contains('rss-band');
+            const isVideo = el.classList.contains('video-obj');
+            const isWeather = el.classList.contains('weather-widget');
+            const isCurrency = el.classList.contains('currency-widget');
+            const isText = tag === 'text' || isRss; 
+            const isWidget = isWeather || isCurrency;
+            
+            let typeName = tag.toUpperCase(); let headerIcon = 'ph-square'; if (isShape) { typeName = 'ŞEKİL'; headerIcon = 'ph-square'; } if (isIcon) { typeName = 'VEKTÖR'; headerIcon = 'ph-shapes'; } if (isPath) { typeName = 'ÇİZİM'; headerIcon = 'ph-scribble-loop'; } if (isImage) { typeName = 'RESİM'; headerIcon = 'ph-image'; } if (tag === 'text') { typeName = 'METİN'; headerIcon = 'ph-text-t'; }
+            if (isRss) { typeName = 'HABER BANT (RSS)'; headerIcon = 'ph-newspaper'; }
+            if (isVideo) { typeName = 'VİDEO / YOUTUBE'; headerIcon = 'ph-video-camera'; }
+            if (isWeather) { typeName = 'HAVA DURUMU'; headerIcon = 'ph-cloud-sun'; }
+            if (isCurrency) { typeName = 'DÖVİZ TABLOSU'; headerIcon = 'ph-currency-circle-dollar'; }
+
+            let layoutHtml = "", styleHtml = "", textHtml = "", codeHtml = "", videoHtml = "", widgetHtml = "";
+            let headerHtml = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; padding-bottom:10px; border-bottom:1px solid var(--border);"><div style="font-size:14px; color:white; font-weight:bold; letter-spacing:1px; display:flex; align-items:center; gap:8px;"><i class="ph ${headerIcon}" style="color:var(--accent);"></i> ${typeName} AYARLARI ${isLocked ? '<i class="ph ph-lock-key" style="color:#ef4444;"></i>' : ''}</div><div class="delete-btn" style="cursor:pointer; color:#94a3b8; font-size:20px; transition:0.2s;" title="Sil" onclick="if(confirm('Silinecek?')){ document.getElementById('${id}').remove(); window.selectedEl=null; window.saveState(); window.renderEditor(); const ctrl = document.getElementById('control-layer'); if(ctrl) ctrl.innerHTML=''; }"><i class="ph ph-x-circle"></i></div></div><div class="action-row" style="margin-bottom:20px;"><button class="action-btn" onclick="window.toggleLock('${id}')" style="background:${isLocked?'var(--error)':'#334155'}"><i class="ph ${isLocked?'ph-lock-key-open':'ph-lock-key'}"></i> ${isLocked ? 'KİLİDİ AÇ' : 'KİLİTLE'}</button><button class="action-btn special" onclick="window.cloneElement('${id}')" ${isLocked ? 'disabled':''}><i class="ph ph-copy"></i> KOPYALA</button></div>`;
+            if (isLocked) { f.innerHTML = headerHtml + `<div style="text-align:center; color:#ef4444; font-size:12px; margin-top:30px;"><i class="ph ph-lock-key" style="font-size:40px; display:block; margin-bottom:10px; opacity:0.5;"></i> Bu öğe kilitli. Düzenlemek için kilidini açın.</div>`; return; }
+            
+            if (!isText && !isVideo && !isWidget && (window.activeTabId === 'tab-text' || window.activeTabId === 'tab-video' || window.activeTabId === 'tab-widget')) window.activeTabId = 'tab-layout';
+            if (isVideo && window.activeTabId !== 'tab-video' && window.activeTabId !== 'tab-layout' && window.activeTabId !== 'tab-style' && window.activeTabId !== 'tab-code') window.activeTabId = 'tab-video';
+            if (isWidget && window.activeTabId !== 'tab-widget' && window.activeTabId !== 'tab-layout' && window.activeTabId !== 'tab-style' && window.activeTabId !== 'tab-code') window.activeTabId = 'tab-widget';
+            if (isText && window.activeTabId !== 'tab-text' && window.activeTabId !== 'tab-layout' && window.activeTabId !== 'tab-style' && window.activeTabId !== 'tab-code') window.activeTabId = 'tab-text';
+
+            let tabsNav = `<div class="tabs-header">
+                <button class="tab-btn ${window.activeTabId === 'tab-layout' ? 'active' : ''}" onclick="window.switchTab(this, 'tab-layout')"><i class="ph ph-bounding-box"></i> Düzen</button>
+                <button class="tab-btn ${window.activeTabId === 'tab-style' ? 'active' : ''}" onclick="window.switchTab(this, 'tab-style')"><i class="ph ph-palette"></i> Stil</button>
+                ${isText ? `<button class="tab-btn ${window.activeTabId === 'tab-text' ? 'active' : ''}" onclick="window.switchTab(this, 'tab-text')"><i class="ph ph-text-t"></i> Metin</button>` : ''}
+                ${isVideo ? `<button class="tab-btn ${window.activeTabId === 'tab-video' ? 'active' : ''}" onclick="window.switchTab(this, 'tab-video')"><i class="ph ph-video-camera"></i> Medya</button>` : ''}
+                ${isWidget ? `<button class="tab-btn ${window.activeTabId === 'tab-widget' ? 'active' : ''}" onclick="window.switchTab(this, 'tab-widget')"><i class="ph ph-plug"></i> Widget</button>` : ''}
+                <button class="tab-btn ${window.activeTabId === 'tab-code' ? 'active' : ''}" onclick="window.switchTab(this, 'tab-code')"><i class="ph ph-code"></i> Kod</button>
+            </div>`;
+
+            if(!isPath) {
+                let bbox = {x:0, y:0, width:0, height:0}; try { bbox = el.getBBox(); } catch(e){}
+                const x = Math.round(parseFloat(el.getAttribute("x")) || bbox.x || 0); const y = Math.round(parseFloat(el.getAttribute("y")) || bbox.y || 0); let w = 0, h = 0;
+                if(tag === 'text') { w = Math.round(parseFloat(el.getAttribute("textLength")) || bbox.width || 0); h = Math.round(parseFloat(window.getD(el, "base-font-size")) || 60); } else { w = Math.round(parseFloat(el.getAttribute("width")) || bbox.width || 0); h = Math.round(parseFloat(el.getAttribute("height")) || bbox.height || 0); }
+                const angle = parseFloat(window.getD(el, 'angle')) || 0;
+                
+                layoutHtml += createPropGroup("<i class='ph ph-intersect'></i> Hizalama & Çevirme", `<div class="action-row" style="margin-bottom:8px;"><button class="action-btn" onclick="window.alignElement('${id}', 'left')"><i class="ph ph-align-left"></i> SOL</button><button class="action-btn" onclick="window.alignElement('${id}', 'center-h')"><i class="ph ph-align-center-horizontal"></i> ORTA</button><button class="action-btn" onclick="window.alignElement('${id}', 'right')"><i class="ph ph-align-right"></i> SAĞ</button></div><div class="action-row" style="margin-bottom:10px;"><button class="action-btn" onclick="window.alignElement('${id}', 'center-v')"><i class="ph ph-align-center-vertical"></i> DİKEY ORTA</button><button class="action-btn" onclick="window.toggleFlip('${id}', 'x')"><i class="ph ph-arrows-left-right"></i> YATAY ÇEVİR</button><button class="action-btn" onclick="window.toggleFlip('${id}', 'y')"><i class="ph ph-arrows-down-up"></i> DİKEY ÇEVİR</button></div>`);
+                layoutHtml += createPropGroup("<i class='ph ph-arrows-out'></i> Konum ve Boyut", `<div class="label-row"><span class="label-text">X KONUMU</span><span class="value-badge" id="val-x-${id}">${x}px</span></div><div style="display:flex; gap:10px; margin-bottom:15px;"><input type="range" min="-1000" max="3000" value="${x}" style="flex:1;" oninput="window.changeProp('${id}', 'x', this.value, this);" onchange="window.saveState()"><input type="number" value="${x}" style="width:70px; padding:8px;" oninput="window.changeProp('${id}', 'x', this.value, this);" onchange="window.saveState()"></div><div class="label-row"><span class="label-text">Y KONUMU</span><span class="value-badge" id="val-y-${id}">${y}px</span></div><div style="display:flex; gap:10px; margin-bottom:15px;"><input type="range" min="-1000" max="3000" value="${y}" style="flex:1;" oninput="window.changeProp('${id}', 'y', this.value, this);" onchange="window.saveState()"><input type="number" value="${y}" style="width:70px; padding:8px;" oninput="window.changeProp('${id}', 'y', this.value, this);" onchange="window.saveState()"></div><div class="label-row"><span class="label-text">${tag === 'text' ? 'GENİŞLİK (ESNETME W)' : 'GENİŞLİK (W)'}</span><span class="value-badge" id="val-w-${id}">${w}px</span></div><div style="display:flex; gap:10px; margin-bottom:15px;"><input type="range" min="1" max="2500" value="${w}" style="flex:1;" oninput="window.changeProp('${id}', 'w', this.value, this);" onchange="window.saveState()"><input type="number" value="${w}" style="width:70px; padding:8px;" oninput="window.changeProp('${id}', 'w', this.value, this);" onchange="window.saveState()"></div><div class="label-row"><span class="label-text">${tag === 'text' ? 'YAZI PUNTO (H)' : 'YÜKSEKLİK (H)'}</span><span class="value-badge" id="val-h-${id}">${h}px</span></div><div style="display:flex; gap:10px;"><input type="range" min="1" max="2500" value="${h}" style="flex:1;" oninput="window.changeProp('${id}', 'h', this.value, this);" onchange="window.saveState()"><input type="number" value="${h}" style="width:70px; padding:8px;" oninput="window.changeProp('${id}', 'h', this.value, this);" onchange="window.saveState()"></div>`);
+                layoutHtml += createPropGroup("<i class='ph ph-arrows-clockwise'></i> Dönüştürme", `<div class="label-row" style="margin-top:0;"><span class="label-text">DÖNDÜRME AÇISI</span><span class="value-badge" id="val-angle-${id}">${angle}°</span></div><div style="display:flex; gap:10px; align-items:center;"><input type="range" min="0" max="360" value="${angle}" style="flex:1;" oninput="window.changeSetting('${id}', 'angle', this.value, this);" onchange="window.saveState()"><input type="number" value="${angle}" style="width:70px; padding:8px;" oninput="window.changeSetting('${id}', 'angle', this.value, this);" onchange="window.saveState()"></div>`);
+            }
+            if ((isShape || isImage || isVideo || isWidget) && !isRss) {
+                const rx = parseFloat(window.getD(el, 'rx')) || 0; const maskShape = window.getD(el, 'mask-shape') || 'none'; let bbox = {width:0, height:0}; try { bbox = el.getBBox(); }catch(e){} const maxR = Math.min(bbox.width, bbox.height) / 2;
+                layoutHtml += createPropGroup("<i class='ph ph-scissors'></i> Form & Maskeleme", `<div class="label-text" style="margin-bottom:5px;">MASKELEME ŞEKLİ</div><select class="font-select" style="margin-bottom:15px;" onchange="window.changeSetting('${id}', 'mask-shape', this.value); window.saveState();"><option value="none" ${maskShape === 'none' ? 'selected' : ''}>Yok (Düz)</option><option value="squircle" ${maskShape === 'squircle' ? 'selected' : ''}>Oval Kare (Squircle)</option><option value="circle" ${maskShape === 'circle' ? 'selected' : ''}>Daire</option><option value="triangle" ${maskShape === 'triangle' ? 'selected' : ''}>Üçgen</option><option value="star" ${maskShape === 'star' ? 'selected' : ''}>Yıldız</option></select><div class="label-row"><span class="label-text">KÖŞE YARIÇAPI (SQUIRCLE)</span><span class="value-badge" id="val-rx-${id}">${Math.round(rx)}px</span></div><div style="display:flex; gap:10px; align-items:center;"><input type="range" min="0" max="${maxR}" value="${rx}" style="flex:1;" oninput="window.changeSetting('${id}', 'rx', this.value, this);" onchange="window.saveState()"><input type="number" value="${rx}" style="width:70px; padding:8px;" oninput="window.changeSetting('${id}', 'rx', this.value, this);" onchange="window.saveState()"></div>`);
+                
+                if (isImage) {
+                    const imageList = window.getD(el, 'image-list') || '';
+                    layoutHtml += createPropGroup("<i class='ph ph-images'></i> İç Resim Slaydı", `<div class="label-text" style="margin-bottom:5px;">ÇOKLU RESİM LİNKLERİ (VİRGÜLLE AYIRIN)</div><textarea placeholder="https://resim1.jpg, https://resim2.jpg" style="width:100%; height:60px; background:#000; color:#fff; border:1px solid var(--border); padding:8px; border-radius:6px; font-size:11px;" oninput="window.changeSetting('${id}', 'image-list', this.value);" onchange="window.saveState()">${imageList}</textarea><div style="font-size:10px; color:#94a3b8; margin-top:5px; font-style:italic;">Buraya birden fazla resim linki girerseniz, yayın ekranında bu alan otomatik slayt gibi döner.</div>`);
+                }
+            }
+
+            if (!isImage && !isVideo && !isWidget) {
+                const fillType = window.getD(el, 'fill-type') || 'solid'; const col1 = window.getD(el, 'color1') || '#10b981'; const col2 = window.getD(el, 'color2') || '#3b82f6'; const solidCol = window.getD(el, 'solid-color') || (el.getAttribute('fill') === 'none' ? el.getAttribute('stroke') : el.getAttribute('fill')) || "#ffffff";
+                let fillHtml = `<div class="label-text" style="margin-bottom:5px;">${isRss?'ARKA PLAN':'DOLGU TİPİ'}</div>`;
+                if (!isRss) fillHtml += `<select class="font-select" style="margin-bottom:15px;" onchange="window.changeSetting('${id}', 'fill-type', this.value); window.saveState();"><option value="solid" ${fillType === 'solid' ? 'selected' : ''}>Düz Renk</option><option value="gradient" ${fillType === 'gradient' ? 'selected' : ''}>Renk Geçişi (Gradient)</option></select>`;
+                if (fillType === 'solid' || isRss) { fillHtml += `<div style="display:flex; gap:10px; align-items:center;"><input type="color" value="${safeColor(solidCol)}" oninput="window.changeSetting('${id}', 'solid-color', this.value); this.nextElementSibling.nextElementSibling.value=this.value;" onchange="window.addRecentColor(this.value); window.saveState();" style="width:45px; height:45px; cursor:pointer; border:none; background:none; border-radius:8px;"><button class="action-btn" style="flex:0 0 45px; padding:12px; background:#334155; font-size:18px;" onclick="window.pickColor('${id}', 'solidColor', 'fill')" title="Göz Damlası"><i class="ph ph-drop"></i></button><input type="text" value="${safeColor(solidCol)}" style="flex:1;" oninput="window.changeSetting('${id}', 'solid-color', this.value); this.previousElementSibling.previousElementSibling.value=this.value;" onchange="window.addRecentColor(this.value); window.saveState();"></div>`; } else { fillHtml += `<div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;"><div class="input-group"><span class="label-text">RENK 1</span><div style="display:flex; gap:5px; align-items:center;"><input type="color" value="${safeColor(col1)}" oninput="window.changeSetting('${id}', 'color1', this.value);" onchange="window.addRecentColor(this.value); window.saveState();" style="width:35px; height:35px; cursor:pointer; border:none; background:none;"><button class="action-btn" style="padding:8px; background:#334155; font-size:16px;" onclick="window.pickColor('${id}', 'color1', '')"><i class="ph ph-drop"></i></button></div></div><div class="input-group"><span class="label-text">RENK 2</span><div style="display:flex; gap:5px; align-items:center;"><input type="color" value="${safeColor(col2)}" oninput="window.changeSetting('${id}', 'color2', this.value);" onchange="window.addRecentColor(this.value); window.saveState();" style="width:35px; height:35px; cursor:pointer; border:none; background:none;"><button class="action-btn" style="padding:8px; background:#334155; font-size:16px;" onclick="window.pickColor('${id}', 'color2', '')"><i class="ph ph-drop"></i></button></div></div></div>`; }
+                fillHtml += `<div class="label-text" style="margin-top:15px; margin-bottom:8px;">PROJE RENKLERİ</div><div class="swatch-container">` + recentColors.map(c => `<div class="color-swatch" style="background:${c}" onclick="window.applyRecentColor('${id}', '${c}')" title="${c}"></div>`).join('') + `</div>`;
+                styleHtml += createPropGroup("<i class='ph ph-paint-bucket'></i> Dolgu & Renk", fillHtml);
+            }
+            
+            if(isWidget || isRss) {
+                const bgOpacity = window.getD(el, 'bg-opacity') || '0.6';
+                const solidCol = window.getD(el, 'solid-color') || '#000000';
+                styleHtml += createPropGroup("<i class='ph ph-paint-bucket'></i> Arka Plan Ayarları", `<div class="label-text" style="margin-bottom:5px;">ARKA PLAN RENGİ</div><div style="display:flex; gap:10px; align-items:center; margin-bottom:15px;"><input type="color" value="${safeColor(solidCol)}" oninput="window.changeSetting('${id}', 'solid-color', this.value); this.nextElementSibling.nextElementSibling.value=this.value;" onchange="window.addRecentColor(this.value); window.saveState();" style="width:45px; height:45px; cursor:pointer; border:none; background:none; border-radius:8px;"><button class="action-btn" style="flex:0 0 45px; padding:12px; background:#334155; font-size:18px;" onclick="window.pickColor('${id}', 'solidColor', 'fill')" title="Göz Damlası"><i class="ph ph-drop"></i></button><input type="text" value="${safeColor(solidCol)}" style="flex:1;" oninput="window.changeSetting('${id}', 'solid-color', this.value); this.previousElementSibling.previousElementSibling.value=this.value;" onchange="window.addRecentColor(this.value); window.saveState();"></div><div class="label-row"><span class="label-text">ARKA PLAN SAYDAMLIK</span><span class="value-badge" id="val-bg-opacity-${id}">${Math.round(bgOpacity*100)}%</span></div><div style="display:flex; gap:10px; align-items:center;"><input type="range" min="0" max="1" step="0.05" value="${bgOpacity}" style="flex:1;" oninput="window.changeSetting('${id}', 'bg-opacity', this.value, this);" onchange="window.saveState()"><input type="number" min="0" max="1" step="0.05" value="${bgOpacity}" style="width:70px; padding:8px;" oninput="window.changeSetting('${id}', 'bg-opacity', this.value, this);" onchange="window.saveState()"></div>`);
+            }
+
+            if(!isRss && !isVideo && !isWidget) {
+                const strokeCol = el.getAttribute('stroke') || '#000000'; const strokeW = parseFloat(el.getAttribute('stroke-width')) || 0; const dash = el.getAttribute('stroke-dasharray') || 'none';
+                styleHtml += createPropGroup("<i class='ph ph-square-logo'></i> Kenarlık & Çizgi", `<div class="label-text" style="margin-bottom:5px;">ÇİZGİ RENGİ</div><div style="display:flex; gap:10px; align-items:center; margin-bottom:15px;"><input type="color" value="${safeColor(strokeCol)}" oninput="const t=document.getElementById('${id}'); t.setAttribute('stroke', this.value); t.setAttribute('paint-order', 'stroke fill'); t.setAttribute('stroke-linejoin', 'round'); this.nextElementSibling.nextElementSibling.value=this.value;" onchange="window.addRecentColor(this.value); window.saveState();" style="width:45px; height:45px; cursor:pointer; border:none; background:none; border-radius:8px;"><button class="action-btn" style="flex:0 0 45px; padding:12px; background:#334155; font-size:18px;" onclick="window.pickColor('${id}', '', 'stroke')" title="Göz Damlası"><i class="ph ph-drop"></i></button><input type="text" value="${safeColor(strokeCol)}" style="flex:1;" oninput="const t=document.getElementById('${id}'); t.setAttribute('stroke', this.value); t.setAttribute('paint-order', 'stroke fill'); t.setAttribute('stroke-linejoin', 'round'); this.previousElementSibling.previousElementSibling.value=this.value;" onchange="window.addRecentColor(this.value); window.saveState();"></div><div class="label-row"><span class="label-text">KALINLIK</span><span class="value-badge" id="val-sw-${id}">${strokeW}px</span></div><div style="display:flex; gap:10px; align-items:center; margin-bottom:15px;"><input type="range" min="0" max="50" value="${strokeW}" style="flex:1;" oninput="const t=document.getElementById('${id}'); t.setAttribute('stroke-width', this.value); t.setAttribute('paint-order', 'stroke fill'); document.getElementById('val-sw-${id}').innerText=this.value+'px'; this.nextElementSibling.value=this.value;" onchange="window.saveState()"><input type="number" value="${strokeW}" style="width:70px; padding:8px;" oninput="const t=document.getElementById('${id}'); t.setAttribute('stroke-width', this.value); t.setAttribute('paint-order', 'stroke fill'); document.getElementById('val-sw-${id}').innerText=this.value+'px'; this.previousElementSibling.value=this.value;" onchange="window.saveState()"></div><div class="label-text" style="margin-bottom:5px;">ÇİZGİ TİPİ</div><select class="font-select" onchange="document.getElementById('${id}').setAttribute('stroke-dasharray', this.value); window.saveState();"><option value="none" ${dash === 'none' ? 'selected' : ''}>Düz</option><option value="5,5" ${dash === '5,5' ? 'selected' : ''}>Kesikli</option><option value="2,2" ${dash === '2,2' ? 'selected' : ''}>Noktalı</option></select>`);
+            }
+            let opacityVal = parseFloat(el.getAttribute('opacity')); if (isNaN(opacityVal)) opacityVal = 1;
+            const sX = parseFloat(window.getD(el, 'shadow-x')) || 0, sY = parseFloat(window.getD(el, 'shadow-y')) || 0, sB = parseFloat(window.getD(el, 'shadow-blur')) || 0, sC = window.getD(el, 'shadow-color') || '#000000', bl = parseFloat(window.getD(el, 'blur')) || 0; const blend = window.getD(el, 'blend') || 'normal';
+            styleHtml += createPropGroup("<i class='ph ph-magic-wand'></i> Efektler & Görünüm", `<div class="label-row"><span class="label-text">SAYDAMLIK (OPACITY)</span><span class="value-badge" id="val-opacity-${id}">${Math.round(opacityVal*100)}%</span></div><div style="display:flex; gap:10px; align-items:center; margin-bottom:15px;"><input type="range" min="0" max="1" step="0.05" value="${opacityVal}" style="flex:1;" oninput="window.changeFilter('${id}', 'opacity', this.value, this);" onchange="window.saveState()"><input type="number" min="0" max="1" step="0.05" value="${opacityVal}" style="width:70px; padding:8px;" oninput="window.changeFilter('${id}', 'opacity', this.value, this);" onchange="window.saveState()"></div><div class="label-text" style="margin-bottom:5px;">KARIŞIM MODU (BLEND)</div><select class="font-select" style="margin-bottom:15px;" onchange="window.changeFilter('${id}', 'blend', this.value); window.saveState();"><option value="normal" ${blend === 'normal' ? 'selected' : ''}>Normal</option><option value="multiply" ${blend === 'multiply' ? 'selected' : ''}>Çoğalt (Multiply)</option><option value="screen" ${blend === 'screen' ? 'selected' : ''}>Ekran (Screen)</option><option value="overlay" ${blend === 'overlay' ? 'selected' : ''}>Kaplama (Overlay)</option></select><div class="group-box"><div class="label-text" style="color:white; margin-bottom:10px;"><i class="ph ph-drop-half-bottom"></i> GÖLGE VE BLUR</div><div style="display:flex; gap:10px; align-items:center; margin-bottom:15px;"><input type="color" value="${sC}" oninput="window.changeFilter('${id}', 'shadow-color', this.value); this.nextElementSibling.nextElementSibling.value=this.value;" onchange="window.addRecentColor(this.value); window.saveState();" style="width:40px; height:40px; cursor:pointer; border:radius:8px; border:none; background:none;"><button class="action-btn" style="padding:10px; background:#334155; font-size:16px;" onclick="window.pickColor('${id}', 'shadow-color', '')"><i class="ph ph-drop"></i></button><input type="text" value="${sC}" style="flex:1;" oninput="window.changeFilter('${id}', 'shadow-color', this.value); this.previousElementSibling.previousElementSibling.value=this.value;" onchange="window.addRecentColor(this.value); window.saveState();"></div><div class="label-row"><span class="label-text">GÖLGE X</span><span class="value-badge" id="val-shadow-x-${id}">${sX}px</span></div><div style="display:flex; gap:10px; align-items:center; margin-bottom:15px;"><input type="range" min="-100" max="100" value="${sX}" style="flex:1;" oninput="window.changeFilter('${id}', 'shadow-x', this.value, this);" onchange="window.saveState()"><input type="number" value="${sX}" style="width:70px; padding:8px;" oninput="window.changeFilter('${id}', 'shadow-x', this.value, this);" onchange="window.saveState()"></div><div class="label-row"><span class="label-text">GÖLGE Y</span><span class="value-badge" id="val-shadow-y-${id}">${sY}px</span></div><div style="display:flex; gap:10px; align-items:center; margin-bottom:15px;"><input type="range" min="-100" max="100" value="${sY}" style="flex:1;" oninput="window.changeFilter('${id}', 'shadow-y', this.value, this);" onchange="window.saveState()"><input type="number" value="${sY}" style="width:70px; padding:8px;" oninput="window.changeFilter('${id}', 'shadow-y', this.value, this);" onchange="window.saveState()"></div><div class="label-row"><span class="label-text">GÖLGE YAYILMASI</span><span class="value-badge" id="val-shadow-blur-${id}">${sB}px</span></div><div style="display:flex; gap:10px; align-items:center; margin-bottom:15px;"><input type="range" min="0" max="100" value="${sB}" style="flex:1;" oninput="window.changeFilter('${id}', 'shadow-blur', this.value, this);" onchange="window.saveState()"><input type="number" value="${sB}" style="width:70px; padding:8px;" oninput="window.changeFilter('${id}', 'shadow-blur', this.value, this);" onchange="window.saveState()"></div><div class="label-row"><span class="label-text">NESNE BULANIKLIĞI</span><span class="value-badge" id="val-blur-${id}">${bl}px</span></div><div style="display:flex; gap:10px; align-items:center;"><input type="range" min="0" max="100" value="${bl}" style="flex:1;" oninput="window.changeFilter('${id}', 'blur', this.value, this);" onchange="window.saveState()"><input type="number" value="${bl}" style="width:70px; padding:8px;" oninput="window.changeFilter('${id}', 'blur', this.value, this);" onchange="window.saveState()"></div></div>`);
+
+            if (tag === 'text') {
+                const rawText = (window.getD(el, 'raw-text') || el.textContent).replace(/'/g, "&apos;").replace(/"/g, "&quot;"); const varName = window.getD(el, 'var-name') || "";
+                let rectOptions = `<option value="">-- Serbest Bırak (Sabitleme Yok) --</option>`; document.querySelectorAll('#canvas-inner svg rect.duzenlenebilir, #canvas-inner svg image.duzenlenebilir').forEach(r => { rectOptions += `<option value="${r.id}" ${window.getD(el, 'bound-rect') === r.id ? 'selected' : ''}>Şekil: ${r.id}</option>`; });
+                textHtml += createPropGroup("<i class='ph ph-text-t'></i> Metin ve Sabitleme", `<div style="margin-bottom:10px;"><div class="label-text" style="margin-bottom:5px;">METİN İÇERİĞİ</div><input type="text" value="${rawText}" oninput="window.changeSetting('${id}', 'raw-text', this.value); window.refreshAutoTextFields();" onchange="window.saveState()" placeholder="Metni girin..." style="margin-bottom:10px;"></div><div style="margin-bottom:10px;"><div class="label-text" style="color:#f472b6; margin-bottom:5px;">OTOMATİK DEĞİŞKEN ADI (Örn: FIYAT)</div><input type="text" value="${varName}" placeholder="Boş bırakırsanız listede görünmez" oninput="this.value = this.value.toUpperCase(); window.setD(document.getElementById('${id}'), 'var-name', this.value); window.refreshAutoTextFields();" onchange="window.saveState()" style="border-color:#f472b6;"></div><div style="padding:10px; background:rgba(16, 185, 129, 0.1); border:1px solid #10b981; border-radius:8px; margin-top:10px;"><div class="label-text" style="color:#10b981; margin-bottom:5px;"><i class="ph ph-intersect"></i> BİR KUTUYA SABİTLE (ORTALA & SIĞDIR)</div><div style="font-size:10px; color:#94a3b8; margin-bottom:8px; font-style:italic;">Seçilen kutunun tam ortasına yapışır ve taşmayı önler.</div><select class="font-select" style="border-color:#10b981; background:#0f172a;" onchange="window.changeSetting('${id}', 'bound-rect', this.value); window.autoFitText(document.getElementById('${id}')); window.updateUI(document.getElementById('${id}')); window.saveState();">${rectOptions}</select></div>`);
+                const ls = parseFloat(el.getAttribute("letter-spacing")) || 0; const currentFont = el.getAttribute("font-family") || "sans-serif"; const curve = parseFloat(window.getD(el, 'curve')) || 0; const mw = parseFloat(window.getD(el, 'max-width')) || 0; const mh = parseFloat(window.getD(el, 'max-height')) || 0; const isB = el.getAttribute('font-weight') === 'bold'; const isI = el.getAttribute('font-style') === 'italic'; const isU = el.getAttribute('text-decoration') === 'underline'; const tAlign = el.getAttribute('text-anchor') || 'middle';
+                let fontOptionsHtml = googleFonts.map(font => `<option value="${font.val}" style="font-family: ${font.val}" ${currentFont.includes(font.name) ? "selected" : ""}>${font.name}</option>`).join('');
+                textHtml += createPropGroup("<i class='ph ph-text-aa'></i> Yazı Tipi & Biçimlendirme", `<select class="font-select" style="margin-bottom:15px;" onchange="const t=document.getElementById('${id}'); t.setAttribute('font-family', this.value); t.style.fontFamily=this.value; window.applyTextCurve(t); if(window.updateEditorUI) window.updateEditorUI(t); window.saveState();">${fontOptionsHtml}</select><div style="display:flex; gap:5px; margin-bottom:15px;"><button class="action-btn ${isB?'active':''}" style="flex:1; font-size:16px;" onclick="window.applyTextStyle('${id}', 'bold')"><i class="ph ph-text-b"></i></button><button class="action-btn ${isI?'active':''}" style="flex:1; font-size:16px;" onclick="window.applyTextStyle('${id}', 'italic')"><i class="ph ph-text-italic"></i></button><button class="action-btn ${isU?'active':''}" style="flex:1; font-size:16px;" onclick="window.applyTextStyle('${id}', 'underline')"><i class="ph ph-text-underline"></i></button><div style="width:1px; background:var(--border); margin:0 5px;"></div><button class="action-btn ${tAlign==='start'?'active':''}" style="flex:1; font-size:16px;" onclick="window.applyTextStyle('${id}', 'align', 'start')"><i class="ph ph-text-align-left"></i></button><button class="action-btn ${tAlign==='middle'?'active':''}" style="flex:1; font-size:16px;" onclick="window.applyTextStyle('${id}', 'align', 'middle')"><i class="ph ph-text-align-center"></i></button><button class="action-btn ${tAlign==='end'?'active':''}" style="flex:1; font-size:16px;" onclick="window.applyTextStyle('${id}', 'align', 'end')"><i class="ph ph-text-align-right"></i></button></div><div class="action-row" style="margin-bottom:15px;"><button class="action-btn" onclick="window.applyTextStyle('${id}', 'normal')">Stil Temizle</button><button class="action-btn special" onclick="document.getElementById('${id}').removeAttribute('textLength'); document.getElementById('${id}').removeAttribute('lengthAdjust'); window.autoFitText(document.getElementById('${id}')); window.saveState(); window.renderProperties();"><i class="ph ph-arrows-out-line-horizontal"></i> ESNETMEYİ SIFIRLA</button></div><div class="action-row" style="margin-bottom:15px;"><button class="action-btn" onclick="window.applyTextStyle('${id}', 'neon')">Neon</button><button class="action-btn" onclick="window.applyTextStyle('${id}', '3d')">3D</button><button class="action-btn" onclick="window.applyTextStyle('${id}', 'hollow')">Hollow</button></div><div class="label-row"><span class="label-text">EĞRİLİK (KAVİS)</span><span class="value-badge" id="val-curve-${id}">${curve}</span></div><div style="display:flex; gap:10px; align-items:center; margin-bottom:15px;"><input type="range" min="-100" max="100" value="${curve}" style="flex:1;" oninput="window.changeSetting('${id}', 'curve', this.value, this);" onchange="window.saveState()"><input type="number" value="${curve}" style="width:70px; padding:8px;" oninput="window.changeSetting('${id}', 'curve', this.value, this);" onchange="window.saveState()"></div><div class="label-row"><span class="label-text">HARF ARALIĞI</span><span class="value-badge" id="val-letter-spacing-${id}">${ls}px</span></div><div style="display:flex; gap:10px; align-items:center; margin-bottom:15px;"><input type="range" min="-20" max="100" value="${ls}" style="flex:1;" oninput="window.changeSetting('${id}', 'letter-spacing', this.value, this);" onchange="window.saveState()"><input type="number" value="${ls}" style="width:70px; padding:8px;" oninput="window.changeSetting('${id}', 'letter-spacing', this.value, this);" onchange="window.saveState()"></div><div class="label-row"><span class="label-text">SIĞDIRMA GENİŞLİK (MAX-W)</span><span class="value-badge" id="val-max-width-${id}">${mw === 0 ? 'KAPALI' : mw+'px'}</span></div><div style="display:flex; gap:10px; align-items:center; margin-bottom:15px;"><input type="range" min="0" max="2000" value="${mw}" style="flex:1;" oninput="window.changeSetting('${id}', 'max-width', this.value, this);" onchange="window.saveState()"><input type="number" value="${mw}" style="width:70px; padding:8px;" oninput="window.changeSetting('${id}', 'max-width', this.value, this);" onchange="window.saveState()"></div><div class="label-row"><span class="label-text">SIĞDIRMA YÜKSEKLİK (MAX-H)</span><span class="value-badge" id="val-max-height-${id}">${mh === 0 ? 'KAPALI' : mh+'px'}</span></div><div style="display:flex; gap:10px; align-items:center;"><input type="range" min="0" max="2000" value="${mh}" style="flex:1;" oninput="window.changeSetting('${id}', 'max-height', this.value, this);" onchange="window.saveState()"><input type="number" value="${mh}" style="width:70px; padding:8px;" oninput="window.changeSetting('${id}', 'max-height', this.value, this);" onchange="window.saveState()"></div>`);
+            } else if (isWeather) {
+                const city = window.getD(el, 'city') || 'Istanbul';
+                const font = el.getAttribute('font-family') || 'sans-serif';
+                let fontOptionsHtml = googleFonts.map(f => `<option value="${f.val}" style="font-family: ${f.val}" ${font.includes(f.name) ? "selected" : ""}>${f.name}</option>`).join('');
+                
+                widgetHtml += createPropGroup("<i class='ph ph-cloud-sun'></i> Hava Durumu Ayarları", `
+                <div class="label-text" style="margin-bottom:5px;">ŞEHİR ADI</div>
+                <input type="text" value="${city}" oninput="window.changeSetting('${id}', 'city', this.value);" placeholder="Örn: Istanbul" style="margin-bottom:15px;">
+                <div class="label-text" style="margin-bottom:5px;">YAZI TİPİ</div>
+                <select class="font-select" onchange="const t=document.getElementById('${id}'); t.setAttribute('font-family', this.value); t.style.fontFamily=this.value; window.updateWeatherDisplay(t); window.saveState();">${fontOptionsHtml}</select>
+                <button class="action-btn active" style="width:100%; margin-top:15px;" onclick="window.updateWeatherDisplay(document.getElementById('${id}'));"><i class="ph ph-arrows-clockwise"></i> VERİYİ YENİLE</button>
+                `);
+            } else if (isCurrency) {
+                const curs = window.getD(el, 'currencies') || 'USD,EUR,GBP';
+                const font = el.getAttribute('font-family') || 'sans-serif';
+                let fontOptionsHtml = googleFonts.map(f => `<option value="${f.val}" style="font-family: ${f.val}" ${font.includes(f.name) ? "selected" : ""}>${f.name}</option>`).join('');
+
+                widgetHtml += createPropGroup("<i class='ph ph-currency-circle-dollar'></i> Döviz Ayarları", `
+                <div class="label-text" style="margin-bottom:5px;">GÖSTERİLECEK KURLAR (Virgülle Ayırın)</div>
+                <input type="text" value="${curs}" oninput="window.changeSetting('${id}', 'currencies', this.value.toUpperCase());" placeholder="USD,EUR,GBP" style="margin-bottom:15px;">
+                <div class="label-text" style="margin-bottom:5px;">YAZI TİPİ</div>
+                <select class="font-select" onchange="const t=document.getElementById('${id}'); t.setAttribute('font-family', this.value); t.style.fontFamily=this.value; window.updateCurrencyDisplay(t); window.saveState();">${fontOptionsHtml}</select>
+                <div style="font-size:10px; color:#94a3b8; font-style:italic;">Desteklenen: USD, EUR, GBP, CHF, JPY, SAR vb.</div>
+                <button class="action-btn active" style="width:100%; margin-top:15px;" onclick="window.updateCurrencyDisplay(document.getElementById('${id}'));"><i class="ph ph-arrows-clockwise"></i> VERİYİ YENİLE</button>
+                `);
+            } else if (isVideo) {
+                const url = window.getD(el, 'video-url') || '';
+                const isMuted = window.getD(el, 'video-muted') === 'true';
+                const isLoop = window.getD(el, 'video-loop') === 'true';
+                videoHtml += createPropGroup("<i class='ph ph-video-camera'></i> Medya Ayarları", `
+                <div class="label-text" style="margin-bottom:5px;">VİDEO LİNKİ (MP4 / M3U8 / YOUTUBE)</div>
+                <input type="text" value="${url}" oninput="window.changeSetting('${id}', 'video-url', this.value);" placeholder="Örn: https://youtu.be/..." style="margin-bottom:15px;">
+                <div class="action-row">
+                    <button class="action-btn ${isMuted ? 'active' : ''}" onclick="window.changeSetting('${id}', 'video-muted', '${!isMuted}'); window.renderProperties(); window.saveState();">
+                        <i class="ph ${isMuted ? 'ph-speaker-slash' : 'ph-speaker-high'}"></i> ${isMuted ? 'SESSİZ' : 'SESLİ'}
+                    </button>
+                    <button class="action-btn ${isLoop ? 'active' : ''}" onclick="window.changeSetting('${id}', 'video-loop', '${!isLoop}'); window.renderProperties(); window.saveState();">
+                        <i class="ph ph-arrows-clockwise"></i> ${isLoop ? 'DÖNGÜ (AÇIK)' : 'DÖNGÜ (KAPALI)'}
+                    </button>
+                </div>
+                `);
+            }
+
+            codeHtml += createPropGroup("<i class='ph ph-file-code'></i> Canlı SVG Kodu", `<textarea id="raw-svg-code" style="width:100%; height:250px; background:#000; color:var(--accent); font-family:monospace; font-size:11px; padding:10px; border-radius:8px; border:1px solid var(--border); resize:vertical;" onchange="window.saveState()">${el.outerHTML.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</textarea><button class="action-btn active" style="width:100%; margin-top:10px; padding:12px;" onclick="window.applyRawCode('${id}')"><i class="ph ph-terminal-window"></i> KODU UYGULA</button>`);
+            
+            f.innerHTML = headerHtml + tabsNav + 
+                `<div id="tab-layout" class="tab-content ${window.activeTabId === 'tab-layout' ? 'active' : ''}">${layoutHtml}</div>` + 
+                `<div id="tab-style" class="tab-content ${window.activeTabId === 'tab-style' ? 'active' : ''}">${styleHtml}</div>` + 
+                (isText ? `<div id="tab-text" class="tab-content ${window.activeTabId === 'tab-text' ? 'active' : ''}">${textHtml}</div>` : '') + 
+                (isVideo ? `<div id="tab-video" class="tab-content ${window.activeTabId === 'tab-video' ? 'active' : ''}">${videoHtml}</div>` : '') + 
+                (isWidget ? `<div id="tab-widget" class="tab-content ${window.activeTabId === 'tab-widget' ? 'active' : ''}">${widgetHtml}</div>` : '') +
+                `<div id="tab-code" class="tab-content ${window.activeTabId === 'tab-code' ? 'active' : ''}">${codeHtml}</div>`;
+        } catch(err) { f.innerHTML = `<div style="color:var(--error); padding:20px; font-size:12px; text-align:center;"><i class="ph ph-warning-circle" style="font-size:32px; display:block; margin-bottom:10px;"></i> Özellikler yüklenemedi.</div>`; }
+    };
+
+    window.applyRawCode = function(id) {
+        try { let p = new DOMParser(); let code = document.getElementById('raw-svg-code').value.trim(); let n; if (!code.toLowerCase().startsWith('<svg')) { let d = p.parseFromString('<svg xmlns="http://www.w3.org/2000/svg">' + code + '</svg>', 'image/svg+xml'); n = d.documentElement.firstElementChild; } else { let d = p.parseFromString(code, 'image/svg+xml'); n = d.documentElement; } if(!n) throw new Error('Geçersiz SVG'); let o = document.getElementById(id); o.replaceWith(n); window.selectedEl = n; if(!window.selectedEl.id) window.selectedEl.id='el_'+Date.now(); if(!window.selectedEl.classList.contains('duzenlenebilir')) window.selectedEl.classList.add('duzenlenebilir'); window.saveState(); window.setupLayers(); window.updateUI(window.selectedEl); window.renderEditor(); window.showToast("Özel Kod Uygulandı!"); } catch(err) { window.showToast('Lütfen geçerli bir SVG kodu girin.', 'error'); }
     };
 
     window.initEngine = function(svg) {
