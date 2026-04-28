@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>SVG Pro Studio | Ultimate Sürüm V49 (Gelişmiş Medya & UI Kulp)</title>
+    <title>SVG Pro Studio | Ultimate Sürüm V49 (Gelişmiş Medya & Font)</title>
     <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&family=Merriweather:wght@400;700&family=Montserrat:wght@400;700;800&family=Nunito:wght@400;700&family=Open+Sans:wght@400;700&family=Oswald:wght@400;700&family=Pacifico&family=Playfair+Display:wght@400;700&family=Poppins:wght@400;700&family=Raleway:wght@400;700&family=Roboto:wght@400;700&family=Ubuntu:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     
@@ -178,7 +178,7 @@
         </div>
         <div id="status-bar">
             <div id="status-count">Nesne Sayısı: 0</div>
-            <div>SVG Pro Studio Ultimate V49 (Gelişmiş Medya & UI Kulp)</div>
+            <div>SVG Pro Studio Ultimate V49 (Stabil Medya & UI Kulp)</div>
             <div id="status-time">Son Kayıt: Bekleniyor...</div>
         </div>
     </div>
@@ -204,6 +204,7 @@
                     
                     <span class="label-text">Ekranda Kalma Süresi (ms)</span>
                     <input type="number" id="slide-time" value="5000">
+                    <div style="font-size:10px; color:#f472b6; margin-top:3px; margin-bottom:10px; font-style:italic;">* Eğer videonuz varsa, süreyi videonun uzunluğuna göre ayarlayın (örn: 15 saniye için 15000)</div>
                     
                     <span class="label-text">Yayın Saat Aralığı</span>
                     <div style="display:flex; gap:5px;">
@@ -310,6 +311,7 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getDatabase, ref, set, get, onValue, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
+    // ⚠️ DİKKAT: KENDİ FIREBASE BİLGİLERİNİ BURAYA YAPIŞTIR
     const firebaseConfig = {
         apiKey: "AIzaSyCFBrHqXdRVdbtaqyKCQAgJ4U8no9cDIF8",
         authDomain: "svg-pro-studio.firebaseapp.com",
@@ -429,7 +431,16 @@
     let isDrawingMode = false, isDrawing = false, currentPath = null, pathData = "", isDraggingGuide = false, currentGuide = null;
     let draggedLayerId = null;
 
-    const googleFonts = [{ name: "Varsayılan", val: "sans-serif" }, { name: "Roboto", val: "'Roboto', sans-serif" }, { name: "Montserrat", val: "'Montserrat', sans-serif" }, { name: "Poppins", val: "'Poppins', sans-serif" }, { name: "Oswald", val: "'Oswald', sans-serif" }, { name: "Pacifico", val: "'Pacifico', cursive" }];
+    // YAZI TİPİ MENÜSÜNE TIMES NEW ROMAN EKLENDİ
+    const googleFonts = [
+        { name: "Varsayılan", val: "sans-serif" }, 
+        { name: "Times New Roman", val: "'Times New Roman', Times, serif" },
+        { name: "Roboto", val: "'Roboto', sans-serif" }, 
+        { name: "Montserrat", val: "'Montserrat', sans-serif" }, 
+        { name: "Poppins", val: "'Poppins', sans-serif" }, 
+        { name: "Oswald", val: "'Oswald', sans-serif" }, 
+        { name: "Pacifico", val: "'Pacifico', cursive" }
+    ];
 
     window.getSvgDim = function() {
         const svg = document.querySelector('#canvas-inner svg'); let w = 1920, h = 1080;
@@ -663,7 +674,7 @@
         svg.appendChild(rect); window.selectedEl = rect; window.saveState(); window.setupLayers(); window.updateUI(rect); window.renderEditor();
     };
 
-    // 🎥 VİDEO VE YOUTUBE MOTORU
+    // 🎥 YENİ: VİDEO YOUTUBE VE M3U8 MOTORU
     window.addVideo = function() {
         const svg = document.querySelector('#canvas-inner svg'); if(!svg) return;
         const dim = window.getSvgDim();
@@ -702,15 +713,18 @@
             const muteParam = window.getD(el, 'video-muted') === 'true' ? '&mute=1' : '';
             const loopParam = window.getD(el, 'video-loop') === 'true' ? `&loop=1&playlist=${ytId}` : '';
             
-            innerHTMLString = `<iframe style="width:100%; height:100%; pointer-events:none; border:none;" src="https://www.youtube.com/embed/${ytId}?autoplay=1&controls=0&enablejsapi=1${muteParam}${loopParam}" allow="autoplay; encrypted-media"></iframe>`;
+            innerHTMLString = `<iframe style="width:100%; height:100%; pointer-events:none; border:none; background:#000;" src="https://www.youtube.com/embed/${ytId}?autoplay=1&controls=0&disablekb=1&fs=0&modestbranding=1&playsinline=1&rel=0&showinfo=0&enablejsapi=1&iv_load_policy=3${muteParam}${loopParam}&origin=${window.location.origin}" allow="autoplay; encrypted-media"></iframe>`;
         } else if (isHLS) {
             const vidId = "v_" + Date.now() + Math.floor(Math.random()*1000);
-            innerHTMLString = `<video id="${vidId}" style="width:100%; height:100%; object-fit:cover; pointer-events:none;" autoplay playsinline ${muted} ${loop}></video>`;
+            innerHTMLString = `<video id="${vidId}" style="width:100%; height:100%; object-fit:cover; pointer-events:none; background:#000;" autoplay playsinline ${muted} ${loop}></video>`;
             
             setTimeout(() => {
                 const vEl = document.getElementById(vidId);
                 if (vEl && window.Hls && Hls.isSupported()) {
-                    const hls = new Hls();
+                    const hls = new Hls({
+                        maxBufferLength: 60,
+                        liveSyncDurationCount: 3
+                    });
                     hls.loadSource(url);
                     hls.attachMedia(vEl);
                 } else if (vEl && vEl.canPlayType('application/vnd.apple.mpegurl')) {
@@ -718,7 +732,7 @@
                 }
             }, 100);
         } else {
-            innerHTMLString = `<video style="width:100%; height:100%; object-fit:cover; pointer-events:none;" src="${url}" autoplay playsinline ${muted} ${loop}></video>`;
+            innerHTMLString = `<video style="width:100%; height:100%; object-fit:cover; pointer-events:none; background:#000;" src="${url}" autoplay playsinline ${muted} ${loop}></video>`;
         }
         
         el.innerHTML = `<div xmlns="http://www.w3.org/1999/xhtml" style="width:100%; height:100%; background:#000; overflow:hidden;">${innerHTMLString}</div>`;
@@ -1217,7 +1231,6 @@
                     const angle = Math.atan2(p.y - (bbox.y + bbox.height/2), p.x - (bbox.x + bbox.width/2)) * (180 / Math.PI) + 90; 
                     window.setD(rotatingEl, 'angle', angle); window.applyTransforms(rotatingEl); window.updateUI(rotatingEl);
                 } 
-                // --- V49 KÖŞE YUVARLAMA KULPU (SQUIRCLE) HAREKET MANTIĞI ---
                 else if (radiusingEl && (radiusingEl.tagName === "image" || radiusingEl.tagName === "rect" || radiusingEl.classList.contains('video-obj'))) {
                     isModified = true; 
                     let delta = Math.max(dx, dy); 
@@ -1226,7 +1239,6 @@
                     window.applyShapeMask(radiusingEl); 
                     window.updateUI(radiusingEl);
                     
-                    // Yandaki menüyü canlı güncelle
                     let badge = document.getElementById('val-rx-' + radiusingEl.id);
                     if(badge) badge.innerText = Math.round(newRx) + 'px';
                     document.querySelectorAll(`input[oninput*="changeSetting('${radiusingEl.id}', 'rx'"]`).forEach(inp => {
@@ -1302,7 +1314,6 @@
         const rotY = b.y - 40; const line = document.createElementNS("http://www.w3.org/2000/svg", "line"); line.setAttribute("x1", b.x + b.width/2); line.setAttribute("y1", b.y); line.setAttribute("x2", b.x + b.width/2); line.setAttribute("y2", rotY); line.setAttribute("stroke", "var(--handle-rotate)"); line.setAttribute("stroke-width", "2"); g.appendChild(line);
         const rotH = document.createElementNS("http://www.w3.org/2000/svg", "circle"); rotH.setAttribute("cx", b.x + b.width/2); rotH.setAttribute("cy", rotY); rotH.setAttribute("r", s/2.5); rotH.setAttribute("class", "handle handle-rotate"); rotH.dataset.id = el.id; g.appendChild(rotH);
 
-        // --- V49: RADIUS / KÖŞE YUVARLAMA KULPU (SQUIRCLE) ---
         if (el.tagName === 'rect' || el.tagName === 'image' || el.classList.contains('video-obj')) {
             const currentRx = parseFloat(window.getD(el, 'rx')) || 0;
             const offsetDist = Math.max(15, currentRx);
