@@ -78,8 +78,14 @@ onAuthStateChanged(auth, (user) => {
     }
 });
 
-// 🛡️ PERSONEL KALKANI: İskeleti bozmaz, sadece yetkileri ustaca gizler (SON VERSİYON)
+// 🛡️ PERSONEL KALKANI: Fonksiyon İptali ve Lazerli Temizlik (SON VERSİYON)
 function aktifEtPersonelModu() {
+    // 1. TIKLAMA FONKSİYONLARINI ÖLDÜR (Menü Fırlaması İmkansız Hale Gelir)
+    window.renderProperties = function() { /* İçi BOŞ! Özellik paneli asla açılamaz. */ };
+    window.updateUI = function() { /* Mavi seçim çizgileri asla çizilmez. */ };
+    window.selectedEl = null;
+
+    // 2. GÖRSEL KALKAN (Tıklamaları Engelle)
     let kalkan = document.getElementById('personel-kalkan');
     if (!kalkan) {
         kalkan = document.createElement('style');
@@ -87,65 +93,49 @@ function aktifEtPersonelModu() {
         document.head.appendChild(kalkan);
     }
     kalkan.innerHTML = `
-        /* 1. ÖNİZLEME EKRANI KİLİDİ (Asla Tıklanamaz, Menü Fırlamaz) */
-        #svg-wrapper { pointer-events: none !important; user-select: none !important; }
+        #svg-wrapper, #canvas-inner, svg { pointer-events: none !important; user-select: none !important; }
         #control-layer, #context-menu { display: none !important; }
-
-        /* 2. SOL/SAĞ PANELDEKİ "İSTENMEYEN" ARAÇLARI GİZLE */
-        /* Nesne ekleme araçları ve slayt silme/ekleme butonları yok olur */
-        #btn-add-text, #btn-add-rect, #btn-add-svg, #btn-add-video, #btn-add-rss, 
-        #btn-add-wth, #btn-add-cur, 
-        button[onclick*="addNewSlide"], button[onclick*="deleteSlide"] { 
-            display: none !important; 
-        }
-
-        /* Tüm detaylı ayarlar (Katmanlar, Tuval, Efektler vb.) gizlenir */
-        #layers-list, #device-list, .tabs-header, .prop-group,
-        #tab-layout, #tab-style, #tab-text, #tab-video, #tab-widget, #tab-code,
-        .bottom-settings, #canvas-settings, 
-        #slide-time, #slide-effect, #start-time, #end-time, .day-btn {
-            display: none !important;
-        }
-
-        /* Başlıkları Temizle (Sadece lazım olanlar kalsın) */
-        h3:has(.ph-layers), h3:has(.ph-monitor), h3:has(.ph-clock), 
-        h3:has(.ph-palette), h3:has(.ph-paint-brush-broad), h3:has(.ph-squares-four) {
-            display: none !important;
-        }
-
-        /* Yanlışlıkla Vektör Ayarları fırlarsa içini boşalt */
-        .action-row, .delete-btn { display: none !important; }
-
-        /* 3. GÜVENLİ BÖLGE: BUNLAR KESİNLİKLE AÇIK VE KULLANILABİLİR KALACAK */
-        /* Slayt Seçici */
-        #file-selector { display: block !important; pointer-events: auto !important; opacity: 1 !important; }
-        
-        /* Hızlı Metin Kutuları */
-        #auto-fields-wrapper, #auto-fields-list { 
-            display: block !important; 
-            pointer-events: auto !important; 
-            opacity: 1 !important; 
-            visibility: visible !important; 
-        }
-        
-        /* Yayına Gönder Butonu */
-        button[onclick*="saveData"] { 
-            display: flex !important; 
-            pointer-events: auto !important; 
-            opacity: 1 !important; 
-            visibility: visible !important; 
-        }
     `;
 
-    // Seçimleri temizle ki tıklanmış bir şey varsa kapansın
-    window.selectedEl = null;
-    const ctrl = document.getElementById('control-layer');
-    if(ctrl) ctrl.innerHTML = "";
-    window.closeCtx();
-    
-    // Metin listesini yenile
+    // 3. LAZERLİ TEMİZLİK: Ekranda inatla duran başlıkları metinlerinden bulup yok et!
+    setTimeout(() => {
+        const yokEdilecekler = [
+            "AKILLI ZAMANLAMA", 
+            "AKTİF CİHAZLAR", 
+            "TUVAL AYARLARI", 
+            "NESNE EKLE", 
+            "KATMANLAR",
+            "VEKTÖR AYARLARI"
+        ];
+        
+        // Ekrandaki tüm elemanları tara
+        document.querySelectorAll('*').forEach(el => {
+            // Sadece başlık olabilecek elemanlara odaklan
+            if(el.children.length <= 2 && el.innerText) {
+                const text = el.innerText.toUpperCase();
+                yokEdilecekler.forEach(hedef => {
+                    if (text.includes(hedef)) {
+                        // 1. O başlığı tamamen sil
+                        el.style.display = 'none';
+                        
+                        // 2. Başlığın hemen altındaki içeriği (Örn: 1920x1080 kutuları veya listeler) de sil
+                        let altEleman = el.nextElementSibling;
+                        // Silerken kazara "Hızlı Metin" listemizi silmemek için güvenlik önlemi:
+                        if(altEleman && 
+                           altEleman.id !== 'auto-fields-list' && 
+                           altEleman.id !== 'auto-fields-wrapper' && 
+                           !altEleman.innerText.includes('HIZLI METİN')) {
+                            altEleman.style.display = 'none';
+                        }
+                    }
+                });
+            }
+        });
+    }, 200);
+
+    // Hızlı metinleri tazele
     window.refreshAutoTextFields();
-    window.showToast("Personel Modu Aktif: Sadece metinleri düzenleyebilirsiniz.", "warning");
+    window.showToast("Personel Modu: Sadece hızlı metin girebilirsiniz.", "success");
 }
 
 function kapatPersonelModu() {
