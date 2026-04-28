@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Canlı Yayın Ekranı Pro V49</title>
     
-    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&family=Merriweather:wght@400;700&family=Montserrat:wght@400;700;800&family=Nunito:wght@400;700&family=Open+Sans:wght@400;700&family=Oswald:wght@400;700&family=Pacifico&family=Playfair+Display:wght@400;700&family=Poppins:wght@400;700&family=Raleway:wght@400;700&family=Ubuntu:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&family=Merriweather:wght@400;700&family=Montserrat:wght@400;700;800&family=Nunito:wght@400;700&family=Open+Sans:wght@400;700&family=Oswald:wght@400;700&family=Pacifico&family=Playfair+Display:wght@400;700&family=Poppins:wght@400;700&family=Raleway:wght@400;700&family=Roboto:wght@400;700&family=Ubuntu:wght@400;700&display=swap" rel="stylesheet">
     
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     
@@ -17,6 +17,7 @@
         
         #viewer-container { 
             position: absolute; inset: 0; transform: translateZ(0); backface-visibility: hidden; transform-style: preserve-3d; perspective: 1000px; 
+            background: #000;
         }
         
         .slide-layer { 
@@ -28,6 +29,9 @@
         .slide-layer.active { opacity: 1; pointer-events: all; z-index: 10; }
         .slide-layer svg { width: 100vw; height: 100vh; object-fit: contain; display: block; }
         .slide-layer text { text-rendering: geometricPrecision; }
+
+        /* Beyaz Parlamaları Engelleyen Katı CSS Kuralı */
+        iframe, video { background-color: #000 !important; }
 
         /* 🌟 HABER BANDI ANİMASYONU 🌟 */
         @keyframes scrollNews { to { transform: translateX(-100%); } }

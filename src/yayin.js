@@ -34,7 +34,7 @@ setInterval(() => {
     const currentPlaying = slideKeys[currentIndex] || "Bekleniyor...";
     set(ref(db, 'sahne/cihazlar/' + deviceId), {
         lastSeen: Date.now(),
-        version: "V49-WIDGET",
+        version: "V49-WIDGET-ACTIVE",
         playing: currentPlaying.replace(/_/g, ' ').toUpperCase()
     }).catch(() => {});
 }, 5000);
@@ -75,18 +75,21 @@ setInterval(async () => {
     activeLayer.querySelectorAll('.weather-widget').forEach(async wth => {
         const city = wth.getAttribute('data-city') || 'Istanbul';
         const theme = wth.getAttribute('data-theme') || 'dark';
+        const txtColor = wth.getAttribute('data-text-color') || '#ffffff';
+        const font = wth.getAttribute('font-family') || 'sans-serif';
         try {
             const res = await fetch(`https://wttr.in/${encodeURIComponent(city)}?format=j1`);
             const data = await res.json();
             const temp = data.current_condition[0].temp_C;
             const desc = data.current_condition[0].lang_tr?.[0]?.value || data.current_condition[0].weatherDesc[0].value;
             const engDesc = data.current_condition[0].weatherDesc[0].value;
-            const iconMap = { "Sunny": "☀️", "Clear": "🌤️", "Partly cloudy": "⛅", "Cloudy": "☁️", "Overcast": "☁️", "Mist": "🌫️", "Patchy rain possible": "🌦️", "Light rain": "🌧️", "Heavy rain": "🌧️", "Light snow": "🌨️", "Heavy snow": "❄️", "Moderate or heavy rain with thunder": "⛈️" };
+            const iconMap = { "Sunny": "☀️", "Clear": "🌙", "Partly cloudy": "⛅", "Cloudy": "☁️", "Overcast": "☁️", "Mist": "🌫️", "Patchy rain possible": "🌦️", "Light rain": "🌧️", "Heavy rain": "🌧️", "Light snow": "🌨️", "Heavy snow": "❄️", "Moderate or heavy rain with thunder": "⛈️", "Fog": "🌫️" };
             const emoji = iconMap[engDesc] || "🌤️";
-            const bg = theme === 'dark' ? 'rgba(0,0,0,0.7)' : 'rgba(255,255,255,0.8)';
-            const color = theme === 'dark' ? '#fff' : '#000';
             
-            wth.innerHTML = `<div xmlns="http://www.w3.org/1999/xhtml" style="width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; background:${bg}; color:${color}; border-radius:20px; font-family:sans-serif; backdrop-filter:blur(10px); padding:20px; box-sizing:border-box;"><div style="font-size:1.5em; font-weight:bold; margin-bottom:5px; text-transform:uppercase; letter-spacing:2px;">${city}</div><div style="display:flex; align-items:center; gap:15px;"><span style="font-size:4em;">${emoji}</span><span style="font-size:4.5em; font-weight:800;">${temp}°</span></div><div style="font-size:1.2em; opacity:0.8; margin-top:5px;">${desc}</div></div>`;
+            const inner = wth.querySelector('.weather-inner');
+            if (inner) {
+                inner.innerHTML = `<div style="display:flex; flex-direction:column; align-items:flex-start; justify-content:center;"><div style="font-size: 25cqh; font-weight:800; letter-spacing:0.05em; margin-bottom: 2cqh; line-height: 1;">${city.toUpperCase()}</div><div style="font-size: 12cqh; font-weight:400; opacity:0.8; line-height: 1;">${desc}</div></div><div style="display:flex; align-items:center; gap: 3cqw;"><span style="font-size: 40cqh; line-height: 1;">${emoji}</span><span style="font-size: 45cqh; font-weight:800; line-height: 1;">${temp}°</span></div>`;
+            }
         } catch(e) {}
     });
 
@@ -104,9 +107,10 @@ setInterval(async () => {
                 else if(data.rates[c]) val = (tryRate / data.rates[c]).toFixed(2);
                 let flag = "💰";
                 if(c==='USD') flag="🇺🇸"; if(c==='EUR') flag="🇪🇺"; if(c==='GBP') flag="🇬🇧"; if(c==='CHF') flag="🇨🇭"; if(c==='JPY') flag="🇯🇵"; if(c==='SAR' || c==='AED') flag="🇸🇦";
-                htmlBlocks += `<div style="display:flex; flex-direction:column; align-items:center; background:rgba(255,255,255,0.1); padding:15px; border-radius:10px; min-width:100px;"><span style="font-size:1.5em; margin-bottom:5px;">${flag}</span><span style="font-size:1em; color:#10b981; font-weight:bold;">${c}</span><span style="font-size:1.6em; font-weight:800;">₺${val}</span></div>`;
+                htmlBlocks += `<div style="display:flex; flex-direction:column; align-items:center; background:rgba(255,255,255,0.15); padding:3cqh 2cqw; border-radius:1cqw; min-width:25cqw;"><span style="font-size:15cqh; margin-bottom:1cqh; line-height:1;">${flag}</span><span style="font-size:10cqh; color:var(--accent); font-weight:bold; line-height:1;">${c}</span><span style="font-size:16cqh; font-weight:800; line-height:1;">₺${val}</span></div>`;
             });
-            cur.innerHTML = `<div xmlns="http://www.w3.org/1999/xhtml" style="width:100%; height:100%; display:flex; align-items:center; justify-content:space-evenly; background:rgba(0,0,0,0.7); color:#fff; border-radius:15px; font-family:sans-serif; backdrop-filter:blur(10px); padding:10px; box-sizing:border-box;">${htmlBlocks}</div>`;
+            const inner = cur.querySelector('.currency-inner');
+            if (inner) inner.innerHTML = htmlBlocks;
         } catch(e) {}
     });
 }, 300000); // 300,000 ms = 5 dakika.
