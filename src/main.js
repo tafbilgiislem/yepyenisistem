@@ -79,23 +79,16 @@ onAuthStateChanged(auth, (user) => {
 });
 
 function aktifEtPersonelModu() {
-    // 👑 PERSONELİN SADECE GÖREBİLECEĞİ SLAYTIN ADI:
-    // (Boşluk yerine alt çizgi ve küçük harf kullan, Örn: slayt_svg)
+    // 👑 PERSONEL SLAYTI (Hangi slaytı göreceklerini buraya yaz)
     const PERSONEL_SLAYTI = "slayt_svg";
 
-    // 1. TIKLAMALARI VE GEREKSİZ EKRAN ÇİZİMLERİNİ DURDUR
+    // 1. TIKLAMA ÖZELLİKLERİNİ GÜVENLİ İPTAL ET (Sistemi çökertmez)
     window.renderProperties = function() {}; 
     window.updateUI = function() {};
     window.selectedEl = null;
     if(window.closeCtx) window.closeCtx();
 
-    // 🚀 İŞTE BURASI YENİ: O ortadaki "Düzenlemek için nesne seçin" yazısını tamamen engeller!
-    window.renderEditor = function() { 
-        // Sadece hızlı metinleri günceller, uyarı yazısını ve katmanları çizmez.
-        window.refreshAutoTextFields(); 
-    };
-
-    // 2. ÖNİZLEME KALKANI VE CSS GİZLEMELERİ
+    // 2. GÜVENLİ CSS KALKANI (O uyarı yazısını ve sahne tıklamalarını yokediyoruz)
     let kalkan = document.getElementById('personel-kalkan');
     if (!kalkan) {
         kalkan = document.createElement('style');
@@ -103,13 +96,15 @@ function aktifEtPersonelModu() {
         document.head.appendChild(kalkan);
     }
     kalkan.innerHTML = `
-        /* Sahneye tıklanmayı engelle */
+        /* Sahneye tıklanmayı tamamen kes */
         #svg-wrapper { pointer-events: none !important; user-select: none !important; }
         #control-layer, #context-menu { display: none !important; }
         
-        /* Garanti olsun diye uyarı yazısının div'ini CSS ile de gizleyelim */
+        /* 🚀 İŞTE BURASI: O "Düzenlemek için nesne seçin" yazısını anında yok eder! */
         #editor-fields > div[style*="text-align:center"] { display: none !important; }
-        .ph-cursor-click { display: none !important; }
+        
+        /* Genel ayar ID'leri */
+        #layers-list, #device-list, .tabs-header, .prop-group, #canvas-settings { display: none !important; }
     `;
 
     // 3. SAĞ ALT KÖŞEYE YAYINA GÖNDER BUTONU
@@ -126,15 +121,15 @@ function aktifEtPersonelModu() {
         document.body.appendChild(gonderBtn);
     }
 
-    // 4. PANELLERİ VE SLAYTLARI KISITLAYAN ANA DÖNGÜ
+    // 4. ÇOK GÜVENLİ TARAYICI VE SLAYT KİLİDİ (Sistemi asla kasmaz)
     setInterval(() => {
         // --- A) SLAYT KİLİDİ ---
         let selector = document.getElementById('file-selector');
         if (selector && selector.options.length > 1) {
             let izinliSlayt = Array.from(selector.options).find(opt => opt.value === PERSONEL_SLAYTI);
-            selector.innerHTML = ''; // Listeyi temizle
+            selector.innerHTML = ''; 
             if (izinliSlayt) {
-                selector.appendChild(izinliSlayt); // Sadece izinliyi ekle
+                selector.appendChild(izinliSlayt);
                 selector.value = PERSONEL_SLAYTI;  
                 if(window.loadSlide) window.loadSlide(); 
             } else {
@@ -142,52 +137,34 @@ function aktifEtPersonelModu() {
             }
         }
 
-        // --- B) GİZLİ PANELLERİ TEMİZLEME ---
-        const hedefler = [
-            "AKILLI ZAMANLAMA", 
-            "AKTİF CİHAZLAR (TAKİP)", 
-            "TUVAL AYARLARI", 
-            "NESNE EKLE", 
-            "KATMANLAR", 
-            "VEKTÖR AYARLARI"
-        ];
-
-        document.querySelectorAll('*').forEach(el => {
-            if (el.children.length <= 2 && el.textContent) {
-                let metin = el.textContent.trim().toUpperCase();
-                if (metin.length > 5 && metin.length < 35) {
-                    hedefler.forEach(hedef => {
-                        if (metin.includes(hedef)) {
-                            el.style.setProperty('display', 'none', 'important');
-                            if (el.nextElementSibling) {
-                                el.nextElementSibling.style.setProperty('display', 'none', 'important');
-                            }
-                        }
-                    });
+        // --- B) PANELLERİ YOK ET (Sadece başlık etiketlerine bakar, beyaz ekran yapmaz!) ---
+        const hedefler = ["AKILLI ZAMANLAMA", "AKTİF CİHAZLAR", "TUVAL AYARLARI", "NESNE EKLE", "KATMANLAR", "VEKTÖR AYARLARI"];
+        
+        document.querySelectorAll('h1, h2, h3, h4, h5, h6').forEach(baslik => {
+            let metin = baslik.textContent.trim().toUpperCase();
+            hedefler.forEach(hedef => {
+                if (metin.includes(hedef)) {
+                    baslik.style.display = 'none'; // Başlığı sil
+                    // Başlığın altındaki ayar kutusunu da sil (Hızlı Metin ise dokunma)
+                    if (baslik.nextElementSibling && !baslik.nextElementSibling.textContent.toUpperCase().includes("HIZLI METİN")) {
+                        baslik.nextElementSibling.style.display = 'none';
+                    }
                 }
-            }
-            
-            // Eğer uyarı metni hala bir şekilde ekrandaysa onu da yok et
-            if (el.textContent && el.textContent.includes("Düzenlemek için sahneden")) {
-                el.style.setProperty('display', 'none', 'important');
-            }
+            });
         });
 
-        // --- C) ESKİ BUTONLARI GİZLEME ---
+        // --- C) ESKİ YAYINLA BUTONLARINI GİZLE ---
         document.querySelectorAll('button').forEach(btn => {
             let btnMetin = btn.textContent.toUpperCase();
             if (btn.id !== 'personel-yayinla-btn' && (btnMetin.includes('YAYINLA') || btnMetin.includes('İNDİR'))) {
-                btn.style.setProperty('display', 'none', 'important');
-            }
-            if (btn.hasAttribute('onclick') && (btn.getAttribute('onclick').includes('addNewSlide') || btn.getAttribute('onclick').includes('deleteSlide'))) {
-                btn.style.setProperty('display', 'none', 'important');
+                btn.style.display = 'none';
             }
         });
 
-    }, 300); 
-    
-    // Açılışta ekstra temizlik
-    setTimeout(() => { if(window.renderEditor) window.renderEditor(); }, 100);
+    }, 500); // 500ms tarama hızı sistem için tamamen zararsızdır.
+
+    // Otomatik Hızlı Metin yenilemesi (Eski güvenli yöntem)
+    setTimeout(() => { if(window.refreshAutoTextFields) window.refreshAutoTextFields(); }, 300);
 }
 
 function kapatPersonelModu() {
