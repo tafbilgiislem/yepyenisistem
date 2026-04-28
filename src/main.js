@@ -78,88 +78,86 @@ onAuthStateChanged(auth, (user) => {
     }
 });
 
-// 🛡️ PERSONEL KALKANI: Beyaz ekran riskini %0'a indiren en güvenli versiyon
+// 🛡️ PERSONEL KALKANI: Başlık Avcısı ve Yeni Buton (GARANTİ ÇÖZÜM)
 function aktifEtPersonelModu() {
-    // 1. Tıklamada menülerin (Vektör Ayarları vs) fırlamasını sağlayan fonksiyonları BOŞALT
+    // 1. TIKLAMA FONKSİYONLARINI İPTAL ET (Vektör Ayarları ASLA Açılamaz)
     window.renderProperties = function() {}; 
     window.updateUI = function() {};
     window.selectedEl = null;
+    if(window.closeCtx) window.closeCtx();
 
-    // 2. GÜVENLİ CSS KALKANI
+    // 2. ÖNİZLEME KİLİDİ (Fareyi devredışı bırak)
     let kalkan = document.getElementById('personel-kalkan');
     if (!kalkan) {
         kalkan = document.createElement('style');
         kalkan.id = 'personel-kalkan';
         document.head.appendChild(kalkan);
     }
-    
     kalkan.innerHTML = `
-        /* -- ÖNİZLEME EKRANINI KORU (Tıklamaları yoksay) -- */
-        #svg-wrapper { pointer-events: none !important; user-select: none !important; }
+        #svg-wrapper, #canvas-inner, svg { pointer-events: none !important; user-select: none !important; }
         #control-layer, #context-menu { display: none !important; }
-
-        /* -- SOL MENÜ (Sadece Slayt Seçimi Kalsın) -- */
-        #sidebar h3 { display: none !important; }
-        #sidebar .action-btn { display: none !important; }
         #btn-add-text, #btn-add-rect, #btn-add-svg, #btn-add-video, #btn-add-rss { display: none !important; }
         button[onclick*="addNewSlide"], button[onclick*="deleteSlide"] { display: none !important; }
-
-        /* -- SAĞ MENÜ (MUCİZE KOD): Hızlı metin hariç İÇİNDEKİ HER ŞEYİ GİZLE -- */
-        /* Bu kod sağ paneldeki Tuval, Katmanlar vb. her şeyi tek hamlede hatasız gizler */
-        #editor-fields > *:not(#auto-fields-wrapper) { 
-            display: none !important; 
-        }
-        
-        /* Eğer dışarıda kalan inatçı başlıklar varsa diye güvenlik: */
-        #layers-list, #device-list, .tabs-header, .prop-group, #canvas-settings { 
-            display: none !important; 
-        }
-
-        /* -- HIZLI METİN ALANINI GÖSTER -- */
-        #auto-fields-wrapper { 
-            display: block !important; 
-            margin-top: 10px !important; 
-            pointer-events: auto !important; 
-        }
-        #auto-fields-list { display: block !important; }
-
-        /* -- YAYINA GÖNDER BUTONUNU SAĞ ALTA ZIMBALA -- */
-        button[onclick*="saveData"] {
-            display: block !important;
-            visibility: visible !important;
-            position: fixed !important;
-            bottom: 30px !important;
-            right: 30px !important;
-            z-index: 999999 !important;
-            background: #10b981 !important;
-            color: white !important;
-            padding: 15px 40px !important;
-            font-size: 16px !important;
-            font-weight: 900 !important;
-            border-radius: 8px !important;
-            border: 2px solid white !important;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.5) !important;
-            pointer-events: auto !important;
-            cursor: pointer !important;
-        }
-
-        /* -- ALT AYARLARI (SÜRE/EFEKT) GİZLE -- */
-        .bottom-settings, #slide-time, #slide-effect, #start-time, #end-time, .day-btn { 
-            display: none !important; 
-        }
     `;
 
-    // Eski kontrol katmanını temizle
-    const ctrl = document.getElementById('control-layer');
-    if (ctrl) ctrl.innerHTML = "";
-    if (window.closeCtx) window.closeCtx();
+    // 3. İNATÇI BAŞLIKLARI VE KUTULARI BULUP YOK ET
+    setTimeout(() => {
+        // Bu kelimeleri içeren başlıkları ve altındaki ayar kutularını sileceğiz
+        const yasakliKelimeler = ["ZAMANLAMA", "CİHAZLAR", "TUVAL", "NESNE", "KATMANLAR", "VEKTÖR"];
+        
+        document.querySelectorAll('h1, h2, h3, h4, h5, h6').forEach(baslik => {
+            const metin = baslik.innerText.toUpperCase();
+            
+            // Hızlı Metin başlığına DOKUNMA
+            if (metin.includes("HIZLI METİN")) return;
 
-    // Metinleri yenile
+            yasakliKelimeler.forEach(yasakli => {
+                if (metin.includes(yasakli)) {
+                    baslik.style.display = 'none'; // Başlığı sil
+                    
+                    // Başlığın hemen altındaki kara kutuyu (örn: 1920x1080 kutusu) bul ve sil
+                    let altKutu = baslik.nextElementSibling;
+                    if (altKutu && altKutu.tagName !== 'SELECT' && !altKutu.innerText.toUpperCase().includes('HIZLI METİN')) {
+                        altKutu.style.display = 'none';
+                    }
+                }
+            });
+        });
+
+        // Listeleri ID ile garanti olarak gizle
+        ['layers-list', 'device-list', 'canvas-settings', 'slide-time', 'slide-effect'].forEach(id => {
+            let el = document.getElementById(id);
+            if(el) el.style.display = 'none';
+        });
+
+        // Üstteki eski Yayınla/İndir butonlarını gizle (Çünkü yenisini yapacağız)
+        document.querySelectorAll('button[onclick*="saveData"], button[onclick*="downloadSVG"]').forEach(btn => {
+            if(btn.id !== 'yeni-gonder-btn') btn.style.display = 'none';
+        });
+
+    }, 300); // Ekran yüklendikten hemen sonra temizliği başlat
+
+    // 4. EKRANIN SAĞ ALTINA SİLİNEMEZ "YAYINA GÖNDER" BUTONU EKLE
+    let gonderBtn = document.getElementById('yeni-gonder-btn');
+    if (!gonderBtn) {
+        gonderBtn = document.createElement('button');
+        gonderBtn.id = 'yeni-gonder-btn';
+        gonderBtn.innerHTML = '<i class="ph ph-paper-plane-tilt"></i> YAYINA GÖNDER';
+        gonderBtn.style.cssText = 'position:fixed; bottom:30px; right:30px; z-index:999999; background:#10b981; color:white; padding:15px 30px; font-size:16px; font-weight:bold; border-radius:8px; border:none; cursor:pointer; box-shadow:0 10px 20px rgba(16,185,129,0.4); display:flex; align-items:center; gap:10px;';
+        
+        // Butona basıldığında yayına gönderme işlemini yap
+        gonderBtn.onclick = function() {
+            if(window.saveData) window.saveData();
+        };
+        document.body.appendChild(gonderBtn);
+    }
+
+    // Hızlı metinleri tazele
     setTimeout(() => {
         if(window.refreshAutoTextFields) window.refreshAutoTextFields();
-    }, 100);
+    }, 500);
 
-    window.showToast("Personel Modu Aktif: Ekran kilitlendi.", "success");
+    window.showToast("Personel Modu Aktif: Metni düzenleyip sağ alttan gönderin.", "success");
 }
 
 function kapatPersonelModu() {
