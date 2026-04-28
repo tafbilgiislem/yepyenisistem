@@ -80,16 +80,22 @@ onAuthStateChanged(auth, (user) => {
 
 function aktifEtPersonelModu() {
     // 👑 PERSONELİN SADECE GÖREBİLECEĞİ SLAYTIN ADI:
-    // Slayt ismini buraya yaz (Boşluk yerine alt çizgi ve küçük harf ile yazılır, Örn: slayt_svg)
+    // (Boşluk yerine alt çizgi ve küçük harf kullan, Örn: slayt_svg)
     const PERSONEL_SLAYTI = "slayt_svg";
 
-    // 1. TIKLAMALARI DURDUR
+    // 1. TIKLAMALARI VE GEREKSİZ EKRAN ÇİZİMLERİNİ DURDUR
     window.renderProperties = function() {}; 
     window.updateUI = function() {};
     window.selectedEl = null;
     if(window.closeCtx) window.closeCtx();
 
-    // 2. ÖNİZLEME KALKANI
+    // 🚀 İŞTE BURASI YENİ: O ortadaki "Düzenlemek için nesne seçin" yazısını tamamen engeller!
+    window.renderEditor = function() { 
+        // Sadece hızlı metinleri günceller, uyarı yazısını ve katmanları çizmez.
+        window.refreshAutoTextFields(); 
+    };
+
+    // 2. ÖNİZLEME KALKANI VE CSS GİZLEMELERİ
     let kalkan = document.getElementById('personel-kalkan');
     if (!kalkan) {
         kalkan = document.createElement('style');
@@ -97,8 +103,13 @@ function aktifEtPersonelModu() {
         document.head.appendChild(kalkan);
     }
     kalkan.innerHTML = `
+        /* Sahneye tıklanmayı engelle */
         #svg-wrapper { pointer-events: none !important; user-select: none !important; }
         #control-layer, #context-menu { display: none !important; }
+        
+        /* Garanti olsun diye uyarı yazısının div'ini CSS ile de gizleyelim */
+        #editor-fields > div[style*="text-align:center"] { display: none !important; }
+        .ph-cursor-click { display: none !important; }
     `;
 
     // 3. SAĞ ALT KÖŞEYE YAYINA GÖNDER BUTONU
@@ -115,27 +126,23 @@ function aktifEtPersonelModu() {
         document.body.appendChild(gonderBtn);
     }
 
-    // 4. PANELERİ VE SLAYTLARI KISITLAYAN DÖNGÜ
+    // 4. PANELLERİ VE SLAYTLARI KISITLAYAN ANA DÖNGÜ
     setInterval(() => {
         // --- A) SLAYT KİLİDİ ---
         let selector = document.getElementById('file-selector');
-        // Eğer listede 1'den fazla slayt varsa (yani diğerleri de görünüyorsa)
         if (selector && selector.options.length > 1) {
-            // Sadece senin izin verdiğin slaytı bul
             let izinliSlayt = Array.from(selector.options).find(opt => opt.value === PERSONEL_SLAYTI);
-            
-            selector.innerHTML = ''; // Tüm listeyi acımasızca sil
-            
+            selector.innerHTML = ''; // Listeyi temizle
             if (izinliSlayt) {
-                selector.appendChild(izinliSlayt); // Sadece izinli slaytı geri koy
-                selector.value = PERSONEL_SLAYTI;  // Onu seçili yap
-                if(window.loadSlide) window.loadSlide(); // Ve o slaytı ekrana zorla yükle!
+                selector.appendChild(izinliSlayt); // Sadece izinliyi ekle
+                selector.value = PERSONEL_SLAYTI;  
+                if(window.loadSlide) window.loadSlide(); 
             } else {
                 selector.innerHTML = '<option value="">Yetkili Slayt Bulunamadı</option>';
             }
         }
 
-        // --- B) GİZLİ PANELLERİ TEMİZLEME (Eski kodumuz) ---
+        // --- B) GİZLİ PANELLERİ TEMİZLEME ---
         const hedefler = [
             "AKILLI ZAMANLAMA", 
             "AKTİF CİHAZLAR (TAKİP)", 
@@ -159,8 +166,14 @@ function aktifEtPersonelModu() {
                     });
                 }
             }
+            
+            // Eğer uyarı metni hala bir şekilde ekrandaysa onu da yok et
+            if (el.textContent && el.textContent.includes("Düzenlemek için sahneden")) {
+                el.style.setProperty('display', 'none', 'important');
+            }
         });
 
+        // --- C) ESKİ BUTONLARI GİZLEME ---
         document.querySelectorAll('button').forEach(btn => {
             let btnMetin = btn.textContent.toUpperCase();
             if (btn.id !== 'personel-yayinla-btn' && (btnMetin.includes('YAYINLA') || btnMetin.includes('İNDİR'))) {
@@ -172,6 +185,9 @@ function aktifEtPersonelModu() {
         });
 
     }, 300); 
+    
+    // Açılışta ekstra temizlik
+    setTimeout(() => { if(window.renderEditor) window.renderEditor(); }, 100);
 }
 
 function kapatPersonelModu() {
