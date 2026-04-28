@@ -1,194 +1,63 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>SVG Pro Studio | Modüler CMS V50</title>
-    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&family=Merriweather:wght@400;700&family=Montserrat:wght@400;700;800&family=Nunito:wght@400;700&family=Open+Sans:wght@400;700&family=Oswald:wght@400;700&family=Pacifico&family=Playfair+Display:wght@400;700&family=Poppins:wght@400;700&family=Raleway:wght@400;700&family=Roboto:wght@400;700&family=Ubuntu:wght@400;700&display=swap" rel="stylesheet">
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>SVG Pro Studio V50 | MODÜLER</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Oswald:wght@400;700&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-    
     <link rel="stylesheet" href="/src/style.css">
 </head>
 <body>
-
-<div id="login-overlay" style="position:fixed; inset:0; background:rgba(15,23,42,0.95); z-index:9999999; display:flex; flex-direction:column; align-items:center; justify-content:center; backdrop-filter: blur(10px);">
-    <i class="ph ph-shield-check" style="font-size: 64px; color: var(--accent); margin-bottom: 20px;"></i>
-    <h2 style="color:white; margin-top:0;">TV Yönetim Paneli</h2>
-    <p style="color:#94a3b8; font-size:13px; margin-bottom:20px;">Lütfen erişim şifrenizi girin.</p>
-    <div style="display:flex; gap:10px;">
-        <input type="password" id="pin-input" placeholder="****" style="width:200px;" onkeypress="if(event.key === 'Enter') window.checkPin()">
-        <button class="action-btn active" onclick="window.checkPin()" style="width:100px;">GİRİŞ</button>
-    </div>
-</div>
-
-<div id="toast-container"></div>
-
-<div id="context-menu">
-    <div class="ctx-item" onclick="if(window.selectedEl) window.cloneElement(window.selectedEl.id); window.closeCtx();"><div style="display:flex; align-items:center; gap:8px;"><i class="ph ph-copy"></i><span>Kopyala</span></div><span class="kbd">Alt+Sürükle</span></div>
-    <div style="height:1px; background:var(--border); margin:4px 0;"></div>
-    <div class="ctx-item" onclick="if(window.selectedEl) window.moveLayer(window.selectedEl.id, 'top'); window.closeCtx();"><div style="display:flex; align-items:center; gap:8px;"><i class="ph ph-caret-double-up"></i><span>En Öne Getir</span></div></div>
-    <div class="ctx-item" onclick="if(window.selectedEl) window.moveLayer(window.selectedEl.id, 1); window.closeCtx();"><div style="display:flex; align-items:center; gap:8px;"><i class="ph ph-caret-up"></i><span>Bir Öne Getir</span></div></div>
-    <div class="ctx-item" onclick="if(window.selectedEl) window.moveLayer(window.selectedEl.id, -1); window.closeCtx();"><div style="display:flex; align-items:center; gap:8px;"><i class="ph ph-caret-down"></i><span>Bir Arkaya Gönder</span></div></div>
-    <div class="ctx-item" onclick="if(window.selectedEl) window.moveLayer(window.selectedEl.id, 'bottom'); window.closeCtx();"><div style="display:flex; align-items:center; gap:8px;"><i class="ph ph-caret-double-down"></i><span>En Arkaya Gönder</span></div></div>
-    <div style="height:1px; background:var(--border); margin:4px 0;"></div>
-    <div class="ctx-item" onclick="if(window.selectedEl) window.toggleLock(window.selectedEl.id); window.closeCtx();"><div style="display:flex; align-items:center; gap:8px;"><i class="ph ph-lock-key" id="ctx-lock-icon"></i><span id="ctx-lock-text">Kilitle/Aç</span></div></div>
-    <div class="ctx-item danger" onclick="if(window.selectedEl && confirm('Silinecek?')){ window.selectedEl.remove(); window.selectedEl=null; window.saveState(); window.renderEditor(); const ctrl = document.getElementById('control-layer'); if(ctrl) ctrl.innerHTML=''; } window.closeCtx();"><div style="display:flex; align-items:center; gap:8px;"><i class="ph ph-trash"></i><span>Sil</span></div><span class="kbd">Del</span></div>
-</div>
-
-<div id="hotkey-modal" class="modal-overlay">
-    <div class="modal-content">
-        <span class="close-modal" onclick="document.getElementById('hotkey-modal').style.display='none'">×</span>
-        <h3 style="margin-top:0; color:var(--accent); display:flex; align-items:center; gap:8px;"><i class="ph ph-keyboard"></i> Kısayol Haritası</h3>
-        <div class="shortcut-row"><span>Gezinme (El Aracı)</span><span class="kbd">Space + Sürükle</span></div>
-        <div class="shortcut-row"><span>Hızlı Kopyalama</span><span class="kbd">Alt + Sürükle</span></div>
-        <div class="shortcut-row"><span>Hassas Taşıma</span><span class="kbd">Ok Tuşları</span></div>
-        <div class="shortcut-row"><span style="color:#f472b6;">Serbest Taşıma (Hizalamayı Kapat)</span><span class="kbd">Shift + Sürükle</span></div>
-        <div class="shortcut-row"><span>Geri Al</span><span class="kbd">Ctrl + Z</span></div>
-        <div class="shortcut-row"><span>Sağ Tık Menüsü</span><span class="kbd">Mause Sağ Tık</span></div>
-        <div class="shortcut-row"><span>Sil</span><span class="kbd">Del / Backspace</span></div>
-    </div>
-</div>
-
-<div id="app-container">
-    <div id="main-view">
-        <div id="horizontal-ruler" class="ruler ruler-h"></div>
-        <div id="vertical-ruler" class="ruler ruler-v"></div>
-
-        <div class="floating-tools">
-            <button class="tool-btn" id="btn-undo" onclick="window.undo()" title="Geri Al (Ctrl+Z)"><i class="ph ph-arrow-u-up-left"></i></button>
-            <button class="tool-btn" id="btn-redo" onclick="window.redo()" title="İleri Al (Ctrl+Y)"><i class="ph ph-arrow-u-up-right"></i></button>
-            <div style="width: 1px; background: var(--border); margin: 0 5px; height: 20px;"></div>
-            <button class="tool-btn" onclick="window.changeZoom(-0.1)"><i class="ph ph-magnifying-glass-minus"></i></button>
-            <button class="tool-btn" id="zoom-val" onclick="window.resetZoom()" style="min-width:60px; justify-content:center;">100%</button>
-            <button class="tool-btn" onclick="window.changeZoom(0.1)"><i class="ph ph-magnifying-glass-plus"></i></button>
-            <div style="width: 1px; background: var(--border); margin: 0 5px; height: 20px;"></div>
-            <button class="tool-btn" onclick="document.getElementById('hotkey-modal').style.display='flex'"><i class="ph ph-keyboard"></i></button>
-        </div>
-
-        <div id="zoom-container">
-            <div id="svg-wrapper">
-                <div id="canvas-inner"></div>
-                <svg id="control-layer"></svg>
-            </div>
-        </div>
-        <div id="status-bar">
-            <div id="status-count">Nesne Sayısı: 0</div>
-            <div>SVG Pro Studio Ultimate V50 (Modüler Çekirdek)</div>
-            <div id="status-time">Son Kayıt: Bekleniyor...</div>
+    <div id="login-overlay" style="position:fixed;inset:0;background:rgba(15,23,42,0.95);z-index:9999999;display:flex;flex-direction:column;align-items:center;justify-content:center;backdrop-filter:blur(10px)">
+        <h2 style="color:white">Yönetim Paneli</h2>
+        <div style="display:flex;gap:10px">
+            <input type="password" id="pin-input" placeholder="****" style="width:200px" onkeypress="if(event.key==='Enter') window.checkPin()">
+            <button class="action-btn active" onclick="window.checkPin()">GİRİŞ</button>
         </div>
     </div>
-    
-    <div id="sidebar">
-        <div class="sidebar-scroll-area">
-            
-            <div style="display:flex; gap:5px; margin-bottom: 5px;">
-                <button onclick="window.saveData()" class="action-btn active" style="flex:2; font-size:12px;"><i class="ph ph-floppy-disk"></i> YAYINLA</button>
-                <button onclick="window.downloadSVG()" class="action-btn" style="flex:1; font-size:12px; background:#0ea5e9;" title="SVG Olarak İndir"><i class="ph ph-download-simple"></i> İNDİR</button>
+    <div id="toast-container"></div>
+    <div id="app-container" style="display:flex;height:100vh;width:100vw;filter:blur(10px)">
+        <div id="main-view" style="flex:1;background:#020617;position:relative;overflow:hidden">
+            <div class="floating-tools">
+                <button class="tool-btn" onclick="window.undo()"><i class="ph ph-arrow-u-up-left"></i></button>
+                <button class="tool-btn" onclick="window.redo()"><i class="ph ph-arrow-u-up-right"></i></button>
+                <button class="tool-btn" onclick="window.resetZoom()">100%</button>
             </div>
-            <div style="display:flex; gap:5px; margin-bottom: 10px;">
-                <button onclick="window.addNewSlide()" class="action-btn" style="flex:1; font-size:12px; background:#8b5cf6;" title="Yeni Slayt Ekle"><i class="ph ph-plus"></i> YENİ SLAYT</button>
-                <button onclick="window.deleteSlide()" class="action-btn danger" style="flex:1; font-size:12px;" title="Seçili Slaytı Sil"><i class="ph ph-trash"></i> SİL</button>
+            <div id="zoom-container" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center">
+                <div id="svg-wrapper" style="position:relative;background:white">
+                    <div id="canvas-inner"></div>
+                    <svg id="control-layer" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none"></svg>
+                </div>
             </div>
-            
-            <select id="file-selector" style="width:100%; padding:10px; background:#000; color:#fff; border-radius:8px; margin-bottom:10px; border:1px solid #334155; outline:none;" onchange="window.loadSlide()"></select>
-            
-            <details style="margin-bottom: 10px;" open>
-                <summary style="font-size:11px; font-weight:bold; color:#f59e0b; cursor:pointer; margin-bottom:5px; display:flex; align-items:center; gap:6px;"><i class="ph ph-clock" style="font-size:14px;"></i> AKILLI ZAMANLAMA & EFEKT</summary>
-                <div class="group-box" style="margin-top:5px;">
-                    <div style="font-size:10px; color:#94a3b8; margin-bottom:10px; font-style:italic;">Bu slaytın ne zaman çıkacağını ve nasıl geçeceğini ayarlayın.</div>
-                    
-                    <span class="label-text">Ekranda Kalma Süresi (ms)</span>
-                    <input type="number" id="slide-time" value="5000">
-                    <div style="font-size:10px; color:#f472b6; margin-top:3px; margin-bottom:10px; font-style:italic;">* Eğer videonuz varsa, süreyi videonun uzunluğuna göre ayarlayın (örn: 15 saniye için 15000)</div>
-                    
-                    <span class="label-text">Yayın Saat Aralığı</span>
-                    <div style="display:flex; gap:5px;">
-                        <input type="time" id="start-time" value="00:00" style="flex:1;">
-                        <input type="time" id="end-time" value="23:59" style="flex:1;">
-                    </div>
-                    
-                    <span class="label-text">Yayın Günleri</span>
-                    <div id="day-selector" style="display:grid; grid-template-columns:repeat(4, 1fr); gap:4px; margin-bottom:10px;">
-                        <button class="day-btn active" data-day="1">Pzt</button><button class="day-btn active" data-day="2">Sal</button><button class="day-btn active" data-day="3">Çar</button><button class="day-btn active" data-day="4">Per</button><button class="day-btn active" data-day="5">Cum</button><button class="day-btn active" data-day="6">Cmt</button><button class="day-btn active" data-day="0">Paz</button>
-                    </div>
-
-                    <span class="label-text">Geçiş Efekti</span>
-                    <select id="slide-effect" class="font-select">
-                        <option value="fade">Yumuşak Geçiş (Fade)</option><option value="slide-left">Sola Kayma (Slide Left)</option><option value="slide-up">Yukarı Çıkma (Slide Up)</option><option value="zoom">Merkezden Büyüme (Zoom)</option><option value="rotate-zoom">Dönerek Büyüme (Rotate Zoom)</option><option value="circle">Daire Açılışı (Circle)</option><option value="wave">Dalgalı Geliş (Wave)</option><option value="curtain">Sinema Perdesi (Curtain)</option><option value="spin-zoom">Girdap Çıkışı (Spin Zoom)</option><option value="rotate3d">Gerçek 3D Dönüş (Rotate 3D)</option><option value="cinematic-cube">Sinematik Takla (Cinematic Flip)</option><option value="cube">Kübik Dönüş (3D Cube)</option><option value="flip">Klasik Takla (Flip)</option><option value="fold">Katlanma (Fold)</option>
-                    </select>
-                    
-                    <button class="action-btn" style="width:100%; background:#f59e0b; color:black;" onclick="window.saveSlideSettings()"><i class="ph ph-database"></i> AYARLARI KAYDET</button>
-                </div>
-            </details>
-
-            <details style="margin-bottom: 10px;">
-                <summary style="font-size:11px; font-weight:bold; color:#0ea5e9; cursor:pointer; margin-bottom:5px; display:flex; align-items:center; gap:6px;"><i class="ph ph-monitor-play" style="font-size:14px;"></i> AKTİF CİHAZLAR (TAKİP)</summary>
-                <div class="group-box" style="margin-top:5px; padding:0; background:transparent; border:none;">
-                    <div id="device-list">
-                        <div style="font-size:11px; color:#64748b; text-align:center; margin-top:10px;">Bağlı cihaz bekleniyor...</div>
-                    </div>
-                </div>
-            </details>
-
-            <details style="margin-bottom: 10px;">
-                <summary style="font-size:11px; font-weight:bold; color:var(--accent); cursor:pointer; margin-bottom:5px; display:flex; align-items:center; gap:6px;"><i class="ph ph-frame-corners" style="font-size:14px;"></i> TUVAL AYARLARI</summary>
-                <div class="group-box" style="margin-top:5px;">
-                    <div style="display:flex; gap:10px; align-items: center; margin-bottom:10px;">
-                        <input type="number" id="canvas-w" placeholder="Genişlik" onchange="window.updateCanvasSize()">
-                        <span style="color:#64748b;"><i class="ph ph-x"></i></span>
-                        <input type="number" id="canvas-h" placeholder="Yükseklik" onchange="window.updateCanvasSize()">
-                        <input type="color" id="canvas-bg-color" title="Arka Plan Rengi" oninput="window.updateCanvasBg()" style="width:40px; height:35px; cursor:pointer; border:none; background:none;">
-                    </div>
-                </div>
-            </details>
-            
-            <details style="margin-bottom: 10px;" open>
-                <summary style="font-size:11px; font-weight:bold; color:#8b5cf6; cursor:pointer; margin-bottom:5px; display:flex; align-items:center; gap:6px;"><i class="ph ph-paint-brush" style="font-size:14px;"></i> NESNE EKLE & ARAÇLAR</summary>
-                <div class="group-box" style="margin-top:5px; margin-bottom:5px;">
-                    <div class="action-row" style="margin-bottom:0;">
-                        <button onclick="window.addNewText()" class="action-btn" style="background:#475569;"><i class="ph ph-text-t"></i> YAZI</button>
-                        <button onclick="document.getElementById('img-in').click()" class="action-btn" style="background:#475569;" title="SVG veya Resim Sürükle"><i class="ph ph-image-square"></i> MEDYA</button>
-                        <button onclick="window.addShape('rect')" class="action-btn" style="background:#475569;"><i class="ph ph-square"></i> KUTU</button>
-                    </div>
-                    <div class="action-row" style="margin-top:8px; margin-bottom:0;">
-                        <button onclick="window.addVideo()" class="action-btn" style="background:#0284c7;"><i class="ph ph-video-camera"></i> VİDEO / YOUTUBE EKLE</button>
-                        <button onclick="window.addRssBand()" class="action-btn" style="background:var(--error);"><i class="ph ph-newspaper"></i> HABER BANT (RSS)</button>
-                    </div>
-                    <div class="action-row" style="margin-top:8px; margin-bottom:0;">
-                        <button onclick="window.addWeather()" class="action-btn" style="background:#0ea5e9;"><i class="ph ph-clock"></i> ANALOG HAVA SAATİ</button>
-                        <button onclick="window.addCurrency()" class="action-btn" style="background:#16a34a;"><i class="ph ph-currency-circle-dollar"></i> DÖVİZ (CANLI)</button>
-                    </div>
-                </div>
-            </details>
-
-            <details style="margin-bottom: 10px;" open id="auto-text-panel">
-                <summary style="font-size:11px; font-weight:bold; color:#f472b6; cursor:pointer; margin-bottom:5px; display:flex; align-items:center; gap:6px;"><i class="ph ph-lightning" style="font-size:14px;"></i> HIZLI METİN YERLEŞTİRME (LİSTE)</summary>
-                <div class="group-box" style="margin-top:5px; margin-bottom:5px; padding: 12px; border: 1px solid var(--border);">
-                    <div id="auto-fields-list"></div>
-                </div>
-            </details>
-
-            <details style="margin-bottom: 5px;" open>
-                <summary style="font-size:11px; font-weight:bold; color:#06b6d4; cursor:pointer; margin-bottom:5px; display:flex; align-items:center; gap:6px;"><i class="ph ph-layers" style="font-size:14px;"></i> KATMANLAR</summary>
-                <div class="group-box" style="margin-top:5px; margin-bottom:5px; padding: 0; overflow: hidden; border: 1px solid var(--border);">
-                    <div id="layers-list" style="max-height: 200px; overflow-y: auto;"></div>
-                </div>
-            </details>
-
-            <input type="file" id="img-in" accept="image/*,.svg" hidden>
+            <div id="status-bar" style="position:absolute;bottom:0;width:100%;background:#0f172a;padding:5px 20px;font-size:11px;color:#94a3b8;display:flex;justify-content:space-between">
+                <span id="status-count">Nesne: 0</span><span id="status-time">Hazır</span>
+            </div>
         </div>
-
-        <div id="editor-fields">
-            <div style="text-align:center; color:#64748b; margin-top:50px; font-style:italic; font-size:13px;">
-                <i class="ph ph-cursor-click" style="font-size:32px; display:block; margin-bottom:10px; color:var(--accent); opacity:0.5"></i>
-                👆 Düzenlemek için sahneden veya katmanlardan bir nesne seçin.
+        <div id="sidebar">
+            <div class="sidebar-scroll-area">
+                <div class="action-row">
+                    <button onclick="window.saveData()" class="action-btn active">YAYINLA</button>
+                    <button onclick="window.addNewSlide()" class="action-btn">YENİ SLAYT</button>
+                </div>
+                <select id="file-selector" onchange="window.loadSlide()" style="width:100%;padding:10px;margin:10px 0;background:#000;color:white;border-radius:8px"></select>
+                <details open><summary>NESNE EKLE</summary>
+                    <div class="action-row">
+                        <button onclick="window.addNewText()" class="action-btn">YAZI</button>
+                        <button onclick="window.addWeather()" class="action-btn">HAVA/SAAT</button>
+                        <button onclick="window.addCurrency()" class="action-btn">DÖVİZ</button>
+                    </div>
+                </details>
+                <details open><summary>HIZLI METİN YERLEŞTİRME</summary>
+                    <div id="auto-fields-list" style="padding:10px;background:rgba(0,0,0,0.2)"></div>
+                </details>
+                <details open><summary>KATMANLAR</summary>
+                    <div id="layers-list" style="max-height:200px;overflow-y:auto"></div>
+                </details>
             </div>
+            <div id="editor-fields" style="padding:20px;border-top:1px solid #334155;flex:1;overflow-y:auto"></div>
         </div>
     </div>
-</div>
-
-<script type="module" src="/src/main.js"></script>
-
+    <script type="module" src="/src/main.js"></script>
 </body>
 </html>

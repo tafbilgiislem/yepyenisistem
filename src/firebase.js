@@ -11,14 +11,7 @@ const firebaseConfig = {
     appId: "1:1085012043931:web:fb6f9fb2e79f4a2607fe3e"
 };
 
-let db = null;
-try { 
-    const app = initializeApp(firebaseConfig); 
-    db = getDatabase(app); 
-    console.log("✅ Firebase Başarıyla Bağlandı!");
-} catch(e) { 
-    console.error("❌ Firebase Hatası:", e); 
-}
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
 
-// Diğer modüllerde kullanabilmek için dışa aktarıyoruz (Export)
 export { db, ref, set, get, onValue, remove };
