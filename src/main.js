@@ -22,6 +22,9 @@ try {
     console.error("Firebase Başlatma Hatası", e); 
 }
 
+// 👑 SİSTEM YÖNETİCİSİ (ADMİN) E-POSTASI - BURAYI KENDİ E-POSTANLA DEĞİŞTİR:
+const ADMIN_EMAIL = "tafbilgiislem@gmail.com"; 
+
 // --- 2. GLOBAL DEĞİŞKENLER VE DURUMLAR ---
 let recentColors = ['#10b981', '#3b82f6', '#ef4444', '#f59e0b', '#8b5cf6', '#ffffff'];
 window.selectedEl = null; 
@@ -42,25 +45,31 @@ const googleFonts = [
     { name: "Pacifico", val: "'Pacifico', cursive" }
 ];
 
-// --- 3. OTURUM YÖNETİMİ VE GİRİŞ EKRANI ---
+// --- 3. OTURUM YÖNETİMİ VE ROL KONTROLÜ ---
 const loginScreen = document.getElementById('login-overlay');
 const appContainer = document.getElementById('app-container');
 
 onAuthStateChanged(auth, (user) => {
     if (user) {
-        // GİRİŞ BAŞARILI: Editörü aç ve verileri YENİ ÇEKMEYE BAŞLA
+        // GİRİŞ BAŞARILI
         if(loginScreen) loginScreen.style.display = 'none';
         if(appContainer) {
             appContainer.style.display = 'flex';
             appContainer.style.filter = 'blur(0px)';
         }
-        window.showToast("Giriş Başarılı!", "success");
         
-        // Veritabanı dinleyicilerini BURADA başlatıyoruz (Hataları önlemek için)
+        // 🔒 ROL KONTROLÜ (ADMİN Mİ YOKSA PERSONEL Mİ?)
+        if (user.email !== ADMIN_EMAIL) {
+            aktifEtPersonelModu(); // Kısıtlı hesap
+        } else {
+            kapatPersonelModu(); // Patron hesabı
+        }
+
+        window.showToast("Giriş Başarılı!", "success");
         window.listenDevices();
         baslatSlaytDinleyici();
     } else {
-        // ÇIKIŞ YAPILDI veya GİRİLMEDİ: Paneli göster
+        // ÇIKIŞ YAPILDI veya GİRİLMEDİ
         if(loginScreen) loginScreen.style.display = 'flex';
         if(appContainer) {
             appContainer.style.display = 'none';
@@ -68,6 +77,44 @@ onAuthStateChanged(auth, (user) => {
         }
     }
 });
+
+// 🛡️ PERSONEL KALKANI: İstenmeyen her şeyi CSS ile gizler ve kilitler
+function aktifEtPersonelModu() {
+    let kalkan = document.getElementById('personel-kalkan');
+    if (!kalkan) {
+        kalkan = document.createElement('style');
+        kalkan.id = 'personel-kalkan';
+        kalkan.innerHTML = `
+            /* Sahneyi (SVG) sürüklemeye ve tıklamaya kapat */
+            #svg-wrapper { pointer-events: none !important; }
+            
+            /* Sol Menü: Yeni Araç Eklemeyi Gizle */
+            #btn-add-text, #btn-add-rect, #btn-add-svg, #btn-add-video, #btn-add-rss { display: none !important; }
+            
+            /* Katmanlar ve Cihazlar Panelini Gizle */
+            #layers-list, #device-list { display: none !important; }
+            
+            /* Slayt Ekle / Sil Butonlarını Gizle */
+            button[onclick*="addNewSlide"], button[onclick*="deleteSlide"] { display: none !important; }
+            
+            /* Detaylı Özellikler Panelini Gizle (Sadece Otomatik Metinler Kalsın) */
+            #editor-fields { display: none !important; }
+            
+            /* Slayt Ayarlarını (Süre, Efekt vb.) Kilitler (Soluk Gösterir) */
+            #slide-time, #slide-effect, #start-time, #end-time, .day-btn, #canvas-w, #canvas-h, #canvas-bg-color { 
+                pointer-events: none !important; 
+                opacity: 0.5 !important; 
+            }
+        `;
+        document.head.appendChild(kalkan);
+    }
+    window.showToast("Personel Modu: Sadece metinleri değiştirebilirsiniz.", "warning");
+}
+
+function kapatPersonelModu() {
+    const kalkan = document.getElementById('personel-kalkan');
+    if (kalkan) kalkan.remove();
+}
 
 window.checkPin = function() {
     const emailInput = document.getElementById('email-input');
@@ -97,7 +144,7 @@ window.checkPin = function() {
         });
 };
 
-// --- 4. VERİTABANI DİNLEYİCİLERİ ---
+// --- 4. VERİTABANI DİNLEYİCİLERİ VE EDİTÖR FONKSİYONLARI ---
 function baslatSlaytDinleyici() {
     if(!db) return;
     onValue(ref(db, 'sahne/slaytlar'), (snapshot) => {
@@ -123,7 +170,73 @@ function baslatSlaytDinleyici() {
     });
 }
 
-// --- 5. UYGULAMA VE EDİTÖR FONKSİYONLARI ---
+window.listenDevices = function() {
+    if(!db) return;
+    onValue(ref(db, 'sahne/cihazlar'), (snapshot) => {
+        const list = document.getElementById('device-list');
+        if(!list) return;
+        list.innerHTML = "";
+        
+        if(snapshot.exists()) {
+            const devices = snapshot.val();
+            const now = Date.now();
+            let activeCount = 0;
+
+            Object.keys(devices).forEach(id => {
+                const dev = devices[id];
+                const lastSeenDiff = now - dev.lastSeen;
+                const isOnline = lastSeenDiff < 15000;
+                
+                if (lastSeenDiff > 3600000) {
+                    remove(ref(db, 'sahne/cihazlar/' + id));
+                    return; 
+                }
+
+                if (lastSeenDiff < 60000) {
+                    activeCount++;
+                    const tvName = dev.name || id; 
+                    
+                    const card = document.createElement('div');
+                    card.className = `device-card ${isOnline ? 'online' : 'offline'}`;
+                    card.innerHTML = `
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+                            <strong style="font-size:14px; color:#fff;"><i class="ph ph-monitor"></i> ${tvName}</strong>
+                            <span style="font-size:12px;">${isOnline ? '🟢 Açık' : '🟡 Koptu'}</span>
+                        </div>
+                        <div style="color:#94a3b8; font-size:11px; margin-bottom:10px;">
+                            <span><i class="ph ph-presentation-chart"></i> Oynatılan: <b>${dev.playing || 'Yok'}</b></span>
+                            <span style="margin-left:5px; opacity:0.5;">(${id})</span>
+                        </div>
+                        <div style="display:flex; gap:5px;">
+                            <button class="action-btn" style="flex:1; padding:6px; font-size:11px;" onclick="window.sendTvCommand('${id}', 'ping')" title="Ekranda ismini göster"><i class="ph ph-map-pin"></i> Bul</button>
+                            <button class="action-btn" style="flex:1; padding:6px; font-size:11px;" onclick="window.sendTvCommand('${id}', 'refresh')" title="TV'yi Uzaktan Yenile"><i class="ph ph-arrows-clockwise"></i> F5 Yenile</button>
+                            <button class="action-btn special" style="flex:1; padding:6px; font-size:11px;" onclick="window.renameTv('${id}', '${tvName}')" title="İsmini Değiştir"><i class="ph ph-pencil"></i> İsim</button>
+                        </div>
+                    `;
+                    list.appendChild(card);
+                }
+            });
+
+            if (activeCount === 0) list.innerHTML = '<div style="font-size:12px; color:#64748b; text-align:center; padding:15px;"><i class="ph ph-plugs" style="font-size:24px; display:block; margin-bottom:5px; opacity:0.5;"></i>Yayına bağlı cihaz yok.</div>';
+        } else {
+            list.innerHTML = '<div style="font-size:12px; color:#64748b; text-align:center; padding:15px;">Cihazlar bekleniyor...</div>';
+        }
+    });
+};
+
+window.sendTvCommand = function(deviceId, type) {
+    set(ref(db, 'sahne/komutlar/' + deviceId), { type: type, ts: Date.now() });
+    window.showToast(type === 'ping' ? "Sinyal gönderildi!" : "Yenileme komutu gönderildi!", "success");
+};
+
+window.renameTv = function(deviceId, currentName) {
+    const newName = prompt("Televizyon için yeni bir isim girin (Örn: Lobi TV):", currentName);
+    if (newName && newName.trim() !== "") {
+        set(ref(db, 'sahne/komutlar/' + deviceId), { type: 'rename', newName: newName.trim(), ts: Date.now() });
+        window.showToast("Yeni isim TV'ye gönderildi!", "success");
+    }
+};
+
 window.showToast = function(msg, type = 'success') {
     const container = document.getElementById('toast-container'); if(!container) return;
     const toast = document.createElement('div'); toast.className = `toast ${type}`;
@@ -228,76 +341,6 @@ window.loadSlide = async function() {
         historyStack = []; historyIndex = -1; window.selectedEl = null;
         setTimeout(() => { window.setupLayers(); window.initCanvasSettings(); window.resetZoom(); window.saveState(); }, 200);
     } catch(e) { window.showToast("Veritabanı Hatası!", "error"); }
-};
-
-window.listenDevices = function() {
-    if(!db) return;
-    onValue(ref(db, 'sahne/cihazlar'), (snapshot) => {
-        const list = document.getElementById('device-list');
-        if(!list) return;
-        list.innerHTML = "";
-        
-        if(snapshot.exists()) {
-            const devices = snapshot.val();
-            const now = Date.now();
-            let activeCount = 0;
-
-            Object.keys(devices).forEach(id => {
-                const dev = devices[id];
-                const lastSeenDiff = now - dev.lastSeen;
-                const isOnline = lastSeenDiff < 15000;
-                
-                // KOPTUKTAN 1 SAAT SONRA VERİTABANINDAN TAMAMEN SİL
-                if (lastSeenDiff > 3600000) {
-                    remove(ref(db, 'sahne/cihazlar/' + id));
-                    return; 
-                }
-
-                // EKRANDA SADECE AKTİFLERİ (Veya anlık kopmuş olanları) GÖSTER
-                if (lastSeenDiff < 60000) {
-                    activeCount++;
-                    const tvName = dev.name || id; // TV'nin özel ismini al
-                    
-                    const card = document.createElement('div');
-                    card.className = `device-card ${isOnline ? 'online' : 'offline'}`;
-                    card.innerHTML = `
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
-                            <strong style="font-size:14px; color:#fff;"><i class="ph ph-monitor"></i> ${tvName}</strong>
-                            <span style="font-size:12px;">${isOnline ? '🟢 Açık' : '🟡 Koptu'}</span>
-                        </div>
-                        <div style="color:#94a3b8; font-size:11px; margin-bottom:10px;">
-                            <span><i class="ph ph-presentation-chart"></i> Oynatılan: <b>${dev.playing || 'Yok'}</b></span>
-                            <span style="margin-left:5px; opacity:0.5;">(${id})</span>
-                        </div>
-                        <div style="display:flex; gap:5px;">
-                            <button class="action-btn" style="flex:1; padding:6px; font-size:11px;" onclick="window.sendTvCommand('${id}', 'ping')" title="Ekranda ismini göster"><i class="ph ph-map-pin"></i> Bul</button>
-                            <button class="action-btn" style="flex:1; padding:6px; font-size:11px;" onclick="window.sendTvCommand('${id}', 'refresh')" title="TV'yi Uzaktan Yenile"><i class="ph ph-arrows-clockwise"></i> F5 Yenile</button>
-                            <button class="action-btn special" style="flex:1; padding:6px; font-size:11px;" onclick="window.renameTv('${id}', '${tvName}')" title="İsmini Değiştir"><i class="ph ph-pencil"></i> İsim</button>
-                        </div>
-                    `;
-                    list.appendChild(card);
-                }
-            });
-
-            if (activeCount === 0) list.innerHTML = '<div style="font-size:12px; color:#64748b; text-align:center; padding:15px;"><i class="ph ph-plugs" style="font-size:24px; display:block; margin-bottom:5px; opacity:0.5;"></i>Yayına bağlı cihaz yok.</div>';
-        } else {
-            list.innerHTML = '<div style="font-size:12px; color:#64748b; text-align:center; padding:15px;">Cihazlar bekleniyor...</div>';
-        }
-    });
-};
-
-// 🌟 KUMANDA FONKSİYONLARI 🌟
-window.sendTvCommand = function(deviceId, type) {
-    set(ref(db, 'sahne/komutlar/' + deviceId), { type: type, ts: Date.now() });
-    window.showToast(type === 'ping' ? "Sinyal gönderildi!" : "Yenileme komutu gönderildi!", "success");
-};
-
-window.renameTv = function(deviceId, currentName) {
-    const newName = prompt("Televizyon için yeni bir isim girin (Örn: Lobi TV):", currentName);
-    if (newName && newName.trim() !== "") {
-        set(ref(db, 'sahne/komutlar/' + deviceId), { type: 'rename', newName: newName.trim(), ts: Date.now() });
-        window.showToast("Yeni isim TV'ye gönderildi!", "success");
-    }
 };
 
 window.syncToFirebase = function() {
