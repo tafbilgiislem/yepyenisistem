@@ -118,10 +118,14 @@
 <div id="login-overlay" style="position:fixed; inset:0; background:rgba(15,23,42,0.95); z-index:9999999; display:flex; flex-direction:column; align-items:center; justify-content:center; backdrop-filter: blur(10px);">
     <i class="ph ph-shield-check" style="font-size: 64px; color: var(--accent); margin-bottom: 20px;"></i>
     <h2 style="color:white; margin-top:0;">TV Yönetim Paneli</h2>
-    <p style="color:#94a3b8; font-size:13px; margin-bottom:20px;">Lütfen erişim şifrenizi girin.</p>
-    <div style="display:flex; gap:10px;">
-        <input type="password" id="pin-input" placeholder="****" style="width:200px;" onkeypress="if(event.key === 'Enter') window.checkPin()">
-        <button class="action-btn active" onclick="window.checkPin()" style="width:100px;">GİRİŞ</button>
+    <p style="color:#94a3b8; font-size:13px; margin-bottom:20px;">Lütfen erişim bilgilerinizi girin.</p>
+    
+    <div style="display:flex; flex-direction:column; gap:10px; align-items:center;">
+        <input type="email" id="email-input" placeholder="E-posta adresiniz" style="width:250px; padding:10px; border-radius:5px; border:none; outline:none; text-align:center;">
+        
+        <input type="password" id="pin-input" placeholder="Şifreniz" style="width:250px; padding:10px; border-radius:5px; border:none; outline:none; text-align:center;" onkeypress="if(event.key === 'Enter') window.checkPin()">
+        
+        <button class="action-btn active" onclick="window.checkPin()" style="width:250px; padding:10px; margin-top:10px; cursor:pointer;">GİRİŞ YAP</button>
     </div>
 </div>
 
