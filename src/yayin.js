@@ -15,7 +15,12 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-const deviceId = "TV_" + Math.floor(Math.random() * 10000); 
+// Cihazın ID'sini hafızadan al, yoksa yeni üret ve kaydet
+let deviceId = localStorage.getItem('tv_device_id');
+if (!deviceId) {
+    deviceId = "TV_" + Math.floor(Math.random() * 10000);
+    localStorage.setItem('tv_device_id', deviceId);
+} 
 
 let slidesData = JSON.parse(localStorage.getItem('slidesData')) || {};
 let settingsData = JSON.parse(localStorage.getItem('settingsData')) || {};

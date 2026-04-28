@@ -236,19 +236,46 @@ window.listenDevices = function() {
         const list = document.getElementById('device-list');
         if(!list) return;
         list.innerHTML = "";
+        
         if(snapshot.exists()) {
             const devices = snapshot.val();
             const now = Date.now();
+            let activeCount = 0;
+
             Object.keys(devices).forEach(id => {
                 const dev = devices[id];
-                const isOnline = (now - dev.lastSeen) < 15000;
-                const card = document.createElement('div');
-                card.className = `device-card ${isOnline ? 'online' : 'offline'}`;
-                card.innerHTML = `<div style="display:flex;justify-content:space-between;"><strong>📺 ${id}</strong><span>${isOnline ? '🟢 Çevrimiçi' : '🔴 Koptu'}</span></div><div style="color:#94a3b8;margin-top:4px;">Sürüm: ${dev.version || 'Bilinmiyor'} | Oynatılan: ${dev.playing || 'Yok'}</div>`;
-                list.appendChild(card);
+                const lastSeenDiff = now - dev.lastSeen;
+                const isOnline = lastSeenDiff < 15000; // Son 15 saniyede sinyal verdiyse Aktif
+
+                // EĞER CİHAZ 1 SAATTEN UZUN SÜREDİR YOKSA (3600000 ms), VERİTABANINDAN SİL (Temizlik)
+                if (lastSeenDiff > 3600000) {
+                    remove(ref(db, 'sahne/cihazlar/' + id));
+                    return; // Ekrana çizmeden atla
+                }
+
+                // EKRANDA SADECE AKTİFLERİ (Veya anlık kopmuş olanları) GÖSTER
+                if (lastSeenDiff < 60000) { // Son 1 dakika içinde sinyal vermişleri listede tut
+                    activeCount++;
+                    const card = document.createElement('div');
+                    card.className = `device-card ${isOnline ? 'online' : 'offline'}`;
+                    card.innerHTML = `
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <strong style="font-size:14px;"><i class="ph ph-monitor"></i> ${id}</strong>
+                            <span style="font-size:12px;">${isOnline ? '🟢 Çevrimiçi' : '🟡 Sinyal Koptu'}</span>
+                        </div>
+                        <div style="color:#94a3b8; margin-top:6px; font-size:12px; display:flex; flex-direction:column; gap:3px;">
+                            <span><i class="ph ph-presentation-chart"></i> Oynatılan: <b>${dev.playing || 'Yok'}</b></span>
+                        </div>
+                    `;
+                    list.appendChild(card);
+                }
             });
+
+            if (activeCount === 0) {
+                list.innerHTML = '<div style="font-size:12px; color:#64748b; text-align:center; padding:15px;"><i class="ph ph-plugs" style="font-size:24px; display:block; margin-bottom:5px; opacity:0.5;"></i>Şu an yayına bağlı cihaz yok.</div>';
+            }
         } else {
-            list.innerHTML = '<div style="font-size:11px;color:#64748b;text-align:center;padding:10px;">Cihazlar bekleniyor...</div>';
+            list.innerHTML = '<div style="font-size:12px; color:#64748b; text-align:center; padding:15px;">Cihazlar bekleniyor...</div>';
         }
     });
 };
