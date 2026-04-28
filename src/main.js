@@ -79,13 +79,17 @@ onAuthStateChanged(auth, (user) => {
 });
 
 function aktifEtPersonelModu() {
-    // 1. TIKLAMALARI DURDUR (Vektör Ayarları penceresinin açılma motorunu iptal eder)
+    // 👑 PERSONELİN SADECE GÖREBİLECEĞİ SLAYTIN ADI:
+    // Slayt ismini buraya yaz (Boşluk yerine alt çizgi ve küçük harf ile yazılır, Örn: slayt_svg)
+    const PERSONEL_SLAYTI = "slayt_svg";
+
+    // 1. TIKLAMALARI DURDUR
     window.renderProperties = function() {}; 
     window.updateUI = function() {};
     window.selectedEl = null;
     if(window.closeCtx) window.closeCtx();
 
-    // 2. ÖNİZLEME KALKANI (Sahneye tıklanmasını engeller)
+    // 2. ÖNİZLEME KALKANI
     let kalkan = document.getElementById('personel-kalkan');
     if (!kalkan) {
         kalkan = document.createElement('style');
@@ -111,9 +115,27 @@ function aktifEtPersonelModu() {
         document.body.appendChild(gonderBtn);
     }
 
-    // 4. PANELERİ SÜREKLİ TARAYIP SİLEN DÖNGÜ (Asıl Çözüm)
+    // 4. PANELERİ VE SLAYTLARI KISITLAYAN DÖNGÜ
     setInterval(() => {
-        // Ekrandan silinmesini istediğimiz o inatçı başlıklar
+        // --- A) SLAYT KİLİDİ ---
+        let selector = document.getElementById('file-selector');
+        // Eğer listede 1'den fazla slayt varsa (yani diğerleri de görünüyorsa)
+        if (selector && selector.options.length > 1) {
+            // Sadece senin izin verdiğin slaytı bul
+            let izinliSlayt = Array.from(selector.options).find(opt => opt.value === PERSONEL_SLAYTI);
+            
+            selector.innerHTML = ''; // Tüm listeyi acımasızca sil
+            
+            if (izinliSlayt) {
+                selector.appendChild(izinliSlayt); // Sadece izinli slaytı geri koy
+                selector.value = PERSONEL_SLAYTI;  // Onu seçili yap
+                if(window.loadSlide) window.loadSlide(); // Ve o slaytı ekrana zorla yükle!
+            } else {
+                selector.innerHTML = '<option value="">Yetkili Slayt Bulunamadı</option>';
+            }
+        }
+
+        // --- B) GİZLİ PANELLERİ TEMİZLEME (Eski kodumuz) ---
         const hedefler = [
             "AKILLI ZAMANLAMA", 
             "AKTİF CİHAZLAR (TAKİP)", 
@@ -123,20 +145,13 @@ function aktifEtPersonelModu() {
             "VEKTÖR AYARLARI"
         ];
 
-        // Ekrandaki tüm elemanları tara
         document.querySelectorAll('*').forEach(el => {
-            // Eğer elementin içinde sadece bir başlık metni varsa
             if (el.children.length <= 2 && el.textContent) {
                 let metin = el.textContent.trim().toUpperCase();
-                
-                // Metin uzunluğu kısıtlaması (Yanlışlıkla tüm ekranı silmemesi için güvenlik)
                 if (metin.length > 5 && metin.length < 35) {
                     hedefler.forEach(hedef => {
                         if (metin.includes(hedef)) {
-                            // Başlığı gizle
                             el.style.setProperty('display', 'none', 'important');
-                            
-                            // Başlığın hemen altındaki kutuyu/listeyi de gizle
                             if (el.nextElementSibling) {
                                 el.nextElementSibling.style.setProperty('display', 'none', 'important');
                             }
@@ -146,7 +161,6 @@ function aktifEtPersonelModu() {
             }
         });
 
-        // En üstte duran eski "Yayınla", "İndir" ve Slayt "Ekle/Sil" butonlarını gizle
         document.querySelectorAll('button').forEach(btn => {
             let btnMetin = btn.textContent.toUpperCase();
             if (btn.id !== 'personel-yayinla-btn' && (btnMetin.includes('YAYINLA') || btnMetin.includes('İNDİR'))) {
@@ -157,7 +171,7 @@ function aktifEtPersonelModu() {
             }
         });
 
-    }, 300); // Her 300 milisaniyede bir kontrol eder. Sistem panelleri sonradan yüklese bile anında yok eder!
+    }, 300); 
 }
 
 function kapatPersonelModu() {
