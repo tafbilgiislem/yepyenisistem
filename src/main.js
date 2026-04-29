@@ -1388,3 +1388,129 @@ document.addEventListener('contextmenu', function(e) {
     } else if (e.target.closest('#svg-wrapper')) { e.preventDefault(); window.closeCtx(); }
 });
 window.closeCtx = function() { const ctx = document.getElementById('context-menu'); if(ctx) { ctx.style.display = 'none'; } }; document.addEventListener('click', window.closeCtx);
+// --- 🌟 ŞUBE VE EKRAN GRUPLAMA (GELİŞMİŞ YÖNETİM EKLENTİSİ) 🌟 ---
+
+// 1. Cihazın Grubunu Uzaktan Değiştirme Fonksiyonu
+window.changeTvGroup = function(deviceId, currentGroup) {
+    const newGroup = prompt("Bu ekran için yeni bir şube/grup adı girin (Örn: KADIKOY, LOBI, GENEL):", currentGroup);
+    if (newGroup && newGroup.trim() !== "") {
+        // Firebase üzerinden komut gönder
+        set(ref(db, 'sahne/komutlar/' + deviceId), { type: 'changeGroup', newGroup: newGroup.trim().toUpperCase(), ts: Date.now() });
+        window.showToast("Yeni grup cihazlara gönderildi! TV yenileniyor...", "success");
+    }
+};
+
+// 2. Slaytın Hangi Grupta (Şubede) Çıkacağını Belirleme Fonksiyonu
+window.setSlideGroup = async function() {
+    const key = document.getElementById('file-selector')?.value;
+    if(!key) return;
+    
+    // Firebase'den slaytın mevcut ayarlarını çek
+    const snap = await get(ref(db, 'sahne/ayarlar/' + key));
+    let currentGroup = 'TÜMÜ';
+    if(snap.exists() && snap.val().targetGroup) currentGroup = snap.val().targetGroup;
+
+    const newGroup = prompt(key.toUpperCase() + " slaytı hangi şubelerde gösterilsin? (Örn: KADIKOY, LOBI). Herkeste görünmesi için TÜMÜ yazın:", currentGroup);
+    
+    if (newGroup && newGroup.trim() !== "") {
+        let sData = snap.exists() ? snap.val() : { time: 5000, effect: 'fade' };
+        sData.targetGroup = newGroup.trim().toUpperCase(); // Yeni grubu veriye ekle
+        
+        // Ayarları Firebase'e geri kaydet
+        await set(ref(db, 'sahne/ayarlar/' + key), sData);
+        window.showToast("Slayt Şubesi Güncellendi!", "success");
+        
+        // Arayüzdeki rozeti de güncelle
+        let badge = document.getElementById('slide-group-badge');
+        if(badge) badge.innerText = sData.targetGroup;
+    }
+};
+
+// 3. Slayt Yüklendiğinde, Üst Kısma 'Grup Belirle' Butonunu (Mor Renkli) Enjekte Et
+const originalLoadSlide = window.loadSlide;
+window.loadSlide = async function() {
+    await originalLoadSlide(); // Slaytı normal bir şekilde yükle
+    
+    setTimeout(async () => {
+        const key = document.getElementById('file-selector')?.value;
+        if(!key) return;
+        
+        // Slaytın grubunu Firebase'den sor
+        const snap = await get(ref(db, 'sahne/ayarlar/' + key));
+        let tg = 'TÜMÜ';
+        if(snap.exists() && snap.val().targetGroup) tg = snap.val().targetGroup;
+
+        // Üst paneldeki dropdown'ın yanına butonu ekle
+        let topActions = document.getElementById('file-selector').parentNode;
+        if (topActions) {
+            let oldBtn = document.getElementById('slide-group-btn');
+            if(oldBtn) oldBtn.remove();
+            
+            let btn = document.createElement('button');
+            btn.id = 'slide-group-btn';
+            btn.className = 'action-btn special';
+            btn.style.cssText = 'margin-left:10px; background:#8b5cf6; color:#fff; padding:6px 15px; border-radius:6px; font-weight:bold; cursor:pointer; border:none; display:flex; align-items:center; gap:5px;';
+            btn.innerHTML = `<i class="ph ph-users"></i> Şube/Grup: <b id="slide-group-badge" style="background:rgba(0,0,0,0.3); padding:2px 6px; border-radius:4px; margin-left:5px;">${tg}</b>`;
+            btn.onclick = window.setSlideGroup;
+            topActions.appendChild(btn);
+        }
+    }, 400); // Sistem yüklendikten hemen sonra enjekte eder
+};
+
+// 4. Cihazlar Listesine (Aktif Cihazlar paneli) Grup Özelliğini ve Butonunu Ekle
+window.listenDevices = function() {
+    if(!db) return;
+    onValue(ref(db, 'sahne/cihazlar'), (snapshot) => {
+        const list = document.getElementById('device-list');
+        if(!list) return;
+        list.innerHTML = "";
+        
+        if(snapshot.exists()) {
+            const devices = snapshot.val();
+            const now = Date.now();
+            let activeCount = 0;
+
+            Object.keys(devices).forEach(id => {
+                const dev = devices[id];
+                const lastSeenDiff = now - dev.lastSeen;
+                const isOnline = lastSeenDiff < 15000;
+                
+                if (lastSeenDiff > 3600000) {
+                    remove(ref(db, 'sahne/cihazlar/' + id));
+                    return; 
+                }
+
+                if (lastSeenDiff < 60000) {
+                    activeCount++;
+                    const tvName = dev.name || id; 
+                    // 🚀 YENİ: Cihazın grubunu Firebase'den çek
+                    const tvGroup = dev.group || 'GENEL'; 
+                    
+                    const card = document.createElement('div');
+                    card.className = `device-card ${isOnline ? 'online' : 'offline'}`;
+                    card.innerHTML = `
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+                            <strong style="font-size:14px; color:#fff;"><i class="ph ph-monitor"></i> ${tvName}</strong>
+                            <span style="font-size:11px; background:#8b5cf6; color:white; padding:2px 6px; border-radius:4px; font-weight:bold;">${tvGroup}</span>
+                        </div>
+                        <div style="color:#94a3b8; font-size:11px; margin-bottom:10px;">
+                            <span><i class="ph ph-presentation-chart"></i> Oynatılan: <b>${dev.playing || 'Yok'}</b></span>
+                            <span style="margin-left:5px; opacity:0.5;">(${id})</span>
+                        </div>
+                        <div style="display:flex; gap:5px;">
+                            <button class="action-btn" style="flex:1; padding:6px; font-size:11px;" onclick="window.sendTvCommand('${id}', 'ping')" title="Ekranda ismini göster"><i class="ph ph-map-pin"></i> Bul</button>
+                            <button class="action-btn" style="flex:1; padding:6px; font-size:11px;" onclick="window.sendTvCommand('${id}', 'refresh')" title="TV'yi Uzaktan Yenile"><i class="ph ph-arrows-clockwise"></i> F5</button>
+                            <button class="action-btn special" style="flex:1; padding:6px; font-size:11px;" onclick="window.renameTv('${id}', '${tvName}')" title="İsmini Değiştir"><i class="ph ph-pencil"></i> İsim</button>
+                            <button class="action-btn" style="flex:1; padding:6px; font-size:11px; background:#8b5cf6; color:white; border:none;" onclick="window.changeTvGroup('${id}', '${tvGroup}')" title="Şube Atama"><i class="ph ph-users"></i> Grup</button>
+                        </div>
+                    `;
+                    list.appendChild(card);
+                }
+            });
+
+            if (activeCount === 0) list.innerHTML = '<div style="font-size:12px; color:#64748b; text-align:center; padding:15px;"><i class="ph ph-plugs" style="font-size:24px; display:block; margin-bottom:5px; opacity:0.5;"></i>Yayına bağlı cihaz yok.</div>';
+        } else {
+            list.innerHTML = '<div style="font-size:12px; color:#64748b; text-align:center; padding:15px;">Cihazlar bekleniyor...</div>';
+        }
+    });
+};

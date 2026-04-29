@@ -1,4 +1,4 @@
-// --- 1. FIREBASE BAĞLANTISI (YENİ VE GÜVENLİ SİSTEM) ---
+// --- 1. FIREBASE BAĞLANTISI ---
 import { initializeApp } from "firebase/app";
 import { getDatabase, ref, onValue, set } from "firebase/database";
 
@@ -15,14 +15,15 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-// --- 2. CİHAZ KİMLİĞİ VE İSİM HAFIZASI ---
+// --- 2. CİHAZ KİMLİĞİ VE GRUP HAFIZASI ---
 let deviceId = localStorage.getItem('tv_device_id');
 if (!deviceId) {
     deviceId = "TV_" + Math.floor(Math.random() * 10000);
     localStorage.setItem('tv_device_id', deviceId);
 }
-// Varsa özel ismini al, yoksa standart ID'yi kullan
-let deviceName = localStorage.getItem('tv_custom_name') || deviceId; 
+let deviceName = localStorage.getItem('tv_custom_name') || deviceId;
+// 🚀 YENİ: Cihazın Grubunu hafızadan al, yoksa "GENEL" yap
+let deviceGroup = localStorage.getItem('tv_device_group') || 'GENEL'; 
 
 // --- 3. DEĞİŞKENLER ---
 let slidesData = JSON.parse(localStorage.getItem('slidesData')) || {};
@@ -33,7 +34,6 @@ let slideKeys = Object.keys(slidesData).sort();
 let currentIndex = -1;
 let rotationTimer = null;
 let isFirstLoad = true;
-
 let pendingUpdates = {};
 let pendingDeletes = [];
 
@@ -44,46 +44,51 @@ setInterval(() => {
     const currentPlaying = slideKeys[currentIndex] || "Bekleniyor...";
     set(ref(db, 'sahne/cihazlar/' + deviceId), {
         lastSeen: Date.now(),
-        version: "V49-PRO",
+        version: "V50-GROUP",
         playing: currentPlaying.replace(/_/g, ' ').toUpperCase(),
-        name: deviceName // Özel ismini de panele gönderir
+        name: deviceName,
+        group: deviceGroup // 🚀 YENİ: Firebase'e grubunu da bildirir
     }).catch(() => {});
 }, 5000);
 
-// --- 5. 🌟 UZAKTAN KUMANDA (KOMUT DİNLEYİCİ) 🌟 ---
+// --- 5. 🌟 UZAKTAN KUMANDA ---
 onValue(ref(db, 'sahne/komutlar/' + deviceId), (snapshot) => {
     if (snapshot.exists()) {
         const cmd = snapshot.val();
         const lastCmdTs = localStorage.getItem('last_cmd_ts') || 0;
         
-        // Sadece YENİ bir komut geldiyse çalıştır
         if (cmd.ts > lastCmdTs) {
             localStorage.setItem('last_cmd_ts', cmd.ts);
             
             if (cmd.type === 'refresh') {
-                window.location.reload(); // TV sayfayı uzaktan yeniler
+                window.location.reload(); 
             } 
             else if (cmd.type === 'rename') {
-                deviceName = cmd.newName; // Yeni ismini kaydeder
+                deviceName = cmd.newName; 
                 localStorage.setItem('tv_custom_name', deviceName);
             } 
+            else if (cmd.type === 'changeGroup') { 
+                // 🚀 YENİ: Uzaktan grup değiştirme komutu gelirse uygula ve yenile
+                deviceGroup = cmd.newGroup;
+                localStorage.setItem('tv_device_group', deviceGroup);
+                window.location.reload(); 
+            }
             else if (cmd.type === 'ping') {
-                // TV Ekranında dev gibi ismini gösterir
                 let div = document.getElementById('ping-overlay');
                 if(!div) {
                     div = document.createElement('div'); div.id = 'ping-overlay';
                     div.style.cssText = 'position:fixed; inset:0; background:rgba(220,38,38,0.95); color:white; z-index:9999999; display:flex; align-items:center; justify-content:center; font-size:8vw; font-weight:900; text-transform:uppercase;';
                     document.body.appendChild(div);
                 }
-                div.innerText = "📍 BEN: " + deviceName;
+                div.innerText = "📍 BEN: " + deviceName + "\n🏢 GRUP: " + deviceGroup;
                 div.style.display = 'flex';
-                setTimeout(() => { div.style.display = 'none'; }, 4000); // 4 saniye sonra kaybolur
+                setTimeout(() => { div.style.display = 'none'; }, 4000); 
             }
         }
     }
 });
 
-// --- 🌟 CANLI VERİ (RSS / HAVA DURUMU / DÖVİZ) GÜNCELLEYİCİSİ ---
+// --- WIDGET GÜNCELLEYİCİLER (RSS, HAVA, DÖVİZ) ---
 async function fetchRssData(url) {
     if(!url) return "🔴 Geçerli bir haber linki girilmedi.";
     const now = Date.now();
@@ -101,12 +106,10 @@ async function fetchRssData(url) {
     return "🔴 Haberler yüklenemedi...";
 }
 
-// Tüm Widget'ları Her 5 Dakikada Bir (300,000 ms) Güncelle
 setInterval(async () => {
     const activeLayer = document.querySelector('.slide-layer.active');
     if(!activeLayer) return;
     
-    // 1. RSS Güncelle
     const rssBands = activeLayer.querySelectorAll('.rss-band');
     for(let band of rssBands) {
         const url = band.getAttribute('data-rss-url');
@@ -115,12 +118,8 @@ setInterval(async () => {
         if(scroller && scroller.innerText !== text) scroller.innerText = text;
     }
 
-    // 2. Hava Durumu Güncelle
     activeLayer.querySelectorAll('.weather-widget').forEach(async wth => {
         const city = wth.getAttribute('data-city') || 'Istanbul';
-        const theme = wth.getAttribute('data-theme') || 'dark';
-        const txtColor = wth.getAttribute('data-text-color') || '#ffffff';
-        const font = wth.getAttribute('font-family') || 'sans-serif';
         try {
             const res = await fetch(`https://wttr.in/${encodeURIComponent(city)}?format=j1`);
             const data = await res.json();
@@ -129,15 +128,11 @@ setInterval(async () => {
             const engDesc = data.current_condition[0].weatherDesc[0].value;
             const iconMap = { "Sunny": "☀️", "Clear": "🌙", "Partly cloudy": "⛅", "Cloudy": "☁️", "Overcast": "☁️", "Mist": "🌫️", "Patchy rain possible": "🌦️", "Light rain": "🌧️", "Heavy rain": "🌧️", "Light snow": "🌨️", "Heavy snow": "❄️", "Moderate or heavy rain with thunder": "⛈️", "Fog": "🌫️" };
             const emoji = iconMap[engDesc] || "🌤️";
-            
             const inner = wth.querySelector('.weather-inner');
-            if (inner) {
-                inner.innerHTML = `<div style="display:flex; flex-direction:column; align-items:flex-start; justify-content:center;"><div style="font-size: 25cqh; font-weight:800; letter-spacing:0.05em; margin-bottom: 2cqh; line-height: 1;">${city.toUpperCase()}</div><div style="font-size: 12cqh; font-weight:400; opacity:0.8; line-height: 1;">${desc}</div></div><div style="display:flex; align-items:center; gap: 3cqw;"><span style="font-size: 40cqh; line-height: 1;">${emoji}</span><span style="font-size: 45cqh; font-weight:800; line-height: 1;">${temp}°</span></div>`;
-            }
+            if (inner) inner.innerHTML = `<div style="display:flex; flex-direction:column; align-items:flex-start; justify-content:center;"><div style="font-size: 25cqh; font-weight:800; letter-spacing:0.05em; margin-bottom: 2cqh; line-height: 1;">${city.toUpperCase()}</div><div style="font-size: 12cqh; font-weight:400; opacity:0.8; line-height: 1;">${desc}</div></div><div style="display:flex; align-items:center; gap: 3cqw;"><span style="font-size: 40cqh; line-height: 1;">${emoji}</span><span style="font-size: 45cqh; font-weight:800; line-height: 1;">${temp}°</span></div>`;
         } catch(e) {}
     });
 
-    // 3. Döviz Güncelle
     activeLayer.querySelectorAll('.currency-widget').forEach(async cur => {
         const curs = (cur.getAttribute('data-currencies') || 'USD,EUR,GBP').split(',').map(c=>c.trim().toUpperCase());
         try {
@@ -157,12 +152,21 @@ setInterval(async () => {
             if (inner) inner.innerHTML = htmlBlocks;
         } catch(e) {}
     });
-}, 300000); // 300,000 ms = 5 dakika.
+}, 300000);
 
 
+// 🚀 YENİ: SLAYTIN BU CİHAZDA GÖRÜNÜP GÖRÜNMEYECEĞİNİ DENETLEYEN ANA MERKEZ
 function isSlideVisible(key) {
     const s = settingsData[key];
     if(!s) return true; 
+
+    // --- GRUP (ŞUBE) KONTROLÜ ---
+    // Eğer slaytın hedef grubu varsa, hedef "TÜMÜ" değilse ve cihazın grubuyla uyuşmuyorsa GÖSTERME!
+    if(s.targetGroup && s.targetGroup !== 'TÜMÜ' && s.targetGroup !== deviceGroup) {
+        return false; 
+    }
+
+    // --- SAAT/GÜN KONTROLÜ ---
     const now = new Date();
     const currentDay = now.getDay(); 
     const currentTime = now.getHours().toString().padStart(2,'0') + ":" + now.getMinutes().toString().padStart(2,'0');
