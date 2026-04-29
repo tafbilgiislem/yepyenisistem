@@ -1514,7 +1514,7 @@ window.listenDevices = function() {
         }
     });
 };
-// --- 📅 KESİNTİSİZ ÇOKLU KAMPANYA YÖNETİMİ (CANLI DİNLEME VERSİYONU) ---
+// --- 📅 KESİNTİSİZ ÇOKLU KAMPANYA YÖNETİMİ (CANLI DİNLEME VE KESİN GÖRÜNÜM) ---
 
 // 1. KAMPANYALARI HAFIZADA TUTACAK CANLI DİNLEYİCİ
 window.kampanyaHafizasi = {};
@@ -1531,35 +1531,44 @@ let aktifSlaytAnahtari = "";
 setInterval(() => {
     const selector = document.getElementById('file-selector');
     const suankiKey = selector?.value;
-    const timeContainer = document.querySelector('.prop-group .time-range-row')?.parentNode;
+    
+    // 🚀 İŞTE HATAYI ÇÖZEN KISIM: Doğrudan Yayın Saat Aralığı kutusunu hedef alıyoruz!
+    const startTimeInput = document.getElementById('start-time');
     
     // Paneli sadece 1 kere ekle
-    if (timeContainer && !document.getElementById('campaign-dates-wrapper')) {
-        const wrapper = document.createElement('div');
-        wrapper.id = 'campaign-dates-wrapper';
-        wrapper.className = 'prop-group';
-        wrapper.style.cssText = 'margin-bottom: 20px; width: 100%; border: 1px dashed #334155; padding: 12px; border-radius: 8px; background: #0f172a;';
-        wrapper.innerHTML = `
-            <label style="color:#f59e0b; font-size:12px; margin-bottom:10px; display:block; text-transform:uppercase; font-weight:bold;">
-                <i class="ph ph-calendar-star"></i> KAMPANYA TARİHLERİ (Max 3)
-            </label>
-            <div style="display:flex; gap:10px; align-items:flex-end; margin-bottom:15px;">
-                <div style="flex:1;">
-                    <span style="font-size:10px; color:#10b981; display:block; margin-bottom:4px; font-weight:bold;">BAŞLANGIÇ</span>
-                    <input type="date" id="camp-start" style="width:100%; background:#1e293b; color:#fff; border:1px solid #334155; padding:8px; border-radius:6px; font-family:inherit; color-scheme:dark;">
+    if (startTimeInput && !document.getElementById('campaign-dates-wrapper')) {
+        
+        const timeContainer = startTimeInput.closest('div').parentNode;
+
+        if (timeContainer) {
+            const wrapper = document.createElement('div');
+            wrapper.id = 'campaign-dates-wrapper';
+            wrapper.className = 'prop-group';
+            wrapper.style.cssText = 'margin-bottom: 20px; width: 100%; border: 1px dashed #334155; padding: 12px; border-radius: 8px; background: #0f172a;';
+            wrapper.innerHTML = `
+                <label style="color:#f59e0b; font-size:12px; margin-bottom:10px; display:block; text-transform:uppercase; font-weight:bold;">
+                    <i class="ph ph-calendar-star"></i> KAMPANYA TARİHLERİ (Max 3)
+                </label>
+                <div style="display:flex; gap:10px; align-items:flex-end; margin-bottom:15px;">
+                    <div style="flex:1;">
+                        <span style="font-size:10px; color:#10b981; display:block; margin-bottom:4px; font-weight:bold;">BAŞLANGIÇ</span>
+                        <input type="date" id="camp-start" style="width:100%; background:#1e293b; color:#fff; border:1px solid #334155; padding:8px; border-radius:6px; font-family:inherit; color-scheme:dark;">
+                    </div>
+                    <div style="flex:1;">
+                        <span style="font-size:10px; color:#ef4444; display:block; margin-bottom:4px; font-weight:bold;">BİTİŞ</span>
+                        <input type="date" id="camp-end" style="width:100%; background:#1e293b; color:#fff; border:1px solid #334155; padding:8px; border-radius:6px; font-family:inherit; color-scheme:dark;">
+                    </div>
+                    <button onclick="window.addCampaignDate()" style="background:#3b82f6; color:white; border:none; padding:9px 15px; border-radius:6px; cursor:pointer; font-weight:bold; height: 35px; transition:0.2s;">
+                        EKLE
+                    </button>
                 </div>
-                <div style="flex:1;">
-                    <span style="font-size:10px; color:#ef4444; display:block; margin-bottom:4px; font-weight:bold;">BİTİŞ</span>
-                    <input type="date" id="camp-end" style="width:100%; background:#1e293b; color:#fff; border:1px solid #334155; padding:8px; border-radius:6px; font-family:inherit; color-scheme:dark;">
-                </div>
-                <button onclick="window.addCampaignDate()" style="background:#3b82f6; color:white; border:none; padding:9px 15px; border-radius:6px; cursor:pointer; font-weight:bold; height: 35px; transition:0.2s;">
-                    EKLE
-                </button>
-            </div>
-            <div id="campaign-list" style="font-size:11px; color:#cbd5e1; display:flex; flex-direction:column; gap:8px;"></div>
-        `;
-        timeContainer.parentNode.insertBefore(wrapper, timeContainer);
-        window.loadCampaignList();
+                <div id="campaign-list" style="font-size:11px; color:#cbd5e1; display:flex; flex-direction:column; gap:8px;"></div>
+            `;
+            
+            // Saatin hemen üstüne yerleştirir
+            timeContainer.parentNode.insertBefore(wrapper, timeContainer);
+            window.loadCampaignList();
+        }
     }
 
     // Slayt değişimini anında yakala
@@ -1575,7 +1584,7 @@ window.addCampaignDate = function() {
     const end = document.getElementById('camp-end').value;
 
     if (!key || !start || !end) return window.showToast?.("Tarih seçilmedi!", "error");
-    if (start > end) return window.showToast?.("Bitiş tarihi hatalı!", "error");
+    if (start > end) return window.showToast?.("Bitiş tarihi başlangıçtan önce olamaz!", "error");
 
     // Hafızadan mevcut tarihleri al
     let mevcutKampanyalar = window.kampanyaHafizasi[key] || [];
@@ -1621,12 +1630,12 @@ window.loadCampaignList = function() {
             const item = document.createElement('div');
             item.style.cssText = "display:flex; justify-content:space-between; align-items:center; background:#1e293b; padding:8px 12px; border-radius:6px; border-left: 3px solid #f59e0b;";
             item.innerHTML = `
-                <span><i class="ph ph-calendar-check" style="color:#10b981;"></i> <b style="color:#10b981;">${s}</b> - <b style="color:#ef4444;">${e}</b></span>
-                <button onclick="window.removeCampaignDate(${index})" style="background:transparent; border:none; color:#ef4444; cursor:pointer;"><i class="ph ph-trash"></i></button>
+                <span><i class="ph ph-calendar-check" style="color:#10b981; margin-right:5px;"></i> Slayt <b style="color:#10b981;">${s}</b>'de yayına girecek, <b style="color:#ef4444;">${e}</b>'de çıkacak.</span>
+                <button onclick="window.removeCampaignDate(${index})" style="background:transparent; border:none; color:#ef4444; cursor:pointer; font-size:16px;" title="Sil"><i class="ph ph-trash"></i></button>
             `;
             listContainer.appendChild(item);
         });
     } else {
-        listContainer.innerHTML = `<span style="opacity:0.5; font-style:italic;">Bu slayt her zaman oynatılır.</span>`;
+        listContainer.innerHTML = `<span style="opacity:0.5; font-style:italic;"><i class="ph ph-info"></i> Bu slayt için özel bir tarih belirlenmemiş. Slayt her zaman oynatılır.</span>`;
     }
 };
