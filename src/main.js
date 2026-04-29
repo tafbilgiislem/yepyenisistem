@@ -79,16 +79,17 @@ onAuthStateChanged(auth, (user) => {
 });
 
 function aktifEtPersonelModu() {
-    // 👑 PERSONELİN GÖRECEĞİ SLAYT
+    // 👑 PERSONELİN SADECE GÖREBİLECEĞİ SLAYTIN ADI:
+    // Slayt ismini buraya yaz (Boşluk yerine alt çizgi ve küçük harf ile yazılır, Örn: slayt_svg)
     const PERSONEL_SLAYTI = "slayt_svg";
 
-    // 1. TIKLAMALARI VE SEÇİMLERİ SIFIRLA (Sistemi bozmadan)
+    // 1. TIKLAMALARI DURDUR
     window.renderProperties = function() {}; 
     window.updateUI = function() {};
     window.selectedEl = null;
     if(window.closeCtx) window.closeCtx();
 
-    // 2. GÖRSEL KALKAN (Sahne tıklamalarını ve tüm butonları yasakla)
+    // 2. ÖNİZLEME KALKANI
     let kalkan = document.getElementById('personel-kalkan');
     if (!kalkan) {
         kalkan = document.createElement('style');
@@ -96,78 +97,63 @@ function aktifEtPersonelModu() {
         document.head.appendChild(kalkan);
     }
     kalkan.innerHTML = `
-        /* Sahneyi tamamen kilitler */
-        #svg-wrapper, #canvas-inner, svg { pointer-events: none !important; user-select: none !important; }
+        #svg-wrapper { pointer-events: none !important; user-select: none !important; }
         #control-layer, #context-menu { display: none !important; }
-        
-        /* Sistemdeki tüm butonları (Yeni Slayt, Sil vb.) gizle */
-        button { display: none !important; }
-        
-        /* İmleç ikonunu gizle */
-        .ph-cursor-click { display: none !important; }
-        
-        /* SADECE bizim Yayına Gönder butonumuz görünür kalsın */
-        #personel-yayinla-btn { display: flex !important; }
     `;
 
-    // 3. SAĞ ALT KÖŞEYE YENİ VE SİLİNEMEZ BUTON
+    // 3. SAĞ ALT KÖŞEYE YAYINA GÖNDER BUTONU
     let gonderBtn = document.getElementById('personel-yayinla-btn');
     if (!gonderBtn) {
         gonderBtn = document.createElement('button');
         gonderBtn.id = 'personel-yayinla-btn';
         gonderBtn.innerHTML = '<i class="ph ph-paper-plane-tilt"></i> YAYINA GÖNDER';
-        gonderBtn.style.cssText = 'position:fixed; bottom:30px; right:30px; z-index:999999; background:#10b981; color:white; padding:15px 30px; font-size:16px; font-weight:bold; border-radius:8px; border:none; cursor:pointer; box-shadow:0 10px 20px rgba(16,185,129,0.4); align-items:center; gap:10px;';
+        gonderBtn.style.cssText = 'position:fixed; bottom:30px; right:30px; z-index:999999; background:#10b981; color:white; padding:15px 30px; font-size:16px; font-weight:bold; border-radius:8px; border:none; cursor:pointer; box-shadow:0 10px 20px rgba(16,185,129,0.4); display:flex; align-items:center; gap:10px;';
         gonderBtn.onclick = function() {
             if(window.saveData) window.saveData();
-            window.showToast("Tasarım Başarıyla Yayına Gönderildi!", "success");
+            window.showToast("Yayına Gönderildi!", "success");
         };
         document.body.appendChild(gonderBtn);
     }
 
-    // 4. MUCİZEVİ AKILLI AVCI DÖNGÜSÜ (Beyaz ekran yapmaz, anında siler)
+    // 4. PANELERİ VE SLAYTLARI KISITLAYAN DÖNGÜ
     setInterval(() => {
         // --- A) SLAYT KİLİDİ ---
         let selector = document.getElementById('file-selector');
+        // Eğer listede 1'den fazla slayt varsa (yani diğerleri de görünüyorsa)
         if (selector && selector.options.length > 1) {
+            // Sadece senin izin verdiğin slaytı bul
             let izinliSlayt = Array.from(selector.options).find(opt => opt.value === PERSONEL_SLAYTI);
-            selector.innerHTML = ''; 
+            
+            selector.innerHTML = ''; // Tüm listeyi acımasızca sil
+            
             if (izinliSlayt) {
-                selector.appendChild(izinliSlayt);
-                selector.value = PERSONEL_SLAYTI;  
-                if(window.loadSlide) window.loadSlide(); 
+                selector.appendChild(izinliSlayt); // Sadece izinli slaytı geri koy
+                selector.value = PERSONEL_SLAYTI;  // Onu seçili yap
+                if(window.loadSlide) window.loadSlide(); // Ve o slaytı ekrana zorla yükle!
             } else {
                 selector.innerHTML = '<option value="">Yetkili Slayt Bulunamadı</option>';
             }
         }
 
-        // --- B) PANELLERİ VE "DÜZENLEMEK İÇİN..." YAZISINI YOK ET ---
-        const yasaklar = [
+        // --- B) GİZLİ PANELLERİ TEMİZLEME (Eski kodumuz) ---
+        const hedefler = [
             "AKILLI ZAMANLAMA", 
-            "AKTİF CİHAZLAR", 
+            "AKTİF CİHAZLAR (TAKİP)", 
             "TUVAL AYARLARI", 
             "NESNE EKLE", 
             "KATMANLAR", 
-            "VEKTÖR AYARLARI",
-            "DÜZENLEMEK IÇIN SAHNEDEN",
-            "DÜZENLEMEK İÇİN SAHNEDEN" // Senin kurtulmak istediğin o yazı!
+            "VEKTÖR AYARLARI"
         ];
-        
-        document.querySelectorAll('h1, h2, h3, h4, h5, h6, div, span, p').forEach(el => {
-            if (!el.textContent) return;
-            let metin = el.textContent.toUpperCase().trim();
-            
-            // GÜVENLİK KİLİDİ: Sadece kısa metinlere odaklan (150 karakterden az). 
-            // Bu sayede ana panelleri silip BEYAZ EKRAN YAPMAZ!
-            if (metin.length > 0 && metin.length < 150) {
-                if (!metin.includes("HIZLI METİN")) {
-                    yasaklar.forEach(hedef => {
+
+        document.querySelectorAll('*').forEach(el => {
+            if (el.children.length <= 2 && el.textContent) {
+                let metin = el.textContent.trim().toUpperCase();
+                if (metin.length > 5 && metin.length < 35) {
+                    hedefler.forEach(hedef => {
                         if (metin.includes(hedef)) {
                             el.style.setProperty('display', 'none', 'important');
-                            
-                            // Altındaki ayar kutusunu da gizle (Eğer Hızlı Metin değilse)
-                            let sonraki = el.nextElementSibling;
-                            if (sonraki && sonraki.tagName !== 'SELECT' && !sonraki.textContent.toUpperCase().includes("HIZLI METİN")) {
-                                sonraki.style.setProperty('display', 'none', 'important');
+                            if (el.nextElementSibling) {
+                                el.nextElementSibling.style.setProperty('display', 'none', 'important');
                             }
                         }
                     });
@@ -175,7 +161,17 @@ function aktifEtPersonelModu() {
             }
         });
 
-    }, 50); // Saniyede 20 kere tarar! "Düzenlemek için..." yazısı ekrana çıkmaya yeltendiği an yok edilir.
+        document.querySelectorAll('button').forEach(btn => {
+            let btnMetin = btn.textContent.toUpperCase();
+            if (btn.id !== 'personel-yayinla-btn' && (btnMetin.includes('YAYINLA') || btnMetin.includes('İNDİR'))) {
+                btn.style.setProperty('display', 'none', 'important');
+            }
+            if (btn.hasAttribute('onclick') && (btn.getAttribute('onclick').includes('addNewSlide') || btn.getAttribute('onclick').includes('deleteSlide'))) {
+                btn.style.setProperty('display', 'none', 'important');
+            }
+        });
+
+    }, 300); 
 }
 
 function kapatPersonelModu() {
