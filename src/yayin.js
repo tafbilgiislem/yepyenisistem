@@ -3,13 +3,13 @@ import { initializeApp } from "firebase/app";
 import { getDatabase, ref, onValue, set } from "firebase/database";
 
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  databaseURL: import.meta.env.VITE_FIREBASE_DB_URL,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID
+    apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+    authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+    databaseURL: import.meta.env.VITE_FIREBASE_DB_URL,
+    projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+    storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+    messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+    appId: import.meta.env.VITE_FIREBASE_APP_ID
 };
 
 const app = initializeApp(firebaseConfig);
@@ -25,57 +25,21 @@ let deviceName = localStorage.getItem('tv_custom_name') || deviceId;
 // 🚀 YENİ: Cihazın Grubunu hafızadan al, yoksa "GENEL" yap
 let deviceGroup = localStorage.getItem('tv_device_group') || 'GENEL'; 
 
-// --- 3. DEĞİŞKENLER ---
+// --- 3. DEĞİŞKENLER VE KAMPANYA DİNLEYİCİSİ ---
 let slidesData = JSON.parse(localStorage.getItem('slidesData')) || {};
 let settingsData = JSON.parse(localStorage.getItem('settingsData')) || {};
 let rssCache = { url: "", data: "🔴 Haberler Bekleniyor...", time: 0 };
-// 🚀 GELİŞMİŞ DENETLEME: GRUP + SAAT + GÜN + BAĞIMSIZ ÇOKLU TARİH KONTROLÜ
-function isSlideVisible(key) {
-    const s = settingsData[key];
-    if(!s) return true; 
 
-    const now = new Date();
-    const todayStr = now.toISOString().split('T')[0]; 
-
-    // --- 1. ÇOKLU TARİH (KAMPANYA LİSTESİ) KONTROLÜ ---
-    const cDates = campaignData[key]; 
-    if (cDates && Object.keys(cDates).length > 0) {
-        // Firebase nesnesini güvenle diziye çevir
-        const datesArray = Array.isArray(cDates) ? cDates : Object.values(cDates);
-        
-        if (datesArray.length > 0) {
-            let isWithinAnyCampaign = false;
-            
-            // Eğer bugünün tarihi listedeki HİÇBİR kampanyaya uymuyorsa, isWithinAnyCampaign "false" kalır
-            for (let i = 0; i < datesArray.length; i++) {
-                const c = datesArray[i];
-                if (todayStr >= c.start && todayStr <= c.end) {
-                    isWithinAnyCampaign = true;
-                    break; 
-                }
-            }
-            
-            if (!isWithinAnyCampaign) return false; // Slayt süresi dışında, atla!
-        }
+// 🚀 YENİ: Kampanya tarihleri burada tutulacak ve anlık güncellenecek
+let campaignData = {}; 
+onValue(ref(db, 'sahne/kampanyalar'), (snapshot) => {
+    if (snapshot.exists()) {
+        campaignData = snapshot.val();
+    } else {
+        campaignData = {};
     }
+});
 
-    // --- 2. GRUP (ŞUBE) KONTROLÜ ---
-    if(s.targetGroup && s.targetGroup !== 'TÜMÜ' && s.targetGroup !== deviceGroup) {
-        return false; 
-    }
-
-    // --- 3. GÜN KONTROLÜ ---
-    const currentDay = now.getDay(); 
-    if(s.days && s.days.length > 0 && !s.days.includes(currentDay)) return false;
-
-    // --- 4. SAAT KONTROLÜ ---
-    const currentTime = now.getHours().toString().padStart(2,'0') + ":" + now.getMinutes().toString().padStart(2,'0');
-    if(s.startTime && s.endTime) {
-        if(currentTime < s.startTime || currentTime > s.endTime) return false;
-    }
-
-    return true; 
-}
 let slideKeys = Object.keys(slidesData).sort();
 let currentIndex = -1;
 let rotationTimer = null;
@@ -93,7 +57,7 @@ setInterval(() => {
         version: "V50-GROUP",
         playing: currentPlaying.replace(/_/g, ' ').toUpperCase(),
         name: deviceName,
-        group: deviceGroup // 🚀 YENİ: Firebase'e grubunu da bildirir
+        group: deviceGroup
     }).catch(() => {});
 }, 5000);
 
@@ -114,7 +78,6 @@ onValue(ref(db, 'sahne/komutlar/' + deviceId), (snapshot) => {
                 localStorage.setItem('tv_custom_name', deviceName);
             } 
             else if (cmd.type === 'changeGroup') { 
-                // 🚀 YENİ: Uzaktan grup değiştirme komutu gelirse uygula ve yenile
                 deviceGroup = cmd.newGroup;
                 localStorage.setItem('tv_device_group', deviceGroup);
                 window.location.reload(); 
@@ -200,34 +163,34 @@ setInterval(async () => {
     });
 }, 300000);
 
-// 🚀 GELİŞMİŞ DENETLEME: GRUP + SAAT + GÜN + ÇOKLU TARİH KONTROLÜ
+// 🚀 GELİŞMİŞ DENETLEME: GRUP + SAAT + GÜN + BAĞIMSIZ ÇOKLU TARİH KONTROLÜ
 function isSlideVisible(key) {
     const s = settingsData[key];
     if(!s) return true; 
 
     const now = new Date();
-    
-    // --- 1. ÇOKLU TARİH (KAMPANYA LİSTESİ) KONTROLÜ ---
     const todayStr = now.toISOString().split('T')[0]; 
 
-    // Eğer campaignDates tanımlanmışsa ve içinde en az 1 tarih varsa (yani boş değilse)
-    if (s.campaignDates && s.campaignDates.length > 0) {
-        let isWithinAnyCampaign = false;
-
-        // Listede dön ve bugünün tarihi bu kampanyalardan herhangi birinin içinde mi bak
-        for (let i = 0; i < s.campaignDates.length; i++) {
-            const c = s.campaignDates[i];
-            if (todayStr >= c.start && todayStr <= c.end) {
-                isWithinAnyCampaign = true; // Tarih tuttu! Oynatılabilir.
-                break; // Bir tanesine uyması yeterli, aramayı kes.
+    // --- 1. ÇOKLU TARİH (KAMPANYA LİSTESİ) KONTROLÜ ---
+    const cDates = campaignData[key]; 
+    if (cDates && Object.keys(cDates).length > 0) {
+        const datesArray = Array.isArray(cDates) ? cDates : Object.values(cDates);
+        
+        if (datesArray.length > 0) {
+            let isWithinAnyCampaign = false;
+            
+            for (let i = 0; i < datesArray.length; i++) {
+                const c = datesArray[i];
+                if (todayStr >= c.start && todayStr <= c.end) {
+                    isWithinAnyCampaign = true;
+                    break; 
+                }
             }
+            
+            if (!isWithinAnyCampaign) return false; 
         }
-
-        // Eğer bugünün tarihi bu listedeki HİÇBİR kampanyaya uymuyorsa, slaytı ATLA!
-        if (!isWithinAnyCampaign) return false; 
-    } 
-    else {
-        // (Geriye Dönük Uyumluluk) Eğer eskiden kalan tekli startDate varsa
+    } else {
+        // (Geriye Dönük Uyumluluk) Eski tekli ayar varsa
         if (s.startDate && todayStr < s.startDate) return false;
         if (s.endDate && todayStr > s.endDate) return false;
     }
@@ -428,8 +391,16 @@ function updateClock() {
     const minutes = now.getMinutes().toString().padStart(2, '0');
     const seconds = now.getSeconds().toString().padStart(2, '0');
     const date = now.toLocaleDateString('tr-TR');
-    if (dateText) dateText.textContent = date;
-    if (timeText) timeText.textContent = hours + ":" + minutes + ":" + seconds;
+    if (dateText) {
+        dateText.textContent = date;
+        dateText.style.textAnchor = "start"; 
+        dateText.setAttribute("text-anchor", "start");
+    }
+    if (timeText) {
+        timeText.textContent = hours + ":" + minutes + ":" + seconds;
+        timeText.style.textAnchor = "start";
+        timeText.setAttribute("text-anchor", "start");
+    }
 }
 setInterval(updateClock, 1000);
 
@@ -457,14 +428,14 @@ function startInnerSliders() {
     }, 3000); 
 }
 startInnerSliders();
-// --- 🚀 YENİ: SİSTEM GENELİ GERİ SAYIM MOTORU (SVG'ler için) ---
+
+// --- 🚀 SİSTEM GENELİ GERİ SAYIM MOTORU (SVG'ler için) ---
 const HEDEF_TARIH = new Date("2028-07-14T20:00:00");
 
 function updateGlobalCountdowns() {
     const activeLayer = document.querySelector('.slide-layer.active');
     if (!activeLayer) return;
 
-    // Aktif slaytta geri sayım ID'leri var mı diye kontrol et
     const secEl = activeLayer.querySelector('#seconds');
     const minEl = activeLayer.querySelector('#minutes');
     const hourEl = activeLayer.querySelector('#hours');
@@ -482,7 +453,6 @@ function updateGlobalCountdowns() {
         const days = Math.floor(diff / 86400000) % 30;
         const months = Math.floor(diff / (86400000 * 30));
 
-        // SVG'nin içindeki text etiketlerini güncelle
         if (monthEl) monthEl.textContent = String(months).padStart(2, "0");
         if (dayEl) dayEl.textContent = String(days).padStart(2, "0");
         if (hourEl) hourEl.textContent = String(hours).padStart(2, "0");
@@ -491,4 +461,3 @@ function updateGlobalCountdowns() {
     }
 }
 setInterval(updateGlobalCountdowns, 1000);
-// --- GERİ SAYIM MOTORU SONU ---
