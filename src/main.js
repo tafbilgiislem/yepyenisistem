@@ -1514,73 +1514,95 @@ window.listenDevices = function() {
         }
     });
 };
-// --- 📅 PROFESYONEL PANEL ENTEGRASYONU (TARİH VE SAAT BİRLEŞTİRME) ---
+// --- 📅 PROFESYONEL PANEL ENTEGRASYONU (KESİN ÇÖZÜM) ---
 
-window.setupSchedulePanel = function() {
-    // Panelde saat aralığının olduğu bölümü bul
-    const timeRangeRow = document.querySelector('.prop-group .time-range-row')?.parentNode;
+// 1. Paneli Sürekli Takip Edip Takvimi Yerleştiren Motor
+setInterval(() => {
+    // Referans noktamız: "Yayın Saat Aralığı" bölümündeki başlangıç saati kutusu
+    const startTimeInput = document.getElementById('start-time');
     
-    if (timeRangeRow && !document.getElementById('campaign-dates-row')) {
-        // Yeni bir satır oluştur (Tarih Aralığı için)
-        const dateRow = document.createElement('div');
-        dateRow.id = 'campaign-dates-row';
-        dateRow.className = 'prop-group'; // Mevcut CSS sınıflarına uyum sağlar
-        dateRow.innerHTML = `
-            <label style="color:#94a3b8; font-size:12px; margin-bottom:8px; display:block; text-transform:uppercase; font-weight:bold;">YAYIN TARİH ARALIĞI</label>
-            <div style="display:flex; gap:10px; margin-bottom:15px;">
-                <div style="flex:1;">
-                    <span style="font-size:10px; color:#64748b; display:block;">BAŞLANGIÇ</span>
-                    <input type="date" id="slide-start-date" class="prop-input" style="width:100%; background:#0f172a; color:#fff; border:1px solid #1e293b; padding:8px; border-radius:6px;">
-                </div>
-                <div style="flex:1;">
-                    <span style="font-size:10px; color:#64748b; display:block;">BİTİŞ</span>
-                    <input type="date" id="slide-end-date" class="prop-input" style="width:100%; background:#0f172a; color:#fff; border:1px solid #1e293b; padding:8px; border-radius:6px;">
-                </div>
-            </div>
-        `;
-        // Saat aralığının hemen altına ekle
-        timeRangeRow.insertBefore(dateRow, document.querySelector('h3:has(.ph-calendar-blank)')?.nextSibling || null);
+    // Eğer saat kutusu ekrandaysa ama bizim TAKVİM henüz eklenmemişse:
+    if (startTimeInput && !document.getElementById('campaign-dates-row')) {
         
-        // Inputlar değiştiğinde otomatik kaydetmesi için dinleyici ekle
-        document.getElementById('slide-start-date').onchange = window.saveScheduleSettings;
-        document.getElementById('slide-end-date').onchange = window.saveScheduleSettings;
+        // Saat kutularını kapsayan ana çerçeveyi bul
+        const timeContainer = startTimeInput.closest('div').parentNode;
+        
+        if (timeContainer) {
+            const dateRow = document.createElement('div');
+            dateRow.id = 'campaign-dates-row';
+            dateRow.style.cssText = 'margin-bottom: 20px; width: 100%;';
+            dateRow.innerHTML = `
+                <label style="color:#94a3b8; font-size:12px; margin-bottom:8px; display:block; text-transform:uppercase; font-weight:bold;">YAYIN TARİH ARALIĞI (KAMPANYA)</label>
+                <div style="display:flex; gap:10px;">
+                    <div style="flex:1;">
+                        <span style="font-size:10px; color:#10b981; display:block; margin-bottom:4px; font-weight:bold;">BAŞLANGIÇ</span>
+                        <input type="date" id="slide-start-date" style="width:100%; background:#0f172a; color:#fff; border:1px solid #1e293b; padding:10px; border-radius:6px; font-family:inherit; color-scheme:dark;">
+                    </div>
+                    <div style="flex:1;">
+                        <span style="font-size:10px; color:#ef4444; display:block; margin-bottom:4px; font-weight:bold;">BİTİŞ</span>
+                        <input type="date" id="slide-end-date" style="width:100%; background:#0f172a; color:#fff; border:1px solid #1e293b; padding:10px; border-radius:6px; font-family:inherit; color-scheme:dark;">
+                    </div>
+                </div>
+            `;
+            
+            // Takvimi, saat ayarının hemen ÜSTÜNE yerleştir
+            timeContainer.parentNode.insertBefore(dateRow, timeContainer);
+            
+            // Tarih seçildiğinde Firebase'e kaydetme olaylarını bağla
+            document.getElementById('slide-start-date').addEventListener('change', window.saveScheduleSettings);
+            document.getElementById('slide-end-date').addEventListener('change', window.saveScheduleSettings);
+
+            // Kutular eklendiği an mevcut tarihleri Firebase'den çek
+            window.loadCampaignDates();
+        }
+    }
+}, 500); // Yarım saniyede bir paneli kontrol eder, dinamik geçişlerde bile bozulmaz.
+
+// 2. Firebase'den Tarihleri Çekip Kutulara Yazan Fonksiyon
+window.loadCampaignDates = async function() {
+    const key = document.getElementById('file-selector')?.value;
+    if(!key) return;
+    
+    const snap = await get(ref(db, 'sahne/ayarlar/' + key));
+    if (snap.exists()) {
+        const data = snap.val();
+        const startInput = document.getElementById('slide-start-date');
+        const endInput = document.getElementById('slide-end-date');
+        
+        // HATA ÖNLEME: Kutucuklar ekrandaysa değerleri yaz (Null hatasını bitirir)
+        if (startInput) startInput.value = data.startDate || "";
+        if (endInput) endInput.value = data.endDate || "";
     }
 };
 
-// Slayt değiştikçe verileri Firebase'den çekip kutucuklara doldur
-const originalLoadSlideGelismiş = window.loadSlide;
-window.loadSlide = async function() {
-    await originalLoadSlideGelismiş(); // Önce slaytı normal yükle
-    
-    setTimeout(async () => {
-        window.setupSchedulePanel(); // Tarih kutularını oraya çiz
-        
-        const key = document.getElementById('file-selector')?.value;
-        const snap = await get(ref(db, 'sahne/ayarlar/' + key));
-        
-        if (snap.exists()) {
-            const data = snap.val();
-            document.getElementById('slide-start-date').value = data.startDate || "";
-            document.getElementById('slide-end-date').value = data.endDate || "";
-        }
-    }, 400);
-};
-
-// Verileri kaydetme fonksiyonu (Diğer ayarlarla birleştirir)
+// 3. Kutucuklar Değiştiğinde Veriyi Firebase'e Kaydeden Fonksiyon
 window.saveScheduleSettings = async function() {
     const key = document.getElementById('file-selector')?.value;
     if(!key) return;
 
-    const startDate = document.getElementById('slide-start-date').value;
-    const endDate = document.getElementById('slide-end-date').value;
+    const startInput = document.getElementById('slide-start-date');
+    const endInput = document.getElementById('slide-end-date');
+    if (!startInput || !endInput) return;
 
-    // Mevcut diğer ayarları (süre, efekt vb.) bozmamak için önce mevcut veriyi al
+    // Mevcut ayarları (süre, gün vb.) bozmamak için önce Firebase'deki veriyi çekiyoruz
     const snap = await get(ref(db, 'sahne/ayarlar/' + key));
     let sData = snap.exists() ? snap.val() : {};
 
-    sData.startDate = startDate;
-    sData.endDate = endDate;
+    // Yeni tarihleri ekliyoruz
+    sData.startDate = startInput.value;
+    sData.endDate = endInput.value;
 
     await set(ref(db, 'sahne/ayarlar/' + key), sData);
-    window.showToast("Planlama Güncellendi", "success");
+    if(window.showToast) window.showToast("Kampanya Tarihi Güncellendi!", "success");
+};
+
+// 4. Slayt Her Değiştiğinde Tarihleri Otomatik Yenile
+const originalLoadSlideTakvim = window.loadSlide;
+window.loadSlide = async function() {
+    if(originalLoadSlideTakvim) await originalLoadSlideTakvim(); 
+    
+    // Arayüzün yüklenmesi için kısa bir süre bekleyip tarihleri doldur
+    setTimeout(() => {
+        window.loadCampaignDates();
+    }, 300);
 };
