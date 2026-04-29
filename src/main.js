@@ -1639,58 +1639,66 @@ window.loadCampaignList = function() {
         listContainer.innerHTML = `<span style="opacity:0.5; font-style:italic;"><i class="ph ph-info"></i> Bu slayt için özel bir tarih belirlenmemiş. Slayt her zaman oynatılır.</span>`;
     }
 };
-// --- 🏢 ŞUBE / GRUP SEÇİMİ (PROFESYONEL AÇILIR LİSTE) ---
+// --- 🏢 ŞUBE / GRUP SEÇİMİ (KESİN ÇALIŞAN PROFESYONEL VERSİYON) ---
 
 // 1. ESKİ ÇİRKİN BUTONU YOK ET
 setInterval(() => {
     const oldBtns = document.querySelectorAll('button');
     oldBtns.forEach(btn => {
-        if (btn.innerText.includes('Şube/Grup')) btn.remove();
+        // İçinde Şube veya Grup yazan o mor butonu bulup siliyoruz
+        if (btn.innerText.includes('Şube') || btn.innerText.includes('Grup')) {
+            btn.remove();
+        }
     });
 }, 1000);
 
-// 2. AKTİF CİHAZLARDAN (TV'LERDEN) GRUPLARI OTOMATİK ÇEK
-window.aktifGruplar = new Set(['TÜMÜ', 'GENEL']); // Varsayılan kalıcı gruplar
-onValue(ref(db, 'sahne/cihazlar'), (snapshot) => {
-    if (snapshot.exists()) {
-        const cihazlar = snapshot.val();
-        Object.values(cihazlar).forEach(cihaz => {
-            if (cihaz.group) window.aktifGruplar.add(cihaz.group);
-        });
-        window.updateGroupDropdown(); // Yeni bir TV bağlanırsa listeyi anında tazele
-    }
-});
+// 2. AKTİF CİHAZLARDAN GRUPLARI OTOMATİK ÇEK
+window.aktifGruplar = new Set(['TÜMÜ', 'GENEL']); // Sistemde her zaman olması gerekenler
+if (!window.grupDinleyiciAktif) {
+    onValue(ref(db, 'sahne/cihazlar'), (snapshot) => {
+        if (snapshot.exists()) {
+            const cihazlar = snapshot.val();
+            Object.values(cihazlar).forEach(cihaz => {
+                if (cihaz.group) window.aktifGruplar.add(cihaz.group);
+            });
+            window.updateGroupDropdown(); 
+        }
+    });
+    window.grupDinleyiciAktif = true;
+}
 
-// 3. ŞIK AÇILIR LİSTEYİ (DROPDOWN) EKRANA YERLEŞTİR
+// 3. ŞIK AÇILIR LİSTEYİ EKRANA YERLEŞTİR (GARANTİLİ HEDEF NOKTASI)
 setInterval(() => {
-    const timeContainer = document.querySelector('.prop-group .time-range-row')?.parentNode;
+    // 🚀 HEDEFİMİZ: En üstteki ana slayt seçici kutusu (Asla şaşmaz)
+    const fileSelector = document.getElementById('file-selector');
+    
+    if (fileSelector && !document.getElementById('group-select-wrapper')) {
+        const fileContainer = fileSelector.parentNode;
 
-    if (timeContainer && !document.getElementById('group-select-wrapper')) {
         const wrapper = document.createElement('div');
         wrapper.id = 'group-select-wrapper';
-        wrapper.className = 'prop-group';
-        // Aktif Cihazlar temasına uygun, şık mavi/lacivert bir kutu tasarımı
-        wrapper.style.cssText = 'margin-bottom: 20px; width: 100%; border: 1px solid #3b82f6; padding: 12px; border-radius: 8px; background: rgba(59, 130, 246, 0.05);';
+        // Şık, hafif mor/lacivert tonlarında bir tasarım
+        wrapper.style.cssText = 'margin-top: 15px; margin-bottom: 15px; width: 100%; border: 1px solid #8b5cf6; padding: 12px; border-radius: 8px; background: rgba(139, 92, 246, 0.1);';
 
         wrapper.innerHTML = `
-            <label style="color:#60a5fa; font-size:12px; margin-bottom:8px; display:block; text-transform:uppercase; font-weight:bold;">
-                <i class="ph ph-monitor-play"></i> HEDEF ŞUBE / EKRAN GRUBU
+            <label style="color:#a78bfa; font-size:12px; margin-bottom:8px; display:block; text-transform:uppercase; font-weight:bold;">
+                <i class="ph ph-buildings"></i> HEDEF ŞUBE / EKRAN GRUBU
             </label>
-            <select id="slide-group-select" onchange="window.handleGroupChange()" style="width:100%; background:#0f172a; color:#fff; border:1px solid #3b82f6; padding:10px; border-radius:6px; font-weight:bold; cursor:pointer; outline:none; appearance:none;">
-                <option value="TÜMÜ">TÜMÜ (Tüm Ekranlarda Oynat)</option>
+            <select id="slide-group-select" onchange="window.handleGroupChange()" style="width:100%; background:#0f172a; color:#fff; border:1px solid #8b5cf6; padding:10px; border-radius:6px; font-weight:bold; cursor:pointer; outline:none;">
+                <option value="TÜMÜ">🌍 TÜMÜ (Tüm Ekranlarda Oynat)</option>
             </select>
             <div style="font-size:11px; color:#94a3b8; margin-top:8px;">
-                <i class="ph ph-info"></i> Bu slaytın hangi şubelerde/ekranlarda çıkacağını seçin.
+                <i class="ph ph-info"></i> Bu slaytın hangi cihazlarda çıkacağını seçin.
             </div>
         `;
         
-        // Akıllı zamanlama panosunun hemen üstüne yerleştiriyoruz
-        timeContainer.parentNode.insertBefore(wrapper, timeContainer);
+        // Ana slayt seçicinin hemen BİR ALTINA yerleştiriyoruz
+        fileContainer.parentNode.insertBefore(wrapper, fileContainer.nextSibling);
         window.updateGroupDropdown();
     }
 }, 500);
 
-// 4. LİSTENİN İÇİNİ DOLDURMA FONKSİYONU
+// 4. LİSTENİN İÇİNİ SİSTEMDEKİ TV'LERE GÖRE DOLDUR
 window.updateGroupDropdown = async function() {
     const selectEl = document.getElementById('slide-group-select');
     const key = document.getElementById('file-selector')?.value;
@@ -1701,32 +1709,29 @@ window.updateGroupDropdown = async function() {
     let currentGroup = 'TÜMÜ';
     if (snap.exists() && snap.val().targetGroup) {
         currentGroup = snap.val().targetGroup;
-        window.aktifGruplar.add(currentGroup); // Eğer listede yoksa zorla ekle
+        window.aktifGruplar.add(currentGroup);
     }
 
-    // Listeyi temizle ve yeniden oluştur
     selectEl.innerHTML = '';
     
-    // Hafızadaki grupları alfabetik olarak listele
+    // Hafızadaki grupları listeye ekle
     Array.from(window.aktifGruplar).sort().forEach(grup => {
         const opt = document.createElement('option');
         opt.value = grup;
-        opt.textContent = grup === 'TÜMÜ' ? 'TÜMÜ (Tüm Ekranlarda Oynat)' : '🏢 ' + grup;
+        opt.textContent = grup === 'TÜMÜ' ? '🌍 TÜMÜ (Tüm Ekranlarda Oynat)' : '🏢 ' + grup;
         selectEl.appendChild(opt);
     });
 
-    // En alta 'Yeni Ekle' seçeneğini iliştir
+    // En alta Yeni Ekleme butonu
     const newOpt = document.createElement('option');
     newOpt.value = 'NEW';
     newOpt.textContent = '➕ Yeni Grup / Şube Ekle...';
-    newOpt.style.color = '#10b981'; // Yeşil renk
     selectEl.appendChild(newOpt);
 
-    // Seçili grubu ekrana yansıt
     selectEl.value = currentGroup;
 };
 
-// 5. KULLANICI LİSTEDEN SEÇİM YAPTIĞINDA ÇALIŞACAK FONKSİYON
+// 5. KULLANICI LİSTEDEN YENİ ŞUBE SEÇTİĞİNDE
 window.handleGroupChange = async function() {
     const selectEl = document.getElementById('slide-group-select');
     const key = document.getElementById('file-selector')?.value;
@@ -1734,20 +1739,18 @@ window.handleGroupChange = async function() {
 
     let selected = selectEl.value;
 
-    // "Yeni Ekle" seçildiyse pop-up çıkar
     if (selected === 'NEW') {
-        const newGroup = prompt("Yeni Şube/Grup Adı Girin (Örn: KADIKÖY ŞUBE):");
+        const newGroup = prompt("Yeni Şube/Grup Adı Girin (Örn: MERKEZ OFİS):");
         if (newGroup && newGroup.trim() !== "") {
             selected = newGroup.trim().toUpperCase();
-            window.aktifGruplar.add(selected); // Kendi hafızamıza da ekleyelim
+            window.aktifGruplar.add(selected);
         } else {
-            // İptal basıldıysa eski haline döndür
             window.updateGroupDropdown();
             return;
         }
     }
 
-    // Slaytın ayarlarını bozmadan sadece grubu güncelleyelim
+    // Slaytın ayarlarına hedef grubu kaydet
     const snap = await get(ref(db, 'sahne/ayarlar/' + key));
     let sData = snap.exists() ? snap.val() : {};
     sData.targetGroup = selected;
@@ -1755,12 +1758,12 @@ window.handleGroupChange = async function() {
     await set(ref(db, 'sahne/ayarlar/' + key), sData);
     if(window.showToast) window.showToast("Hedef Şube Güncellendi: " + selected, "success");
     
-    window.updateGroupDropdown(); // Listeyi yenile
+    window.updateGroupDropdown(); 
 };
 
-// Slaytlar arası geçişte listeyi tazelemek için kancamız
-const originalLoadSlideGroup = window.loadSlide;
+// Slayt değiştikçe dropdown'u güncelle
+const originalLoadSlideForGroup = window.loadSlide;
 window.loadSlide = async function() {
-    if(originalLoadSlideGroup) await originalLoadSlideGroup(); 
+    if(originalLoadSlideForGroup) await originalLoadSlideForGroup(); 
     setTimeout(() => { window.updateGroupDropdown(); }, 300);
 };
