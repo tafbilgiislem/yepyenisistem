@@ -1514,55 +1514,43 @@ window.listenDevices = function() {
         }
     });
 };
-// --- 📅 3'LÜ KAMPANYA LİSTESİ VE TARİH YÖNETİMİ (HATASIZ VERSİYON) ---
+// --- 📅 3'LÜ KAMPANYA LİSTESİ (BAĞIMSIZ VERİTABANI KORUMALI) ---
 
 setInterval(() => {
-    // Referans noktamız: "Yayın Saat Aralığı" bölümündeki başlangıç saati kutusu
-    const startTimeInput = document.getElementById('start-time');
+    const timeContainer = document.querySelector('.prop-group .time-range-row')?.parentNode;
     
-    // Paneli sadece 1 kere ekle
-    if (startTimeInput && !document.getElementById('campaign-dates-wrapper')) {
-        
-        // Saat kutularını kapsayan ana çerçeveyi bul
-        const timeContainer = startTimeInput.closest('div').parentNode;
+    if (timeContainer && !document.getElementById('campaign-dates-wrapper')) {
+        const wrapper = document.createElement('div');
+        wrapper.id = 'campaign-dates-wrapper';
+        wrapper.className = 'prop-group';
+        wrapper.style.cssText = 'margin-bottom: 20px; width: 100%; border: 1px dashed #334155; padding: 12px; border-radius: 8px; background: #0f172a;';
 
-        if (timeContainer) {
-            const wrapper = document.createElement('div');
-            wrapper.id = 'campaign-dates-wrapper';
-            wrapper.className = 'prop-group';
-            wrapper.style.cssText = 'margin-bottom: 20px; width: 100%; border: 1px dashed #334155; padding: 12px; border-radius: 8px; background: #0f172a;';
-
-            // Tarih seçme kutuları, Ekle Butonu ve Listenin Geleceği Alan
-            wrapper.innerHTML = `
-                <label style="color:#f59e0b; font-size:12px; margin-bottom:10px; display:block; text-transform:uppercase; font-weight:bold;">
-                    <i class="ph ph-calendar-star"></i> KAMPANYA TARİHLERİ (Max 3)
-                </label>
-                <div style="display:flex; gap:10px; align-items:flex-end; margin-bottom:15px;">
-                    <div style="flex:1;">
-                        <span style="font-size:10px; color:#10b981; display:block; margin-bottom:4px; font-weight:bold;">BAŞLANGIÇ</span>
-                        <input type="date" id="camp-start" style="width:100%; background:#1e293b; color:#fff; border:1px solid #334155; padding:8px; border-radius:6px; font-family:inherit; color-scheme:dark;">
-                    </div>
-                    <div style="flex:1;">
-                        <span style="font-size:10px; color:#ef4444; display:block; margin-bottom:4px; font-weight:bold;">BİTİŞ</span>
-                        <input type="date" id="camp-end" style="width:100%; background:#1e293b; color:#fff; border:1px solid #334155; padding:8px; border-radius:6px; font-family:inherit; color-scheme:dark;">
-                    </div>
-                    <button onclick="window.addCampaignDate()" style="background:#3b82f6; color:white; border:none; padding:9px 15px; border-radius:6px; cursor:pointer; font-weight:bold; height: 35px; transition:0.2s;">
-                        EKLE
-                    </button>
+        wrapper.innerHTML = `
+            <label style="color:#f59e0b; font-size:12px; margin-bottom:10px; display:block; text-transform:uppercase; font-weight:bold;">
+                <i class="ph ph-calendar-star"></i> KAMPANYA TARİHLERİ (Max 3)
+            </label>
+            <div style="display:flex; gap:10px; align-items:flex-end; margin-bottom:15px;">
+                <div style="flex:1;">
+                    <span style="font-size:10px; color:#10b981; display:block; margin-bottom:4px; font-weight:bold;">BAŞLANGIÇ</span>
+                    <input type="date" id="camp-start" style="width:100%; background:#1e293b; color:#fff; border:1px solid #334155; padding:8px; border-radius:6px; font-family:inherit; color-scheme:dark;">
                 </div>
-                
-                <div id="campaign-list" style="font-size:11px; color:#cbd5e1; display:flex; flex-direction:column; gap:8px;">
-                    <span style="opacity:0.5;">Yükleniyor...</span>
+                <div style="flex:1;">
+                    <span style="font-size:10px; color:#ef4444; display:block; margin-bottom:4px; font-weight:bold;">BİTİŞ</span>
+                    <input type="date" id="camp-end" style="width:100%; background:#1e293b; color:#fff; border:1px solid #334155; padding:8px; border-radius:6px; font-family:inherit; color-scheme:dark;">
                 </div>
-            `;
-
-            timeContainer.parentNode.insertBefore(wrapper, timeContainer);
-            window.loadCampaignList();
-        }
+                <button onclick="window.addCampaignDate()" style="background:#3b82f6; color:white; border:none; padding:9px 15px; border-radius:6px; cursor:pointer; font-weight:bold; height: 35px; transition:0.2s;">
+                    EKLE
+                </button>
+            </div>
+            <div id="campaign-list" style="font-size:11px; color:#cbd5e1; display:flex; flex-direction:column; gap:8px;">
+                <span style="opacity:0.5;">Yükleniyor...</span>
+            </div>
+        `;
+        timeContainer.parentNode.insertBefore(wrapper, timeContainer);
+        window.loadCampaignList();
     }
 }, 500);
 
-// "EKLE" Butonuna Basılınca Çalışacak Fonksiyon
 window.addCampaignDate = async function() {
     const key = document.getElementById('file-selector')?.value;
     const start = document.getElementById('camp-start').value;
@@ -1577,9 +1565,14 @@ window.addCampaignDate = async function() {
         return;
     }
 
-    const snap = await get(ref(db, 'sahne/ayarlar/' + key));
-    let sData = snap.exists() ? snap.val() : {};
-    let dates = sData.campaignDates || []; // Array yapısı
+    // 🚀 YENİ: Veriyi ana ayarlara değil, GÜVENLİ "kampanyalar" klasörüne kaydediyoruz!
+    const snap = await get(ref(db, 'sahne/kampanyalar/' + key));
+    let dates = [];
+    if (snap.exists()) {
+        // Firebase array bozulmalarını önlemek için Object.values ile her zaman diziye çeviririz
+        const rawData = snap.val();
+        dates = Array.isArray(rawData) ? rawData : Object.values(rawData);
+    }
 
     if (dates.length >= 3) {
         if(window.showToast) window.showToast("Bir slayt için en fazla 3 tarih aralığı girebilirsiniz!", "error");
@@ -1587,79 +1580,62 @@ window.addCampaignDate = async function() {
     }
 
     dates.push({ start: start, end: end });
-    sData.campaignDates = dates;
-
-    // Eskiden kalan tekli tarih ayarları varsa temizleyelim (çakışmasın)
-    delete sData.startDate;
-    delete sData.endDate;
-
-    await set(ref(db, 'sahne/ayarlar/' + key), sData);
+    await set(ref(db, 'sahne/kampanyalar/' + key), dates);
+    
     if(window.showToast) window.showToast("Kampanya listeye eklendi!", "success");
-
-    // Kutuları sıfırla ve listeyi yenile
     document.getElementById('camp-start').value = "";
     document.getElementById('camp-end').value = "";
     window.loadCampaignList();
 };
 
-// Çöp Kutusuna Basılınca Tarihi Silecek Fonksiyon
 window.removeCampaignDate = async function(index) {
     const key = document.getElementById('file-selector')?.value;
     if(!key) return;
 
-    const snap = await get(ref(db, 'sahne/ayarlar/' + key));
+    const snap = await get(ref(db, 'sahne/kampanyalar/' + key));
     if (snap.exists()) {
-        let sData = snap.val();
-        let dates = sData.campaignDates || [];
-        dates.splice(index, 1); // Seçilen tarihi listeden sil
-        sData.campaignDates = dates;
-        
-        await set(ref(db, 'sahne/ayarlar/' + key), sData);
+        let dates = Array.isArray(snap.val()) ? snap.val() : Object.values(snap.val());
+        dates.splice(index, 1);
+        await set(ref(db, 'sahne/kampanyalar/' + key), dates);
         if(window.showToast) window.showToast("Tarih listeden silindi!", "success");
         window.loadCampaignList();
     }
 };
 
-// Kayıtlı Tarihleri Okuyup Ekran Listesine Yazan Fonksiyon
 window.loadCampaignList = async function() {
     const key = document.getElementById('file-selector')?.value;
     const listContainer = document.getElementById('campaign-list');
     if(!key || !listContainer) return;
 
-    const snap = await get(ref(db, 'sahne/ayarlar/' + key));
+    const snap = await get(ref(db, 'sahne/kampanyalar/' + key));
     listContainer.innerHTML = "";
 
-    if (snap.exists() && snap.val().campaignDates && snap.val().campaignDates.length > 0) {
-        const dates = snap.val().campaignDates;
-        dates.forEach((d, index) => {
-            const item = document.createElement('div');
-            item.style.cssText = "display:flex; justify-content:space-between; align-items:center; background:#1e293b; padding:8px 12px; border-radius:6px; border-left: 3px solid #f59e0b;";
+    if (snap.exists()) {
+        let dates = Array.isArray(snap.val()) ? snap.val() : Object.values(snap.val());
+        if (dates.length > 0) {
+            dates.forEach((d, index) => {
+                const item = document.createElement('div');
+                item.style.cssText = "display:flex; justify-content:space-between; align-items:center; background:#1e293b; padding:8px 12px; border-radius:6px; border-left: 3px solid #f59e0b;";
 
-            // Tarihleri Türkiye formatına çevir (GG.AA.YYYY)
-            const sSplit = d.start.split('-');
-            const eSplit = d.end.split('-');
-            const sFormat = sSplit.length === 3 ? `${sSplit[2]}.${sSplit[1]}.${sSplit[0]}` : d.start;
-            const eFormat = eSplit.length === 3 ? `${eSplit[2]}.${eSplit[1]}.${eSplit[0]}` : d.end;
+                const sSplit = d.start.split('-');
+                const eSplit = d.end.split('-');
+                const sFormat = sSplit.length === 3 ? `${sSplit[2]}.${sSplit[1]}.${sSplit[0]}` : d.start;
+                const eFormat = eSplit.length === 3 ? `${eSplit[2]}.${eSplit[1]}.${eSplit[0]}` : d.end;
 
-            item.innerHTML = `
-                <span><i class="ph ph-calendar-check" style="color:#10b981; margin-right:5px;"></i> Slayt <b style="color:#10b981;">${sFormat}</b>'de yayına girecek, <b style="color:#ef4444;">${eFormat}</b>'de çıkacak.</span>
-                <button onclick="window.removeCampaignDate(${index})" style="background:transparent; border:none; color:#ef4444; cursor:pointer; font-size:16px; display:flex; align-items:center;" title="Sil">
-                    <i class="ph ph-trash"></i>
-                </button>
-            `;
-            listContainer.appendChild(item);
-        });
-    } else {
-        // Tırnak hatası giderildi (Backtick kullanıldı)
-        listContainer.innerHTML = `<span style="opacity:0.5; font-style:italic;"><i class="ph ph-info"></i> Bu slayt için özel bir tarih belirlenmemiş. Slayt her zaman oynatılır.</span>`;
+                item.innerHTML = `
+                    <span><i class="ph ph-calendar-check" style="color:#10b981; margin-right:5px;"></i> <b style="color:#10b981;">${sFormat}</b> başlar, <b style="color:#ef4444;">${eFormat}</b> biter.</span>
+                    <button onclick="window.removeCampaignDate(${index})" style="background:transparent; border:none; color:#ef4444; cursor:pointer; font-size:16px;" title="Sil"><i class="ph ph-trash"></i></button>
+                `;
+                listContainer.appendChild(item);
+            });
+            return;
+        }
     }
+    listContainer.innerHTML = `<span style="opacity:0.5; font-style:italic;"><i class="ph ph-info"></i> Bu slayt için tarih ayarı yok. Her zaman gösterilir.</span>`;
 };
 
-// Slayt her değiştiğinde listeyi tazelemek için
-const originalLoadSlideTakvim = window.loadSlide;
+const originalLoadSlideGecis = window.loadSlide;
 window.loadSlide = async function() {
-    if(originalLoadSlideTakvim) await originalLoadSlideTakvim(); 
-    setTimeout(() => {
-        window.loadCampaignList();
-    }, 300);
+    if(originalLoadSlideGecis) await originalLoadSlideGecis(); 
+    setTimeout(() => { window.loadCampaignList(); }, 300);
 };

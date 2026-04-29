@@ -29,7 +29,53 @@ let deviceGroup = localStorage.getItem('tv_device_group') || 'GENEL';
 let slidesData = JSON.parse(localStorage.getItem('slidesData')) || {};
 let settingsData = JSON.parse(localStorage.getItem('settingsData')) || {};
 let rssCache = { url: "", data: "🔴 Haberler Bekleniyor...", time: 0 };
+// 🚀 GELİŞMİŞ DENETLEME: GRUP + SAAT + GÜN + BAĞIMSIZ ÇOKLU TARİH KONTROLÜ
+function isSlideVisible(key) {
+    const s = settingsData[key];
+    if(!s) return true; 
 
+    const now = new Date();
+    const todayStr = now.toISOString().split('T')[0]; 
+
+    // --- 1. ÇOKLU TARİH (KAMPANYA LİSTESİ) KONTROLÜ ---
+    const cDates = campaignData[key]; 
+    if (cDates && Object.keys(cDates).length > 0) {
+        // Firebase nesnesini güvenle diziye çevir
+        const datesArray = Array.isArray(cDates) ? cDates : Object.values(cDates);
+        
+        if (datesArray.length > 0) {
+            let isWithinAnyCampaign = false;
+            
+            // Eğer bugünün tarihi listedeki HİÇBİR kampanyaya uymuyorsa, isWithinAnyCampaign "false" kalır
+            for (let i = 0; i < datesArray.length; i++) {
+                const c = datesArray[i];
+                if (todayStr >= c.start && todayStr <= c.end) {
+                    isWithinAnyCampaign = true;
+                    break; 
+                }
+            }
+            
+            if (!isWithinAnyCampaign) return false; // Slayt süresi dışında, atla!
+        }
+    }
+
+    // --- 2. GRUP (ŞUBE) KONTROLÜ ---
+    if(s.targetGroup && s.targetGroup !== 'TÜMÜ' && s.targetGroup !== deviceGroup) {
+        return false; 
+    }
+
+    // --- 3. GÜN KONTROLÜ ---
+    const currentDay = now.getDay(); 
+    if(s.days && s.days.length > 0 && !s.days.includes(currentDay)) return false;
+
+    // --- 4. SAAT KONTROLÜ ---
+    const currentTime = now.getHours().toString().padStart(2,'0') + ":" + now.getMinutes().toString().padStart(2,'0');
+    if(s.startTime && s.endTime) {
+        if(currentTime < s.startTime || currentTime > s.endTime) return false;
+    }
+
+    return true; 
+}
 let slideKeys = Object.keys(slidesData).sort();
 let currentIndex = -1;
 let rotationTimer = null;
