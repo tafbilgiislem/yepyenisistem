@@ -1552,7 +1552,7 @@ setInterval(() => {
                     <span style="font-size:10px; color:#ef4444; display:block; margin-bottom:4px; font-weight:bold;">BİTİŞ</span>
                     <input type="date" id="camp-end" style="width:100%; background:#1e293b; color:#fff; border:1px solid #334155; padding:8px; border-radius:6px; font-family:inherit; color-scheme:dark;">
                 </div>
-                <button onclick="window.addCampaignDate()" style="background:#3b82f6; color:white; border:none; padding:9px 15px; border-radius:6px; cursor:pointer; font-weight:bold; height: 35px;">
+                <button onclick="window.addCampaignDate()" style="background:#3b82f6; color:white; border:none; padding:9px 15px; border-radius:6px; cursor:pointer; font-weight:bold; height: 35px; transition:0.2s;">
                     EKLE
                 </button>
             </div>
@@ -1621,7 +1621,7 @@ window.loadCampaignList = function() {
             const item = document.createElement('div');
             item.style.cssText = "display:flex; justify-content:space-between; align-items:center; background:#1e293b; padding:8px 12px; border-radius:6px; border-left: 3px solid #f59e0b;";
             item.innerHTML = `
-                <span><i class="ph ph-calendar-check" style="color:#10b981;"></i> <b>${s}</b> - <b>${e}</b></span>
+                <span><i class="ph ph-calendar-check" style="color:#10b981;"></i> <b style="color:#10b981;">${s}</b> - <b style="color:#ef4444;">${e}</b></span>
                 <button onclick="window.removeCampaignDate(${index})" style="background:transparent; border:none; color:#ef4444; cursor:pointer;"><i class="ph ph-trash"></i></button>
             `;
             listContainer.appendChild(item);
