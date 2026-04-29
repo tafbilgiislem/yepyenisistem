@@ -1639,21 +1639,20 @@ window.loadCampaignList = function() {
         listContainer.innerHTML = `<span style="opacity:0.5; font-style:italic;"><i class="ph ph-info"></i> Bu slayt için özel bir tarih belirlenmemiş. Slayt her zaman oynatılır.</span>`;
     }
 };
-// --- 🏢 ŞUBE / GRUP SEÇİMİ (TİTREME HATASI ÇÖZÜLMÜŞ VERSİYON) ---
+// --- 🏢 ŞUBE / GRUP SEÇİMİ (YAYINDAN KALDIRMA ÖZELLİKLİ) ---
 
-// 1. ESKİ ÇİRKİN BUTONU GÜVENLİCE GİZLE (Sistemi Bozmadan)
+// 1. ESKİ ÇİRKİN BUTONU GÜVENLİCE GİZLE
 setInterval(() => {
     const oldBtns = document.querySelectorAll('button');
     oldBtns.forEach(btn => {
-        // Sadece Katmanlar bölümündeki "Şube/Grup:" yazan butonu hedef al!
         if (btn.innerText.includes('Şube/Grup:')) {
-            btn.style.display = 'none'; // remove() yerine gizliyoruz ki React kafası karışmasın
+            btn.style.display = 'none';
         }
     });
 }, 1000);
 
 // 2. AKTİF CİHAZLARDAN GRUPLARI OTOMATİK ÇEK
-window.aktifGruplar = new Set(['TÜMÜ', 'GENEL']); // Sistemde her zaman olması gerekenler
+window.aktifGruplar = new Set(['TÜMÜ', 'GENEL']); 
 if (!window.grupDinleyiciAktif) {
     onValue(ref(db, 'sahne/cihazlar'), (snapshot) => {
         if (snapshot.exists()) {
@@ -1667,7 +1666,7 @@ if (!window.grupDinleyiciAktif) {
     window.grupDinleyiciAktif = true;
 }
 
-// 3. ŞIK AÇILIR LİSTEYİ EKRANA YERLEŞTİR (GARANTİLİ HEDEF NOKTASI)
+// 3. ŞIK AÇILIR LİSTEYİ EKRANA YERLEŞTİR
 setInterval(() => {
     const fileSelector = document.getElementById('file-selector');
     
@@ -1683,10 +1682,9 @@ setInterval(() => {
                 <i class="ph ph-buildings"></i> HEDEF ŞUBE / EKRAN GRUBU
             </label>
             <select id="slide-group-select" onchange="window.handleGroupChange()" style="width:100%; background:#0f172a; color:#fff; border:1px solid #8b5cf6; padding:10px; border-radius:6px; font-weight:bold; cursor:pointer; outline:none;">
-                <option value="TÜMÜ">🌍 TÜMÜ (Tüm Ekranlarda Oynat)</option>
-            </select>
+                </select>
             <div style="font-size:11px; color:#94a3b8; margin-top:8px;">
-                <i class="ph ph-info"></i> Bu slaytın hangi cihazlarda çıkacağını seçin.
+                <i class="ph ph-info"></i> Bu slaytın hangi cihazlarda çıkacağını seçin. Slaytı gizlemek için "HİÇBİRİ" seçin.
             </div>
         `;
         
@@ -1695,7 +1693,7 @@ setInterval(() => {
     }
 }, 500);
 
-// 4. LİSTENİN İÇİNİ SİSTEMDEKİ TV'LERE GÖRE DOLDUR
+// 4. LİSTENİN İÇİNİ DOLDUR (TÜMÜ, GRUPLAR, HİÇBİRİ VE YENİ EKLE)
 window.updateGroupDropdown = async function() {
     const selectEl = document.getElementById('slide-group-select');
     const key = document.getElementById('file-selector')?.value;
@@ -1710,22 +1708,40 @@ window.updateGroupDropdown = async function() {
 
     selectEl.innerHTML = '';
     
+    // Sabit Seçenek 1: TÜMÜ
+    const optTumu = document.createElement('option');
+    optTumu.value = 'TÜMÜ';
+    optTumu.textContent = '🌍 TÜMÜ (Tüm Ekranlarda Oynat)';
+    selectEl.appendChild(optTumu);
+
+    // Dinamik Şubeler
     Array.from(window.aktifGruplar).sort().forEach(grup => {
-        const opt = document.createElement('option');
-        opt.value = grup;
-        opt.textContent = grup === 'TÜMÜ' ? '🌍 TÜMÜ (Tüm Ekranlarda Oynat)' : '🏢 ' + grup;
-        selectEl.appendChild(opt);
+        if (grup !== 'TÜMÜ' && grup !== 'HİÇBİRİ') {
+            const opt = document.createElement('option');
+            opt.value = grup;
+            opt.textContent = '🏢 ' + grup;
+            selectEl.appendChild(opt);
+        }
     });
 
+    // Sabit Seçenek 2: HİÇBİRİ (Taslak)
+    const optNone = document.createElement('option');
+    optNone.value = 'HİÇBİRİ';
+    optNone.textContent = '🚫 HİÇBİRİ (Yayından Kaldır / Taslak)';
+    optNone.style.color = '#ef4444'; // Kırmızı Renk
+    selectEl.appendChild(optNone);
+
+    // Sabit Seçenek 3: YENİ EKLE
     const newOpt = document.createElement('option');
     newOpt.value = 'NEW';
     newOpt.textContent = '➕ Yeni Grup / Şube Ekle...';
+    newOpt.style.color = '#10b981'; // Yeşil Renk
     selectEl.appendChild(newOpt);
 
     selectEl.value = currentGroup;
 };
 
-// 5. KULLANICI LİSTEDEN YENİ ŞUBE SEÇTİĞİNDE
+// 5. KULLANICI LİSTEDEN SEÇİM YAPTIĞINDA
 window.handleGroupChange = async function() {
     const selectEl = document.getElementById('slide-group-select');
     const key = document.getElementById('file-selector')?.value;
@@ -1749,7 +1765,12 @@ window.handleGroupChange = async function() {
     sData.targetGroup = selected;
 
     await set(ref(db, 'sahne/ayarlar/' + key), sData);
-    if(window.showToast) window.showToast("Hedef Şube Güncellendi: " + selected, "success");
+    
+    if (selected === 'HİÇBİRİ') {
+        if(window.showToast) window.showToast("Slayt Yayından Kaldırıldı (Taslak)", "success");
+    } else {
+        if(window.showToast) window.showToast("Hedef Şube Güncellendi: " + selected, "success");
+    }
     
     window.updateGroupDropdown(); 
 };
