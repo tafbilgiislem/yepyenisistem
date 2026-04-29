@@ -1514,50 +1514,73 @@ window.listenDevices = function() {
         }
     });
 };
-// --- 📅 TARİHSEL KAMPANYA PLANLAMA (PROFESYONEL EKLENTİ) ---
+// --- 📅 PROFESYONEL PANEL ENTEGRASYONU (TARİH VE SAAT BİRLEŞTİRME) ---
 
-// 1. Slayt Yüklendiğinde Tarih Ayarlarını Panelde Göster
-window.setSlideDates = async function() {
-    const key = document.getElementById('file-selector')?.value;
-    if(!key) return;
+window.setupSchedulePanel = function() {
+    // Panelde saat aralığının olduğu bölümü bul
+    const timeRangeRow = document.querySelector('.prop-group .time-range-row')?.parentNode;
     
-    const snap = await get(ref(db, 'sahne/ayarlar/' + key));
-    let sData = snap.exists() ? snap.val() : { time: 5000, effect: 'fade', targetGroup: 'TÜMÜ' };
-    
-    // Basit bir modal (popup) yerine daha kullanışlı bir yapı:
-    const start = prompt("Kampanya BAŞLANGIÇ Tarihi (Format: YYYY-MM-DD):", sData.startDate || "");
-    const end = prompt("Kampanya BİTİŞ Tarihi (Format: YYYY-MM-DD):", sData.endDate || "");
-    
-    if (start !== null && end !== null) {
-        sData.startDate = start;
-        sData.endDate = end;
+    if (timeRangeRow && !document.getElementById('campaign-dates-row')) {
+        // Yeni bir satır oluştur (Tarih Aralığı için)
+        const dateRow = document.createElement('div');
+        dateRow.id = 'campaign-dates-row';
+        dateRow.className = 'prop-group'; // Mevcut CSS sınıflarına uyum sağlar
+        dateRow.innerHTML = `
+            <label style="color:#94a3b8; font-size:12px; margin-bottom:8px; display:block; text-transform:uppercase; font-weight:bold;">YAYIN TARİH ARALIĞI</label>
+            <div style="display:flex; gap:10px; margin-bottom:15px;">
+                <div style="flex:1;">
+                    <span style="font-size:10px; color:#64748b; display:block;">BAŞLANGIÇ</span>
+                    <input type="date" id="slide-start-date" class="prop-input" style="width:100%; background:#0f172a; color:#fff; border:1px solid #1e293b; padding:8px; border-radius:6px;">
+                </div>
+                <div style="flex:1;">
+                    <span style="font-size:10px; color:#64748b; display:block;">BİTİŞ</span>
+                    <input type="date" id="slide-end-date" class="prop-input" style="width:100%; background:#0f172a; color:#fff; border:1px solid #1e293b; padding:8px; border-radius:6px;">
+                </div>
+            </div>
+        `;
+        // Saat aralığının hemen altına ekle
+        timeRangeRow.insertBefore(dateRow, document.querySelector('h3:has(.ph-calendar-blank)')?.nextSibling || null);
         
-        await set(ref(db, 'sahne/ayarlar/' + key), sData);
-        window.showToast("Kampanya Tarihleri Kaydedildi!", "success");
-        window.loadSlide(); // Buton metnini güncellemek için tazele
+        // Inputlar değiştiğinde otomatik kaydetmesi için dinleyici ekle
+        document.getElementById('slide-start-date').onchange = window.saveScheduleSettings;
+        document.getElementById('slide-end-date').onchange = window.saveScheduleSettings;
     }
 };
 
-// 2. loadSlide fonksiyonunu genişleterek Tarih Butonunu enjekte et
-const originalLoadSlideWithDates = window.loadSlide;
+// Slayt değiştikçe verileri Firebase'den çekip kutucuklara doldur
+const originalLoadSlideGelismiş = window.loadSlide;
 window.loadSlide = async function() {
-    await originalLoadSlideWithDates(); // Mevcut yükleme işlemini yap
+    await originalLoadSlideGelismiş(); // Önce slaytı normal yükle
     
     setTimeout(async () => {
+        window.setupSchedulePanel(); // Tarih kutularını oraya çiz
+        
         const key = document.getElementById('file-selector')?.value;
-        if(!key) return;
-
-        let topActions = document.getElementById('file-selector').parentNode;
-        if (topActions) {
-            let oldBtn = document.getElementById('slide-date-btn');
-            if(oldBtn) oldBtn.remove();
-            
-            let btn = document.createElement('button');
-            btn.id = 'slide-date-btn';
-            btn.style.cssText = 'margin-left:10px; background:#f59e0b; color:#fff; padding:6px 15px; border-radius:6px; font-weight:bold; cursor:pointer; border:none; display:flex; align-items:center; gap:5px;';
-            btn.innerHTML = `<i class="ph ph-calendar"></i> Tarih Planla`;
-            btn.onclick = window.setSlideDates;
-            topActions.appendChild(btn);
+        const snap = await get(ref(db, 'sahne/ayarlar/' + key));
+        
+        if (snap.exists()) {
+            const data = snap.val();
+            document.getElementById('slide-start-date').value = data.startDate || "";
+            document.getElementById('slide-end-date').value = data.endDate || "";
         }
-    }, 450);
+    }, 400);
+};
+
+// Verileri kaydetme fonksiyonu (Diğer ayarlarla birleştirir)
+window.saveScheduleSettings = async function() {
+    const key = document.getElementById('file-selector')?.value;
+    if(!key) return;
+
+    const startDate = document.getElementById('slide-start-date').value;
+    const endDate = document.getElementById('slide-end-date').value;
+
+    // Mevcut diğer ayarları (süre, efekt vb.) bozmamak için önce mevcut veriyi al
+    const snap = await get(ref(db, 'sahne/ayarlar/' + key));
+    let sData = snap.exists() ? snap.val() : {};
+
+    sData.startDate = startDate;
+    sData.endDate = endDate;
+
+    await set(ref(db, 'sahne/ayarlar/' + key), sData);
+    window.showToast("Planlama Güncellendi", "success");
 };
