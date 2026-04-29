@@ -1639,15 +1639,15 @@ window.loadCampaignList = function() {
         listContainer.innerHTML = `<span style="opacity:0.5; font-style:italic;"><i class="ph ph-info"></i> Bu slayt için özel bir tarih belirlenmemiş. Slayt her zaman oynatılır.</span>`;
     }
 };
-// --- 🏢 ŞUBE / GRUP SEÇİMİ (KESİN ÇALIŞAN PROFESYONEL VERSİYON) ---
+// --- 🏢 ŞUBE / GRUP SEÇİMİ (TİTREME HATASI ÇÖZÜLMÜŞ VERSİYON) ---
 
-// 1. ESKİ ÇİRKİN BUTONU YOK ET
+// 1. ESKİ ÇİRKİN BUTONU GÜVENLİCE GİZLE (Sistemi Bozmadan)
 setInterval(() => {
     const oldBtns = document.querySelectorAll('button');
     oldBtns.forEach(btn => {
-        // İçinde Şube veya Grup yazan o mor butonu bulup siliyoruz
-        if (btn.innerText.includes('Şube') || btn.innerText.includes('Grup')) {
-            btn.remove();
+        // Sadece Katmanlar bölümündeki "Şube/Grup:" yazan butonu hedef al!
+        if (btn.innerText.includes('Şube/Grup:')) {
+            btn.style.display = 'none'; // remove() yerine gizliyoruz ki React kafası karışmasın
         }
     });
 }, 1000);
@@ -1669,7 +1669,6 @@ if (!window.grupDinleyiciAktif) {
 
 // 3. ŞIK AÇILIR LİSTEYİ EKRANA YERLEŞTİR (GARANTİLİ HEDEF NOKTASI)
 setInterval(() => {
-    // 🚀 HEDEFİMİZ: En üstteki ana slayt seçici kutusu (Asla şaşmaz)
     const fileSelector = document.getElementById('file-selector');
     
     if (fileSelector && !document.getElementById('group-select-wrapper')) {
@@ -1677,7 +1676,6 @@ setInterval(() => {
 
         const wrapper = document.createElement('div');
         wrapper.id = 'group-select-wrapper';
-        // Şık, hafif mor/lacivert tonlarında bir tasarım
         wrapper.style.cssText = 'margin-top: 15px; margin-bottom: 15px; width: 100%; border: 1px solid #8b5cf6; padding: 12px; border-radius: 8px; background: rgba(139, 92, 246, 0.1);';
 
         wrapper.innerHTML = `
@@ -1692,7 +1690,6 @@ setInterval(() => {
             </div>
         `;
         
-        // Ana slayt seçicinin hemen BİR ALTINA yerleştiriyoruz
         fileContainer.parentNode.insertBefore(wrapper, fileContainer.nextSibling);
         window.updateGroupDropdown();
     }
@@ -1704,7 +1701,6 @@ window.updateGroupDropdown = async function() {
     const key = document.getElementById('file-selector')?.value;
     if (!selectEl || !key) return;
 
-    // Firebase'den bu slaytın güncel grubunu çek
     const snap = await get(ref(db, 'sahne/ayarlar/' + key));
     let currentGroup = 'TÜMÜ';
     if (snap.exists() && snap.val().targetGroup) {
@@ -1714,7 +1710,6 @@ window.updateGroupDropdown = async function() {
 
     selectEl.innerHTML = '';
     
-    // Hafızadaki grupları listeye ekle
     Array.from(window.aktifGruplar).sort().forEach(grup => {
         const opt = document.createElement('option');
         opt.value = grup;
@@ -1722,7 +1717,6 @@ window.updateGroupDropdown = async function() {
         selectEl.appendChild(opt);
     });
 
-    // En alta Yeni Ekleme butonu
     const newOpt = document.createElement('option');
     newOpt.value = 'NEW';
     newOpt.textContent = '➕ Yeni Grup / Şube Ekle...';
@@ -1750,7 +1744,6 @@ window.handleGroupChange = async function() {
         }
     }
 
-    // Slaytın ayarlarına hedef grubu kaydet
     const snap = await get(ref(db, 'sahne/ayarlar/' + key));
     let sData = snap.exists() ? snap.val() : {};
     sData.targetGroup = selected;
@@ -1761,7 +1754,6 @@ window.handleGroupChange = async function() {
     window.updateGroupDropdown(); 
 };
 
-// Slayt değiştikçe dropdown'u güncelle
 const originalLoadSlideForGroup = window.loadSlide;
 window.loadSlide = async function() {
     if(originalLoadSlideForGroup) await originalLoadSlideForGroup(); 
