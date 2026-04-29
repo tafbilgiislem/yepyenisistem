@@ -154,23 +154,36 @@ setInterval(async () => {
     });
 }, 300000);
 
-
-// 🚀 GELİŞMİŞ DENETLEME: GRUP + SAAT + GÜN + TARİH KONTROLÜ
+// 🚀 GELİŞMİŞ DENETLEME: GRUP + SAAT + GÜN + ÇOKLU TARİH KONTROLÜ
 function isSlideVisible(key) {
     const s = settingsData[key];
     if(!s) return true; 
 
     const now = new Date();
     
-    // --- 1. TARİHSEL (TAK Takvim) KONTROLÜ ---
-    // Tarih formatı: YYYY-MM-DD
+    // --- 1. ÇOKLU TARİH (KAMPANYA LİSTESİ) KONTROLÜ ---
     const todayStr = now.toISOString().split('T')[0]; 
 
-    if (s.startDate && todayStr < s.startDate) {
-        return false; // Kampanya henüz başlamamış
-    }
-    if (s.endDate && todayStr > s.endDate) {
-        return false; // Kampanya süresi dolmuş
+    // Eğer campaignDates tanımlanmışsa ve içinde en az 1 tarih varsa (yani boş değilse)
+    if (s.campaignDates && s.campaignDates.length > 0) {
+        let isWithinAnyCampaign = false;
+
+        // Listede dön ve bugünün tarihi bu kampanyalardan herhangi birinin içinde mi bak
+        for (let i = 0; i < s.campaignDates.length; i++) {
+            const c = s.campaignDates[i];
+            if (todayStr >= c.start && todayStr <= c.end) {
+                isWithinAnyCampaign = true; // Tarih tuttu! Oynatılabilir.
+                break; // Bir tanesine uyması yeterli, aramayı kes.
+            }
+        }
+
+        // Eğer bugünün tarihi bu listedeki HİÇBİR kampanyaya uymuyorsa, slaytı ATLA!
+        if (!isWithinAnyCampaign) return false; 
+    } 
+    else {
+        // (Geriye Dönük Uyumluluk) Eğer eskiden kalan tekli startDate varsa
+        if (s.startDate && todayStr < s.startDate) return false;
+        if (s.endDate && todayStr > s.endDate) return false;
     }
 
     // --- 2. GRUP (ŞUBE) KONTROLÜ ---
@@ -188,7 +201,7 @@ function isSlideVisible(key) {
         if(currentTime < s.startTime || currentTime > s.endTime) return false;
     }
 
-    return true; // Tüm engelleri geçti, slayt gösterilebilir!
+    return true; 
 }
 
 onValue(ref(db, 'sahne/ayarlar'), (snapshot) => {

@@ -1514,95 +1514,152 @@ window.listenDevices = function() {
         }
     });
 };
-// --- 📅 PROFESYONEL PANEL ENTEGRASYONU (KESİN ÇÖZÜM) ---
+// --- 📅 3'LÜ KAMPANYA LİSTESİ VE TARİH YÖNETİMİ (HATASIZ VERSİYON) ---
 
-// 1. Paneli Sürekli Takip Edip Takvimi Yerleştiren Motor
 setInterval(() => {
     // Referans noktamız: "Yayın Saat Aralığı" bölümündeki başlangıç saati kutusu
     const startTimeInput = document.getElementById('start-time');
     
-    // Eğer saat kutusu ekrandaysa ama bizim TAKVİM henüz eklenmemişse:
-    if (startTimeInput && !document.getElementById('campaign-dates-row')) {
+    // Paneli sadece 1 kere ekle
+    if (startTimeInput && !document.getElementById('campaign-dates-wrapper')) {
         
         // Saat kutularını kapsayan ana çerçeveyi bul
         const timeContainer = startTimeInput.closest('div').parentNode;
-        
+
         if (timeContainer) {
-            const dateRow = document.createElement('div');
-            dateRow.id = 'campaign-dates-row';
-            dateRow.style.cssText = 'margin-bottom: 20px; width: 100%;';
-            dateRow.innerHTML = `
-                <label style="color:#94a3b8; font-size:12px; margin-bottom:8px; display:block; text-transform:uppercase; font-weight:bold;">YAYIN TARİH ARALIĞI (KAMPANYA)</label>
-                <div style="display:flex; gap:10px;">
+            const wrapper = document.createElement('div');
+            wrapper.id = 'campaign-dates-wrapper';
+            wrapper.className = 'prop-group';
+            wrapper.style.cssText = 'margin-bottom: 20px; width: 100%; border: 1px dashed #334155; padding: 12px; border-radius: 8px; background: #0f172a;';
+
+            // Tarih seçme kutuları, Ekle Butonu ve Listenin Geleceği Alan
+            wrapper.innerHTML = `
+                <label style="color:#f59e0b; font-size:12px; margin-bottom:10px; display:block; text-transform:uppercase; font-weight:bold;">
+                    <i class="ph ph-calendar-star"></i> KAMPANYA TARİHLERİ (Max 3)
+                </label>
+                <div style="display:flex; gap:10px; align-items:flex-end; margin-bottom:15px;">
                     <div style="flex:1;">
                         <span style="font-size:10px; color:#10b981; display:block; margin-bottom:4px; font-weight:bold;">BAŞLANGIÇ</span>
-                        <input type="date" id="slide-start-date" style="width:100%; background:#0f172a; color:#fff; border:1px solid #1e293b; padding:10px; border-radius:6px; font-family:inherit; color-scheme:dark;">
+                        <input type="date" id="camp-start" style="width:100%; background:#1e293b; color:#fff; border:1px solid #334155; padding:8px; border-radius:6px; font-family:inherit; color-scheme:dark;">
                     </div>
                     <div style="flex:1;">
                         <span style="font-size:10px; color:#ef4444; display:block; margin-bottom:4px; font-weight:bold;">BİTİŞ</span>
-                        <input type="date" id="slide-end-date" style="width:100%; background:#0f172a; color:#fff; border:1px solid #1e293b; padding:10px; border-radius:6px; font-family:inherit; color-scheme:dark;">
+                        <input type="date" id="camp-end" style="width:100%; background:#1e293b; color:#fff; border:1px solid #334155; padding:8px; border-radius:6px; font-family:inherit; color-scheme:dark;">
                     </div>
+                    <button onclick="window.addCampaignDate()" style="background:#3b82f6; color:white; border:none; padding:9px 15px; border-radius:6px; cursor:pointer; font-weight:bold; height: 35px; transition:0.2s;">
+                        EKLE
+                    </button>
+                </div>
+                
+                <div id="campaign-list" style="font-size:11px; color:#cbd5e1; display:flex; flex-direction:column; gap:8px;">
+                    <span style="opacity:0.5;">Yükleniyor...</span>
                 </div>
             `;
-            
-            // Takvimi, saat ayarının hemen ÜSTÜNE yerleştir
-            timeContainer.parentNode.insertBefore(dateRow, timeContainer);
-            
-            // Tarih seçildiğinde Firebase'e kaydetme olaylarını bağla
-            document.getElementById('slide-start-date').addEventListener('change', window.saveScheduleSettings);
-            document.getElementById('slide-end-date').addEventListener('change', window.saveScheduleSettings);
 
-            // Kutular eklendiği an mevcut tarihleri Firebase'den çek
-            window.loadCampaignDates();
+            timeContainer.parentNode.insertBefore(wrapper, timeContainer);
+            window.loadCampaignList();
         }
     }
-}, 500); // Yarım saniyede bir paneli kontrol eder, dinamik geçişlerde bile bozulmaz.
+}, 500);
 
-// 2. Firebase'den Tarihleri Çekip Kutulara Yazan Fonksiyon
-window.loadCampaignDates = async function() {
+// "EKLE" Butonuna Basılınca Çalışacak Fonksiyon
+window.addCampaignDate = async function() {
+    const key = document.getElementById('file-selector')?.value;
+    const start = document.getElementById('camp-start').value;
+    const end = document.getElementById('camp-end').value;
+
+    if (!key || !start || !end) {
+        if(window.showToast) window.showToast("Lütfen başlangıç ve bitiş tarihi seçin!", "error");
+        return;
+    }
+    if (start > end) {
+        if(window.showToast) window.showToast("Bitiş tarihi başlangıçtan önce olamaz!", "error");
+        return;
+    }
+
+    const snap = await get(ref(db, 'sahne/ayarlar/' + key));
+    let sData = snap.exists() ? snap.val() : {};
+    let dates = sData.campaignDates || []; // Array yapısı
+
+    if (dates.length >= 3) {
+        if(window.showToast) window.showToast("Bir slayt için en fazla 3 tarih aralığı girebilirsiniz!", "error");
+        return;
+    }
+
+    dates.push({ start: start, end: end });
+    sData.campaignDates = dates;
+
+    // Eskiden kalan tekli tarih ayarları varsa temizleyelim (çakışmasın)
+    delete sData.startDate;
+    delete sData.endDate;
+
+    await set(ref(db, 'sahne/ayarlar/' + key), sData);
+    if(window.showToast) window.showToast("Kampanya listeye eklendi!", "success");
+
+    // Kutuları sıfırla ve listeyi yenile
+    document.getElementById('camp-start').value = "";
+    document.getElementById('camp-end').value = "";
+    window.loadCampaignList();
+};
+
+// Çöp Kutusuna Basılınca Tarihi Silecek Fonksiyon
+window.removeCampaignDate = async function(index) {
     const key = document.getElementById('file-selector')?.value;
     if(!key) return;
-    
+
     const snap = await get(ref(db, 'sahne/ayarlar/' + key));
     if (snap.exists()) {
-        const data = snap.val();
-        const startInput = document.getElementById('slide-start-date');
-        const endInput = document.getElementById('slide-end-date');
+        let sData = snap.val();
+        let dates = sData.campaignDates || [];
+        dates.splice(index, 1); // Seçilen tarihi listeden sil
+        sData.campaignDates = dates;
         
-        // HATA ÖNLEME: Kutucuklar ekrandaysa değerleri yaz (Null hatasını bitirir)
-        if (startInput) startInput.value = data.startDate || "";
-        if (endInput) endInput.value = data.endDate || "";
+        await set(ref(db, 'sahne/ayarlar/' + key), sData);
+        if(window.showToast) window.showToast("Tarih listeden silindi!", "success");
+        window.loadCampaignList();
     }
 };
 
-// 3. Kutucuklar Değiştiğinde Veriyi Firebase'e Kaydeden Fonksiyon
-window.saveScheduleSettings = async function() {
+// Kayıtlı Tarihleri Okuyup Ekran Listesine Yazan Fonksiyon
+window.loadCampaignList = async function() {
     const key = document.getElementById('file-selector')?.value;
-    if(!key) return;
+    const listContainer = document.getElementById('campaign-list');
+    if(!key || !listContainer) return;
 
-    const startInput = document.getElementById('slide-start-date');
-    const endInput = document.getElementById('slide-end-date');
-    if (!startInput || !endInput) return;
-
-    // Mevcut ayarları (süre, gün vb.) bozmamak için önce Firebase'deki veriyi çekiyoruz
     const snap = await get(ref(db, 'sahne/ayarlar/' + key));
-    let sData = snap.exists() ? snap.val() : {};
+    listContainer.innerHTML = "";
 
-    // Yeni tarihleri ekliyoruz
-    sData.startDate = startInput.value;
-    sData.endDate = endInput.value;
+    if (snap.exists() && snap.val().campaignDates && snap.val().campaignDates.length > 0) {
+        const dates = snap.val().campaignDates;
+        dates.forEach((d, index) => {
+            const item = document.createElement('div');
+            item.style.cssText = "display:flex; justify-content:space-between; align-items:center; background:#1e293b; padding:8px 12px; border-radius:6px; border-left: 3px solid #f59e0b;";
 
-    await set(ref(db, 'sahne/ayarlar/' + key), sData);
-    if(window.showToast) window.showToast("Kampanya Tarihi Güncellendi!", "success");
+            // Tarihleri Türkiye formatına çevir (GG.AA.YYYY)
+            const sSplit = d.start.split('-');
+            const eSplit = d.end.split('-');
+            const sFormat = sSplit.length === 3 ? `${sSplit[2]}.${sSplit[1]}.${sSplit[0]}` : d.start;
+            const eFormat = eSplit.length === 3 ? `${eSplit[2]}.${eSplit[1]}.${eSplit[0]}` : d.end;
+
+            item.innerHTML = `
+                <span><i class="ph ph-calendar-check" style="color:#10b981; margin-right:5px;"></i> Slayt <b style="color:#10b981;">${sFormat}</b>'de yayına girecek, <b style="color:#ef4444;">${eFormat}</b>'de çıkacak.</span>
+                <button onclick="window.removeCampaignDate(${index})" style="background:transparent; border:none; color:#ef4444; cursor:pointer; font-size:16px; display:flex; align-items:center;" title="Sil">
+                    <i class="ph ph-trash"></i>
+                </button>
+            `;
+            listContainer.appendChild(item);
+        });
+    } else {
+        // Tırnak hatası giderildi (Backtick kullanıldı)
+        listContainer.innerHTML = `<span style="opacity:0.5; font-style:italic;"><i class="ph ph-info"></i> Bu slayt için özel bir tarih belirlenmemiş. Slayt her zaman oynatılır.</span>`;
+    }
 };
 
-// 4. Slayt Her Değiştiğinde Tarihleri Otomatik Yenile
+// Slayt her değiştiğinde listeyi tazelemek için
 const originalLoadSlideTakvim = window.loadSlide;
 window.loadSlide = async function() {
     if(originalLoadSlideTakvim) await originalLoadSlideTakvim(); 
-    
-    // Arayüzün yüklenmesi için kısa bir süre bekleyip tarihleri doldur
     setTimeout(() => {
-        window.loadCampaignDates();
+        window.loadCampaignList();
     }, 300);
 };
