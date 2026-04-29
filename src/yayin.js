@@ -155,27 +155,40 @@ setInterval(async () => {
 }, 300000);
 
 
-// 🚀 YENİ: SLAYTIN BU CİHAZDA GÖRÜNÜP GÖRÜNMEYECEĞİNİ DENETLEYEN ANA MERKEZ
+// 🚀 GELİŞMİŞ DENETLEME: GRUP + SAAT + GÜN + TARİH KONTROLÜ
 function isSlideVisible(key) {
     const s = settingsData[key];
     if(!s) return true; 
 
-    // --- GRUP (ŞUBE) KONTROLÜ ---
-    // Eğer slaytın hedef grubu varsa, hedef "TÜMÜ" değilse ve cihazın grubuyla uyuşmuyorsa GÖSTERME!
+    const now = new Date();
+    
+    // --- 1. TARİHSEL (TAK Takvim) KONTROLÜ ---
+    // Tarih formatı: YYYY-MM-DD
+    const todayStr = now.toISOString().split('T')[0]; 
+
+    if (s.startDate && todayStr < s.startDate) {
+        return false; // Kampanya henüz başlamamış
+    }
+    if (s.endDate && todayStr > s.endDate) {
+        return false; // Kampanya süresi dolmuş
+    }
+
+    // --- 2. GRUP (ŞUBE) KONTROLÜ ---
     if(s.targetGroup && s.targetGroup !== 'TÜMÜ' && s.targetGroup !== deviceGroup) {
         return false; 
     }
 
-    // --- SAAT/GÜN KONTROLÜ ---
-    const now = new Date();
+    // --- 3. GÜN KONTROLÜ ---
     const currentDay = now.getDay(); 
-    const currentTime = now.getHours().toString().padStart(2,'0') + ":" + now.getMinutes().toString().padStart(2,'0');
-
     if(s.days && s.days.length > 0 && !s.days.includes(currentDay)) return false;
+
+    // --- 4. SAAT KONTROLÜ ---
+    const currentTime = now.getHours().toString().padStart(2,'0') + ":" + now.getMinutes().toString().padStart(2,'0');
     if(s.startTime && s.endTime) {
         if(currentTime < s.startTime || currentTime > s.endTime) return false;
     }
-    return true; 
+
+    return true; // Tüm engelleri geçti, slayt gösterilebilir!
 }
 
 onValue(ref(db, 'sahne/ayarlar'), (snapshot) => {

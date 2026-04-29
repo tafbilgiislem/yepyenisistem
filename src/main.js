@@ -1514,3 +1514,50 @@ window.listenDevices = function() {
         }
     });
 };
+// --- 📅 TARİHSEL KAMPANYA PLANLAMA (PROFESYONEL EKLENTİ) ---
+
+// 1. Slayt Yüklendiğinde Tarih Ayarlarını Panelde Göster
+window.setSlideDates = async function() {
+    const key = document.getElementById('file-selector')?.value;
+    if(!key) return;
+    
+    const snap = await get(ref(db, 'sahne/ayarlar/' + key));
+    let sData = snap.exists() ? snap.val() : { time: 5000, effect: 'fade', targetGroup: 'TÜMÜ' };
+    
+    // Basit bir modal (popup) yerine daha kullanışlı bir yapı:
+    const start = prompt("Kampanya BAŞLANGIÇ Tarihi (Format: YYYY-MM-DD):", sData.startDate || "");
+    const end = prompt("Kampanya BİTİŞ Tarihi (Format: YYYY-MM-DD):", sData.endDate || "");
+    
+    if (start !== null && end !== null) {
+        sData.startDate = start;
+        sData.endDate = end;
+        
+        await set(ref(db, 'sahne/ayarlar/' + key), sData);
+        window.showToast("Kampanya Tarihleri Kaydedildi!", "success");
+        window.loadSlide(); // Buton metnini güncellemek için tazele
+    }
+};
+
+// 2. loadSlide fonksiyonunu genişleterek Tarih Butonunu enjekte et
+const originalLoadSlideWithDates = window.loadSlide;
+window.loadSlide = async function() {
+    await originalLoadSlideWithDates(); // Mevcut yükleme işlemini yap
+    
+    setTimeout(async () => {
+        const key = document.getElementById('file-selector')?.value;
+        if(!key) return;
+
+        let topActions = document.getElementById('file-selector').parentNode;
+        if (topActions) {
+            let oldBtn = document.getElementById('slide-date-btn');
+            if(oldBtn) oldBtn.remove();
+            
+            let btn = document.createElement('button');
+            btn.id = 'slide-date-btn';
+            btn.style.cssText = 'margin-left:10px; background:#f59e0b; color:#fff; padding:6px 15px; border-radius:6px; font-weight:bold; cursor:pointer; border:none; display:flex; align-items:center; gap:5px;';
+            btn.innerHTML = `<i class="ph ph-calendar"></i> Tarih Planla`;
+            btn.onclick = window.setSlideDates;
+            topActions.appendChild(btn);
+        }
+    }, 450);
+};
