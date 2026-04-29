@@ -1514,16 +1514,26 @@ window.listenDevices = function() {
         }
     });
 };
-// --- 📅 KESİNTİSİZ ÇOKLU KAMPANYA YÖNETİMİ (TAKİP SİSTEMLİ) ---
+// --- 📅 KESİNTİSİZ ÇOKLU KAMPANYA YÖNETİMİ (CANLI DİNLEME VERSİYONU) ---
 
-let aktifSlaytAnahtari = ""; // Değişimi izlemek için
+// 1. KAMPANYALARI HAFIZADA TUTACAK CANLI DİNLEYİCİ
+window.kampanyaHafizasi = {};
+if (window.kampanyaDinleyiciAktif !== true) {
+    onValue(ref(db, 'sahne/kampanyalar'), (snapshot) => {
+        window.kampanyaHafizasi = snapshot.exists() ? snapshot.val() : {};
+        window.loadCampaignList(); // Veritabanı güncellendiğinde ekranı otomatik tazele
+    });
+    window.kampanyaDinleyiciAktif = true;
+}
 
-setInterval(async () => {
+let aktifSlaytAnahtari = ""; 
+
+setInterval(() => {
     const selector = document.getElementById('file-selector');
     const suankiKey = selector?.value;
     const timeContainer = document.querySelector('.prop-group .time-range-row')?.parentNode;
     
-    // 1. Paneli ve Listeyi Kontrol Et (Ekranda yoksa çiz)
+    // Paneli sadece 1 kere ekle
     if (timeContainer && !document.getElementById('campaign-dates-wrapper')) {
         const wrapper = document.createElement('div');
         wrapper.id = 'campaign-dates-wrapper';
@@ -1552,14 +1562,14 @@ setInterval(async () => {
         window.loadCampaignList();
     }
 
-    // 2. 🚀 KRİTİK NOKTA: Slayt değişimini anında yakala
+    // Slayt değişimini anında yakala
     if (suankiKey && suankiKey !== aktifSlaytAnahtari) {
         aktifSlaytAnahtari = suankiKey;
-        window.loadCampaignList(); // Slayt değiştiği an listeyi tazele
+        window.loadCampaignList();
     }
 }, 500);
 
-window.addCampaignDate = async function() {
+window.addCampaignDate = function() {
     const key = document.getElementById('file-selector')?.value;
     const start = document.getElementById('camp-start').value;
     const end = document.getElementById('camp-end').value;
@@ -1567,41 +1577,44 @@ window.addCampaignDate = async function() {
     if (!key || !start || !end) return window.showToast?.("Tarih seçilmedi!", "error");
     if (start > end) return window.showToast?.("Bitiş tarihi hatalı!", "error");
 
-    const snap = await get(ref(db, 'sahne/kampanyalar/' + key));
-    let dates = snap.exists() ? (Array.isArray(snap.val()) ? snap.val() : Object.values(snap.val())) : [];
+    // Hafızadan mevcut tarihleri al
+    let mevcutKampanyalar = window.kampanyaHafizasi[key] || [];
+    let dates = Array.isArray(mevcutKampanyalar) ? mevcutKampanyalar : Object.values(mevcutKampanyalar);
 
     if (dates.length >= 3) return window.showToast?.("En fazla 3 tarih eklenebilir!", "error");
 
-    dates.push({ start, end });
-    await set(ref(db, 'sahne/kampanyalar/' + key), dates);
+    dates.push({ start: start, end: end });
+    
+    // Firebase'e gönder (onValue anında listeyi güncelleyecek)
+    set(ref(db, 'sahne/kampanyalar/' + key), dates);
     
     document.getElementById('camp-start').value = "";
     document.getElementById('camp-end').value = "";
-    window.loadCampaignList();
     window.showToast?.("Kampanya Eklendi", "success");
 };
 
-window.removeCampaignDate = async function(index) {
+window.removeCampaignDate = function(index) {
     const key = document.getElementById('file-selector')?.value;
-    const snap = await get(ref(db, 'sahne/kampanyalar/' + key));
-    if (snap.exists()) {
-        let dates = Array.isArray(snap.val()) ? snap.val() : Object.values(snap.val());
-        dates.splice(index, 1);
-        await set(ref(db, 'sahne/kampanyalar/' + key), dates);
-        window.loadCampaignList();
-    }
+    if (!key) return;
+
+    let mevcutKampanyalar = window.kampanyaHafizasi[key] || [];
+    let dates = Array.isArray(mevcutKampanyalar) ? mevcutKampanyalar : Object.values(mevcutKampanyalar);
+    
+    dates.splice(index, 1);
+    set(ref(db, 'sahne/kampanyalar/' + key), dates);
 };
 
-window.loadCampaignList = async function() {
+window.loadCampaignList = function() {
     const key = document.getElementById('file-selector')?.value;
     const listContainer = document.getElementById('campaign-list');
     if(!key || !listContainer) return;
 
-    const snap = await get(ref(db, 'sahne/kampanyalar/' + key));
     listContainer.innerHTML = "";
+    
+    let mevcutKampanyalar = window.kampanyaHafizasi[key] || [];
+    let dates = Array.isArray(mevcutKampanyalar) ? mevcutKampanyalar : Object.values(mevcutKampanyalar);
 
-    if (snap.exists()) {
-        const dates = Array.isArray(snap.val()) ? snap.val() : Object.values(snap.val());
+    if (dates.length > 0) {
         dates.forEach((d, index) => {
             const s = d.start.split('-').reverse().join('.');
             const e = d.end.split('-').reverse().join('.');
