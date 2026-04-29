@@ -79,21 +79,16 @@ onAuthStateChanged(auth, (user) => {
 });
 
 function aktifEtPersonelModu() {
-    // 👑 PERSONELİN SADECE GÖREBİLECEĞİ SLAYT:
+    // 👑 PERSONELİN GÖRECEĞİ SLAYT
     const PERSONEL_SLAYTI = "slayt_svg";
 
-    // 1. SİSTEMİN PANELLERİ VE YAZILARI ÜRETEN MOTORLARINI BOZUYORUZ!
-    // İşte bu satır, o "Düzenlemek için sahneden nesne seçin" yazısının ve diğer panellerin çizilmesini KÖKTEN engeller.
-    window.renderEditor = function() { 
-        if(window.refreshAutoTextFields) window.refreshAutoTextFields(); 
-    };
+    // 1. TIKLAMALARI VE SEÇİMLERİ SIFIRLA (Sistemi bozmadan)
     window.renderProperties = function() {}; 
-    window.renderLayers = function() {}; 
     window.updateUI = function() {};
     window.selectedEl = null;
     if(window.closeCtx) window.closeCtx();
 
-    // 2. GÖRSEL KALKAN (Sahne tıklamalarını iptal et)
+    // 2. GÖRSEL KALKAN (Sahne tıklamalarını ve tüm butonları yasakla)
     let kalkan = document.getElementById('personel-kalkan');
     if (!kalkan) {
         kalkan = document.createElement('style');
@@ -101,17 +96,27 @@ function aktifEtPersonelModu() {
         document.head.appendChild(kalkan);
     }
     kalkan.innerHTML = `
+        /* Sahneyi tamamen kilitler */
         #svg-wrapper, #canvas-inner, svg { pointer-events: none !important; user-select: none !important; }
         #control-layer, #context-menu { display: none !important; }
+        
+        /* Sistemdeki tüm butonları (Yeni Slayt, Sil vb.) gizle */
+        button { display: none !important; }
+        
+        /* İmleç ikonunu gizle */
+        .ph-cursor-click { display: none !important; }
+        
+        /* SADECE bizim Yayına Gönder butonumuz görünür kalsın */
+        #personel-yayinla-btn { display: flex !important; }
     `;
 
-    // 3. SAĞ ALT KÖŞEYE YAYINA GÖNDER BUTONU
+    // 3. SAĞ ALT KÖŞEYE YENİ VE SİLİNEMEZ BUTON
     let gonderBtn = document.getElementById('personel-yayinla-btn');
     if (!gonderBtn) {
         gonderBtn = document.createElement('button');
         gonderBtn.id = 'personel-yayinla-btn';
         gonderBtn.innerHTML = '<i class="ph ph-paper-plane-tilt"></i> YAYINA GÖNDER';
-        gonderBtn.style.cssText = 'position:fixed; bottom:30px; right:30px; z-index:999999; background:#10b981; color:white; padding:15px 30px; font-size:16px; font-weight:bold; border-radius:8px; border:none; cursor:pointer; box-shadow:0 10px 20px rgba(16,185,129,0.4); display:flex; align-items:center; gap:10px;';
+        gonderBtn.style.cssText = 'position:fixed; bottom:30px; right:30px; z-index:999999; background:#10b981; color:white; padding:15px 30px; font-size:16px; font-weight:bold; border-radius:8px; border:none; cursor:pointer; box-shadow:0 10px 20px rgba(16,185,129,0.4); align-items:center; gap:10px;';
         gonderBtn.onclick = function() {
             if(window.saveData) window.saveData();
             window.showToast("Tasarım Başarıyla Yayına Gönderildi!", "success");
@@ -119,7 +124,7 @@ function aktifEtPersonelModu() {
         document.body.appendChild(gonderBtn);
     }
 
-    // 4. KESİN VE ACIMASIZ TEMİZLİK DÖNGÜSÜ (Saniyede 5 kere tarar, asla kaçırmaz)
+    // 4. MUCİZEVİ AKILLI AVCI DÖNGÜSÜ (Beyaz ekran yapmaz, anında siler)
     setInterval(() => {
         // --- A) SLAYT KİLİDİ ---
         let selector = document.getElementById('file-selector');
@@ -135,48 +140,42 @@ function aktifEtPersonelModu() {
             }
         }
 
-        // --- B) BAŞLIKLARI VE KUTULARI KELİMELERİNDEN BULUP YOK ET ---
-        const arananKelimeler = ["ZAMANLAMA", "CİHAZLAR", "TUVAL", "NESNE EKLE", "KATMANLAR"];
+        // --- B) PANELLERİ VE "DÜZENLEMEK İÇİN..." YAZISINI YOK ET ---
+        const yasaklar = [
+            "AKILLI ZAMANLAMA", 
+            "AKTİF CİHAZLAR", 
+            "TUVAL AYARLARI", 
+            "NESNE EKLE", 
+            "KATMANLAR", 
+            "VEKTÖR AYARLARI",
+            "DÜZENLEMEK IÇIN SAHNEDEN",
+            "DÜZENLEMEK İÇİN SAHNEDEN" // Senin kurtulmak istediğin o yazı!
+        ];
         
-        document.querySelectorAll('h1, h2, h3, h4, h5, h6, div, span').forEach(el => {
-            // Yanlışlıkla ana ekranı silmemek için sadece kısa metinlere (başlıklara) saldır
-            if (el.childElementCount <= 2 && el.innerText && el.innerText.length < 40) {
-                let metin = el.innerText.toUpperCase();
-                
-                arananKelimeler.forEach(kelime => {
-                    // "HIZLI METİN" yazısına ASLA dokunma
-                    if (metin.includes(kelime) && !metin.includes("HIZLI METİN")) {
-                        el.style.display = 'none'; // Başlığı sil
-                        
-                        // Başlığın hemen altındaki ayar kutusunu da sil
-                        if (el.nextElementSibling && !el.nextElementSibling.innerText.toUpperCase().includes("HIZLI METİN")) {
-                            el.nextElementSibling.style.display = 'none';
-                        }
-                    }
-                });
-            }
+        document.querySelectorAll('h1, h2, h3, h4, h5, h6, div, span, p').forEach(el => {
+            if (!el.textContent) return;
+            let metin = el.textContent.toUpperCase().trim();
             
-            // "Düzenlemek için sahneden nesne seçin" yazısı hala direniyorsa, onu da ez
-            if (el.textContent && el.textContent.includes("Düzenlemek için sahneden")) {
-                el.style.display = 'none';
-            }
-        });
-
-        // --- C) EN ÜSTTEKİ "YENİ SLAYT", "SİL", "YAYINLA", "İNDİR" BUTONLARINI YOK ET ---
-        document.querySelectorAll('button').forEach(btn => {
-            let btnMetin = btn.innerText.toUpperCase();
-            if (btnMetin.includes("YENİ SLAYT") || btnMetin.includes("SİL") || btnMetin.includes("YAYINLA") || btnMetin.includes("İNDİR")) {
-                if (btn.id !== 'personel-yayinla-btn') {
-                    btn.style.display = 'none';
+            // GÜVENLİK KİLİDİ: Sadece kısa metinlere odaklan (150 karakterden az). 
+            // Bu sayede ana panelleri silip BEYAZ EKRAN YAPMAZ!
+            if (metin.length > 0 && metin.length < 150) {
+                if (!metin.includes("HIZLI METİN")) {
+                    yasaklar.forEach(hedef => {
+                        if (metin.includes(hedef)) {
+                            el.style.setProperty('display', 'none', 'important');
+                            
+                            // Altındaki ayar kutusunu da gizle (Eğer Hızlı Metin değilse)
+                            let sonraki = el.nextElementSibling;
+                            if (sonraki && sonraki.tagName !== 'SELECT' && !sonraki.textContent.toUpperCase().includes("HIZLI METİN")) {
+                                sonraki.style.setProperty('display', 'none', 'important');
+                            }
+                        }
+                    });
                 }
             }
         });
 
-    }, 200); // 200 milisaniye hızıyla tarar, panellerin ekranda kalması FİZİKSEL OLARAK imkansızdır.
-    
-    // Ekran açılışında her ihtimale karşı editör alanını temizle
-    const ef = document.getElementById('editor-fields');
-    if(ef) ef.innerHTML = '';
+    }, 50); // Saniyede 20 kere tarar! "Düzenlemek için..." yazısı ekrana çıkmaya yeltendiği an yok edilir.
 }
 
 function kapatPersonelModu() {
