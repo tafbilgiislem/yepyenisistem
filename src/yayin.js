@@ -385,3 +385,38 @@ function startInnerSliders() {
     }, 3000); 
 }
 startInnerSliders();
+// --- 🚀 YENİ: SİSTEM GENELİ GERİ SAYIM MOTORU (SVG'ler için) ---
+const HEDEF_TARIH = new Date("2028-07-14T20:00:00");
+
+function updateGlobalCountdowns() {
+    const activeLayer = document.querySelector('.slide-layer.active');
+    if (!activeLayer) return;
+
+    // Aktif slaytta geri sayım ID'leri var mı diye kontrol et
+    const secEl = activeLayer.querySelector('#seconds');
+    const minEl = activeLayer.querySelector('#minutes');
+    const hourEl = activeLayer.querySelector('#hours');
+    const dayEl = activeLayer.querySelector('#days');
+    const monthEl = activeLayer.querySelector('#months');
+
+    if (secEl || minEl || hourEl || dayEl || monthEl) {
+        const now = new Date();
+        let diff = HEDEF_TARIH - now;
+        if (diff < 0) diff = 0;
+
+        const seconds = Math.floor(diff / 1000) % 60;
+        const minutes = Math.floor(diff / 60000) % 60;
+        const hours = Math.floor(diff / 3600000) % 24;
+        const days = Math.floor(diff / 86400000) % 30;
+        const months = Math.floor(diff / (86400000 * 30));
+
+        // SVG'nin içindeki text etiketlerini güncelle
+        if (monthEl) monthEl.textContent = String(months).padStart(2, "0");
+        if (dayEl) dayEl.textContent = String(days).padStart(2, "0");
+        if (hourEl) hourEl.textContent = String(hours).padStart(2, "0");
+        if (minEl) minEl.textContent = String(minutes).padStart(2, "0");
+        if (secEl) secEl.textContent = String(seconds).padStart(2, "0");
+    }
+}
+setInterval(updateGlobalCountdowns, 1000);
+// --- GERİ SAYIM MOTORU SONU ---
