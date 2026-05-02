@@ -1,3 +1,42 @@
+// --- 0. 🌟 GÖRSEL EFEKT VE ANİMASYON MOTORU (DİNAMİK) ---
+if (!document.getElementById('tv-effects-css')) {
+    const style = document.createElement('style');
+    style.id = 'tv-effects-css';
+    style.innerHTML = `
+        .slide-layer { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 1; overflow: hidden; }
+        .slide-layer.active { pointer-events: auto; z-index: 2; }
+        .slide-layer.fade { opacity: 0; transition: opacity var(--ef-dur, 1s) var(--ef-ease, ease-in-out); }
+        .slide-layer.fade.active { opacity: 1; }
+        .slide-layer.slide { transform: translateX(100%); transition: transform var(--ef-dur, 1s) var(--ef-ease, ease-in-out); }
+        .slide-layer.slide.active { transform: translateX(0); }
+        .slide-layer.slide-right { transform: translateX(-100%); transition: transform var(--ef-dur, 1s) var(--ef-ease, ease-in-out); }
+        .slide-layer.slide-right.active { transform: translateX(0); }
+        .slide-layer.slide-up { transform: translateY(100%); transition: transform var(--ef-dur, 1s) var(--ef-ease, ease-in-out); }
+        .slide-layer.slide-up.active { transform: translateY(0); }
+        .slide-layer.slide-down { transform: translateY(-100%); transition: transform var(--ef-dur, 1s) var(--ef-ease, ease-in-out); }
+        .slide-layer.slide-down.active { transform: translateY(0); }
+        .slide-layer.zoom { transform: scale(var(--ef-scale, 0.5)); opacity: 0; transition: all var(--ef-dur, 1s) var(--ef-ease, ease-in-out); }
+        .slide-layer.zoom.active { transform: scale(1); opacity: 1; }
+        .slide-layer.zoom-out { transform: scale(var(--ef-scale, 1.5)); opacity: 0; transition: all var(--ef-dur, 1s) var(--ef-ease, ease-in-out); }
+        .slide-layer.zoom-out.active { transform: scale(1); opacity: 1; }
+        .slide-layer.flip { transform: perspective(2000px) rotateY(var(--ef-angle, 90deg)); opacity: 0; transition: all var(--ef-dur, 1s) var(--ef-ease, ease-in-out); }
+        .slide-layer.flip.active { transform: perspective(2000px) rotateY(0deg); opacity: 1; }
+        .slide-layer.flip-y { transform: perspective(2000px) rotateX(var(--ef-angle, 90deg)); opacity: 0; transition: all var(--ef-dur, 1s) var(--ef-ease, ease-in-out); }
+        .slide-layer.flip-y.active { transform: perspective(2000px) rotateX(0deg); opacity: 1; }
+        .slide-layer.rotate { transform: rotate(var(--ef-angle, -90deg)) scale(var(--ef-scale, 0.5)); opacity: 0; transition: all var(--ef-dur, 1s) var(--ef-ease, ease-in-out); }
+        .slide-layer.rotate.active { transform: rotate(0deg) scale(1); opacity: 1; }
+        .slide-layer.blur { filter: blur(20px); opacity: 0; transition: all var(--ef-dur, 1s) var(--ef-ease, ease-in-out); }
+        .slide-layer.blur.active { filter: blur(0px); opacity: 1; }
+        .slide-layer.wipe-left { clip-path: polygon(100% 0, 100% 0, 100% 100%, 100% 100%); transition: clip-path var(--ef-dur, 1s) var(--ef-ease, ease-in-out); }
+        .slide-layer.wipe-left.active { clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%); }
+        .slide-layer.bounce { transform: scale(var(--ef-scale, 0.5)); opacity: 0; transition: all var(--ef-dur, 1s) var(--ef-ease, ease-in-out); }
+        .slide-layer.bounce.active { transform: scale(1); opacity: 1; }
+        .slide-layer.none { opacity: 0; transition: none !important; }
+        .slide-layer.none.active { opacity: 1; transition: none !important; }
+    `;
+    document.head.appendChild(style);
+}
+
 // --- 1. FIREBASE BAĞLANTISI ---
 import { initializeApp } from "firebase/app";
 import { getDatabase, ref, onValue, set } from "firebase/database";
@@ -22,66 +61,39 @@ if (!deviceId) {
     localStorage.setItem('tv_device_id', deviceId);
 }
 let deviceName = localStorage.getItem('tv_custom_name') || deviceId;
-// 🚀 YENİ: Cihazın Grubunu hafızadan al, yoksa "GENEL" yap
 let deviceGroup = localStorage.getItem('tv_device_group') || 'GENEL'; 
 
-// --- 3. DEĞİŞKENLER VE KAMPANYA DİNLEYİCİSİ ---
 let slidesData = JSON.parse(localStorage.getItem('slidesData')) || {};
-let settingsData = JSON.parse(localStorage.getItem('settingsData')) || {};
+let myPlaylist = []; 
 let rssCache = { url: "", data: "🔴 Haberler Bekleniyor...", time: 0 };
-
-// 🚀 YENİ: Kampanya tarihleri burada tutulacak ve anlık güncellenecek
-let campaignData = {}; 
-onValue(ref(db, 'sahne/kampanyalar'), (snapshot) => {
-    if (snapshot.exists()) {
-        campaignData = snapshot.val();
-    } else {
-        campaignData = {};
-    }
-});
-
-let slideKeys = Object.keys(slidesData).sort();
 let currentIndex = -1;
 let rotationTimer = null;
 let isFirstLoad = true;
-let pendingUpdates = {};
-let pendingDeletes = [];
-
 const container = document.getElementById('viewer-container');
 
-// --- 4. FİREBASE'E "BEN AKTİFİM" SİNYALİ GÖNDER ---
 setInterval(() => {
-    const currentPlaying = slideKeys[currentIndex] || "Bekleniyor...";
+    let currentPlaying = "Bekleniyor...";
+    if (myPlaylist.length > 0 && currentIndex >= 0 && myPlaylist[currentIndex]) {
+        currentPlaying = myPlaylist[currentIndex].slide || "Bilinmiyor";
+    }
     set(ref(db, 'sahne/cihazlar/' + deviceId), {
         lastSeen: Date.now(),
-        version: "V50-GROUP",
+        version: "V68-INSTANT-API",
         playing: currentPlaying.replace(/_/g, ' ').toUpperCase(),
         name: deviceName,
         group: deviceGroup
     }).catch(() => {});
 }, 5000);
 
-// --- 5. 🌟 UZAKTAN KUMANDA ---
 onValue(ref(db, 'sahne/komutlar/' + deviceId), (snapshot) => {
     if (snapshot.exists()) {
         const cmd = snapshot.val();
         const lastCmdTs = localStorage.getItem('last_cmd_ts') || 0;
-        
         if (cmd.ts > lastCmdTs) {
             localStorage.setItem('last_cmd_ts', cmd.ts);
-            
-            if (cmd.type === 'refresh') {
-                window.location.reload(); 
-            } 
-            else if (cmd.type === 'rename') {
-                deviceName = cmd.newName; 
-                localStorage.setItem('tv_custom_name', deviceName);
-            } 
-            else if (cmd.type === 'changeGroup') { 
-                deviceGroup = cmd.newGroup;
-                localStorage.setItem('tv_device_group', deviceGroup);
-                window.location.reload(); 
-            }
+            if (cmd.type === 'refresh') window.location.reload(); 
+            else if (cmd.type === 'rename') { deviceName = cmd.newName; localStorage.setItem('tv_custom_name', deviceName); } 
+            else if (cmd.type === 'changeGroup') { deviceGroup = cmd.newGroup; localStorage.setItem('tv_device_group', deviceGroup); window.location.reload(); }
             else if (cmd.type === 'ping') {
                 let div = document.getElementById('ping-overlay');
                 if(!div) {
@@ -97,52 +109,210 @@ onValue(ref(db, 'sahne/komutlar/' + deviceId), (snapshot) => {
     }
 });
 
-// --- WIDGET GÜNCELLEYİCİLER (RSS, HAVA, DÖVİZ) ---
-async function fetchRssData(url) {
-    if(!url) return "🔴 Geçerli bir haber linki girilmedi.";
-    const now = Date.now();
-    if(rssCache.url === url && (now - rssCache.time < 300000)) return rssCache.data;
-    try {
-        const res = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(url)}`);
-        const data = await res.json();
-        if(data.items && data.items.length > 0) {
-            const newsString = data.items.map(i => "🔴 " + i.title).join("  |  ");
-            const finalString = newsString + "  |  " + newsString;
-            rssCache = { url: url, data: finalString, time: now };
-            return finalString;
+// 🚀 HİBRİT ÇEVİRİ MOTORU (DeepL Pro + Google Ücretsiz Fallback)
+async function translateToTurkish(text, deepLKey) {
+    // 1. EĞER DEEPL ANAHTARI GİRİLMİŞSE PROFESYONEL ÇEVİRİ KULLAN
+    if (deepLKey && deepLKey.trim() !== '') {
+        try {
+            // Anahtar sonu :fx ile bitiyorsa ücretsiz sunucu, bitmiyorsa Pro sunucu kullanılır
+            const url = deepLKey.endsWith(':fx') ? 'https://api-free.deepl.com/v2/translate' : 'https://api.deepl.com/v2/translate';
+            const res = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `DeepL-Auth-Key ${deepLKey}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ text: [text], target_lang: 'TR' })
+            });
+            const data = await res.json();
+            if (data.translations && data.translations[0]) {
+                return data.translations[0].text;
+            }
+        } catch (e) {
+            console.error("DeepL Hatası, ücretsiz Google Çeviriye dönülüyor...", e);
         }
-    } catch(e) { }
-    return "🔴 Haberler yüklenemedi...";
-}
-
-setInterval(async () => {
-    const activeLayer = document.querySelector('.slide-layer.active');
-    if(!activeLayer) return;
-    
-    const rssBands = activeLayer.querySelectorAll('.rss-band');
-    for(let band of rssBands) {
-        const url = band.getAttribute('data-rss-url');
-        const text = await fetchRssData(url);
-        const scroller = band.querySelector('.rss-scroller');
-        if(scroller && scroller.innerText !== text) scroller.innerText = text;
     }
 
-    activeLayer.querySelectorAll('.weather-widget').forEach(async wth => {
-        const city = wth.getAttribute('data-city') || 'Istanbul';
-        try {
-            const res = await fetch(`https://wttr.in/${encodeURIComponent(city)}?format=j1`);
+    // 2. ANAHTAR YOKSA VEYA HATA VERİRSE ÜCRETSİZ GOOGLE ÇEVİRİ KULLAN (Asla Yarı Yolda Bırakmaz)
+    try {
+        const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=tr&dt=t&q=${encodeURIComponent(text)}`;
+        const res = await fetch(url);
+        const data = await res.json();
+        let translatedText = "";
+        data[0].forEach(item => { if (item[0]) translatedText += item[0]; });
+        return translatedText || text;
+    } catch (e) {
+        console.error("Google Çeviri Hatası:", e);
+        return text; 
+    }
+}
+
+// 🚀 COLLECT API + DEEPL + SANSÜR + BÜYÜK HARF DESTEKLİ HABER MOTORU
+async function fetchRssData(url, apiKey, autoTranslate, bannedWords, deepLKey) { 
+    if(!url) return "🔴 GEÇERLİ BİR HABER LİNKİ GİRİLMEDİ.";
+    const now = Date.now();
+    
+    // Veriler değişmediyse hafızadan hızlıca ver
+    if(rssCache.url === url && rssCache.translate === autoTranslate && rssCache.banned === bannedWords && (now - rssCache.time < 300000)) return rssCache.data;
+    
+    try {
+        let newsItems = [];
+
+        // 1. Haberleri Çek
+        if (url.includes('collectapi.com')) {
+            const res = await fetch(url, { headers: { "content-type": "application/json", "authorization": apiKey } });
             const data = await res.json();
-            const temp = data.current_condition[0].temp_C;
-            const desc = data.current_condition[0].lang_tr?.[0]?.value || data.current_condition[0].weatherDesc[0].value;
-            const engDesc = data.current_condition[0].weatherDesc[0].value;
-            const iconMap = { "Sunny": "☀️", "Clear": "🌙", "Partly cloudy": "⛅", "Cloudy": "☁️", "Overcast": "☁️", "Mist": "🌫️", "Patchy rain possible": "🌦️", "Light rain": "🌧️", "Heavy rain": "🌧️", "Light snow": "🌨️", "Heavy snow": "❄️", "Moderate or heavy rain with thunder": "⛈️", "Fog": "🌫️" };
-            const emoji = iconMap[engDesc] || "🌤️";
-            const inner = wth.querySelector('.weather-inner');
-            if (inner) inner.innerHTML = `<div style="display:flex; flex-direction:column; align-items:flex-start; justify-content:center;"><div style="font-size: 25cqh; font-weight:800; letter-spacing:0.05em; margin-bottom: 2cqh; line-height: 1;">${city.toUpperCase()}</div><div style="font-size: 12cqh; font-weight:400; opacity:0.8; line-height: 1;">${desc}</div></div><div style="display:flex; align-items:center; gap: 3cqw;"><span style="font-size: 40cqh; line-height: 1;">${emoji}</span><span style="font-size: 45cqh; font-weight:800; line-height: 1;">${temp}°</span></div>`;
-        } catch(e) {}
+            if(data.success && data.result) newsItems = data.result.map(i => i.name);
+        } else {
+            const res = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(url)}`);
+            const data = await res.json();
+            if(data.items) newsItems = data.items.map(i => i.title);
+        }
+
+        if (newsItems.length > 0) {
+            // Haber sitelerinin kendi attığı "|" işaretlerini zorla sil
+            newsItems = newsItems.map(title => title.replace(/\|/g, " "));
+
+            // Aralara ayraç yerine 8 karakterlik devasa bir boşluk at
+            let combinedText = newsItems.map(title => "🔴 " + title).join("        ");
+
+            // 2. ÇEVİRİ MOTORUNU DEEPL DESTEĞİYLE ÇAĞIR
+            if (autoTranslate === 'true') {
+                combinedText = await translateToTurkish(combinedText, deepLKey);
+            }
+
+            // 3. SADECE YAZILAN KELİMEYİ GİZLEME (Haberi Asla Silmez!)
+            if (bannedWords && bannedWords.trim() !== "") {
+                const bannedArr = bannedWords.split(',').map(w => w.trim()).filter(w => w);
+                bannedArr.forEach(banned => {
+                    const regex = new RegExp(banned, "gi");
+                    combinedText = combinedText.replace(regex, ""); 
+                });
+                
+                combinedText = combinedText.replace(/\s{2,}/g, ' ').trim();
+            }
+
+            // 4. TÜRKÇE KARAKTER UYUMLU BÜYÜK HARF DÖNÜŞÜMÜ
+            combinedText = combinedText.toLocaleUpperCase('tr-TR');
+
+            const finalString = combinedText + "        " + combinedText;
+            rssCache = { url: url, data: finalString, time: now, translate: autoTranslate, banned: bannedWords };
+            return finalString;
+        }
+
+    } catch(e) { console.error("Haber Hatası:", e); }
+    return "🔴 HABERLER YÜKLENEMEDİ...";
+}
+
+// 🚀 WIDGETLARI CANLI YENİLEME MOTORU
+async function refreshActiveWidgets() {
+    
+    // 1. RSS HABERLER (Sadece aktif ekranda güncellenir ki kayma animasyonu bozulmasın)
+    const activeLayer = document.querySelector('.slide-layer.active');
+    if(activeLayer) {
+        const rssBands = activeLayer.querySelectorAll('.rss-band');
+        for(let band of rssBands) {
+            const url = band.getAttribute('data-rss-url');
+            const apiKey = band.getAttribute('data-collect-api-key') || '';
+            const autoTrans = band.getAttribute('data-auto-translate') || 'false'; 
+            const bannedWords = band.getAttribute('data-banned-words') || ''; 
+            const deepLKey = band.getAttribute('data-deepl-api-key') || ''; // 🚀 YENİ: DeepL Key'i al
+            
+            // 🚀 Motora DeepL Key'i de gönder
+            const text = await fetchRssData(url, apiKey, autoTrans, bannedWords, deepLKey); 
+            const scroller = band.querySelector('.rss-scroller');
+            if(scroller && scroller.innerText !== text) scroller.innerText = text;
+        }
+    }
+    
+    // 2. HAVA DURUMU (Ekranda olsun veya olmasın arka planda TÜM slaytları günceller)
+    document.querySelectorAll('.weather-widget').forEach(async wth => {
+        const city = wth.getAttribute('data-city') || 'Izmir';
+        const theme = wth.getAttribute('data-theme') || 'light';
+        const mainBg = theme === 'dark' ? '#1e293b' : '#ffffff';
+        const gridBg = theme === 'dark' ? '#334155' : '#f8f3ee';
+        const textColor = theme === 'dark' ? '#cbd5e1' : '#64748b';
+        const valColor = theme === 'dark' ? '#38bdf8' : '#0369a1';
+
+        try {
+            const OWM_API_KEY = "97fe4c9ee7efb72f3e0520ceb21bba8b"; 
+            const res = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(city)}&units=metric&lang=tr&appid=${OWM_API_KEY}`);
+            
+            if(!res.ok) return; 
+            
+            const data = await res.json();
+            const temp = Math.round(data.main.temp);
+            const feelsLike = Math.round(data.main.feels_like);
+            let desc = data.weather[0].description;
+            desc = desc.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '); 
+            
+            const wind = data.wind.speed.toFixed(1);
+            const humidity = data.main.humidity;
+            const visibility = (data.visibility / 1000).toFixed(1);
+            const pressure = data.main.pressure;
+            const clouds = data.clouds.all; 
+            const minMax = `${Math.round(data.main.temp_min)}° / ${Math.round(data.main.temp_max)}°`;
+
+            let bgUrl = "https://images.unsplash.com/photo-1601297183305-6df142704ea2?q=80&w=600&auto=format&fit=crop"; 
+            if(data.weather[0].main === 'Clear') bgUrl = "https://images.unsplash.com/photo-1529126624584-eb58aa1f868c?q=80&w=600&auto=format&fit=crop"; 
+            else if(data.weather[0].main === 'Rain' || data.weather[0].main === 'Drizzle' || data.weather[0].main === 'Thunderstorm') bgUrl = "https://images.unsplash.com/photo-1515694346937-94d85e41e6f0?q=80&w=600&auto=format&fit=crop"; 
+            else if(data.weather[0].main === 'Snow') bgUrl = "https://images.unsplash.com/photo-1478265409131-1f65c88f965c?q=80&w=600&auto=format&fit=crop"; 
+
+            const now = new Date();
+            const timeStr = now.getHours().toString().padStart(2,'0') + ":" + now.getMinutes().toString().padStart(2,'0');
+
+            // 🚀 DİNAMİK PİKSEL HESAPLAMA
+            const w = parseFloat(wth.getAttribute('width')) || 380;
+            const scale = w / 380;
+
+            wth.innerHTML = `
+            <div xmlns="http://www.w3.org/1999/xhtml" style="width: 100%; height: 100%; background: ${mainBg}; border-radius: ${20 * scale}px; font-family: sans-serif; display: flex; flex-direction: column; justify-content: space-between; padding: 4%; box-sizing: border-box;">
+                <div style="width: 100%; height: 50%; background: #1e293b; border-radius: ${14 * scale}px; position: relative; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; padding: 5%; box-sizing: border-box; box-shadow: inset 0 0 40px rgba(0,0,0,0.4); color: white;">
+                    <img src="${bgUrl}" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.65; mix-blend-mode: overlay; pointer-events: none;" />
+                    <div style="position: relative; z-index: 1; display: flex; justify-content: space-between; align-items: flex-start;">
+                        <div style="font-size: ${30 * scale}px; font-weight: 800; text-shadow: 0 2px 5px rgba(0,0,0,0.6);">${city.toUpperCase()}</div>
+                        <div style="font-size: ${20 * scale}px; font-weight: bold; text-shadow: 0 2px 5px rgba(0,0,0,0.6);">${timeStr}</div>
+                    </div>
+                    <div style="position: relative; z-index: 1; display: flex; align-items: flex-end; justify-content: space-between;">
+                        <div style="font-size: ${90 * scale}px; font-weight: 800; line-height: 0.8; text-shadow: 0 4px 10px rgba(0,0,0,0.5);">${temp}°</div>
+                        <div style="text-align: right; display: flex; flex-direction: column; gap: ${2 * scale}px;">
+                            <div style="font-size: ${18 * scale}px; font-weight: bold; text-shadow: 0 2px 5px rgba(0,0,0,0.6);">${desc}</div>
+                            <div style="font-size: ${14 * scale}px; opacity: 0.95; text-shadow: 0 2px 5px rgba(0,0,0,0.6);">Hissedilen: ${feelsLike}°</div>
+                        </div>
+                    </div>
+                </div>
+                <div style="width: 100%; height: 46%; display: grid; grid-template-columns: 1fr 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 3%;">
+                    <div style="background: ${gridBg}; border-radius: ${10 * scale}px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                        <div style="font-size: ${13 * scale}px; color: ${textColor}; display: flex; align-items: center; gap: 4px;"><i class="ph ph-wind"></i> Rüzgâr</div>
+                        <div style="font-size: ${16 * scale}px; color: ${valColor}; font-weight: bold; margin-top: 4px;">${wind} m/s</div>
+                    </div>
+                    <div style="background: ${gridBg}; border-radius: ${10 * scale}px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                        <div style="font-size: ${13 * scale}px; color: ${textColor}; display: flex; align-items: center; gap: 4px;"><i class="ph ph-drop"></i> Nem</div>
+                        <div style="font-size: ${16 * scale}px; color: ${valColor}; font-weight: bold; margin-top: 4px;">%${humidity}</div>
+                    </div>
+                    <div style="background: ${gridBg}; border-radius: ${10 * scale}px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                        <div style="font-size: ${13 * scale}px; color: ${textColor}; display: flex; align-items: center; gap: 4px;"><i class="ph ph-eye"></i> Görünürlük</div>
+                        <div style="font-size: ${16 * scale}px; color: ${valColor}; font-weight: bold; margin-top: 4px;">${visibility} km</div>
+                    </div>
+                    <div style="background: ${gridBg}; border-radius: ${10 * scale}px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                        <div style="font-size: ${13 * scale}px; color: ${textColor}; display: flex; align-items: center; gap: 4px;"><i class="ph ph-arrows-in"></i> Basınç</div>
+                        <div style="font-size: ${16 * scale}px; color: ${valColor}; font-weight: bold; margin-top: 4px;">${pressure} hPa</div>
+                    </div>
+                    <div style="background: ${gridBg}; border-radius: ${10 * scale}px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                        <div style="font-size: ${13 * scale}px; color: ${textColor}; display: flex; align-items: center; gap: 4px;"><i class="ph ph-cloud"></i> Bulutluluk</div>
+                        <div style="font-size: ${16 * scale}px; color: ${valColor}; font-weight: bold; margin-top: 4px;">%${clouds}</div>
+                    </div>
+                    <div style="background: ${gridBg}; border-radius: ${10 * scale}px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                        <div style="font-size: ${13 * scale}px; color: ${textColor}; display: flex; align-items: center; gap: 4px;"><i class="ph ph-thermometer"></i> Min/Maks</div>
+                        <div style="font-size: ${16 * scale}px; color: ${valColor}; font-weight: bold; margin-top: 4px;">${minMax}</div>
+                    </div>
+                </div>
+            </div>`;
+        } catch(e) { console.log("Hava durumu güncellenemedi, API veya İnternet hatası:", e); }
     });
 
-    activeLayer.querySelectorAll('.currency-widget').forEach(async cur => {
+    // 3. DÖVİZ (Tüm slaytları arka planda günceller)
+    document.querySelectorAll('.currency-widget').forEach(async cur => {
         const curs = (cur.getAttribute('data-currencies') || 'USD,EUR,GBP').split(',').map(c=>c.trim().toUpperCase());
         try {
             const res = await fetch('https://open.er-api.com/v6/latest/USD');
@@ -161,62 +331,21 @@ setInterval(async () => {
             if (inner) inner.innerHTML = htmlBlocks;
         } catch(e) {}
     });
-}, 300000);
-
-// 🚀 GELİŞMİŞ DENETLEME: GRUP + SAAT + GÜN + BAĞIMSIZ ÇOKLU TARİH KONTROLÜ
-function isSlideVisible(key) {
-    const s = settingsData[key];
-    if(!s) return true; 
-
-    const now = new Date();
-    const todayStr = now.toISOString().split('T')[0]; 
-
-    // --- 1. ÇOKLU TARİH (KAMPANYA LİSTESİ) KONTROLÜ ---
-    const cDates = campaignData[key]; 
-    if (cDates && Object.keys(cDates).length > 0) {
-        const datesArray = Array.isArray(cDates) ? cDates : Object.values(cDates);
-        
-        if (datesArray.length > 0) {
-            let isWithinAnyCampaign = false;
-            
-            for (let i = 0; i < datesArray.length; i++) {
-                const c = datesArray[i];
-                if (todayStr >= c.start && todayStr <= c.end) {
-                    isWithinAnyCampaign = true;
-                    break; 
-                }
-            }
-            
-            if (!isWithinAnyCampaign) return false; 
-        }
-    } else {
-        // (Geriye Dönük Uyumluluk) Eski tekli ayar varsa
-        if (s.startDate && todayStr < s.startDate) return false;
-        if (s.endDate && todayStr > s.endDate) return false;
-    }
-
-    // --- 2. GRUP (ŞUBE) KONTROLÜ ---
-    if(s.targetGroup && s.targetGroup !== 'TÜMÜ' && s.targetGroup !== deviceGroup) {
-        return false; 
-    }
-
-    // --- 3. GÜN KONTROLÜ ---
-    const currentDay = now.getDay(); 
-    if(s.days && s.days.length > 0 && !s.days.includes(currentDay)) return false;
-
-    // --- 4. SAAT KONTROLÜ ---
-    const currentTime = now.getHours().toString().padStart(2,'0') + ":" + now.getMinutes().toString().padStart(2,'0');
-    if(s.startTime && s.endTime) {
-        if(currentTime < s.startTime || currentTime > s.endTime) return false;
-    }
-
-    return true; 
 }
 
-onValue(ref(db, 'sahne/ayarlar'), (snapshot) => {
+
+// 🚀 OYNATMA LİSTESİ DİNLEYİCİSİ
+onValue(ref(db, 'sahne/oynatma_listeleri'), (snapshot) => {
     if (snapshot.exists()) {
-        settingsData = snapshot.val();
-        localStorage.setItem('settingsData', JSON.stringify(settingsData));
+        const lists = snapshot.val();
+        myPlaylist = lists[deviceName] || lists[deviceId] || lists[deviceGroup] || lists['TÜMÜ'] || [];
+        
+        if (myPlaylist.length > 0 && container.innerHTML.includes("Yayın Bekleniyor")) {
+            currentIndex = -1;
+            showNextSlide();
+        }
+    } else {
+        myPlaylist = [];
     }
 });
 
@@ -249,15 +378,12 @@ function initMedia(layer) {
 }
 
 function updateLayersGhost(newData) {
-    const newKeys = Object.keys(newData).sort(); 
+    const newKeys = Object.keys(newData); 
     
-    slideKeys.forEach(key => {
+    Object.keys(slidesData).forEach(key => {
         if (!newData[key]) {
             const el = document.getElementById('layer-' + key);
-            if (el) {
-                if (el.classList.contains('active')) pendingDeletes.push(key);
-                else el.remove();
-            }
+            if (el) el.remove();
         }
     });
 
@@ -274,28 +400,31 @@ function updateLayersGhost(newData) {
         }
 
         if (isNewLayer || slidesData[key] !== newData[key]) {
-            if (layer.classList.contains('active')) {
-                pendingUpdates[key] = newData[key]; 
-            } else {
-                layer.innerHTML = newData[key];
-                initMedia(layer); 
-                
+            layer.innerHTML = newData[key];
+            initMedia(layer); 
+            
+            if (!layer.classList.contains('active')) {
                 layer.querySelectorAll('video').forEach(v => v.pause());
+            } else {
+                layer.querySelectorAll('video').forEach(v => v.play().catch(e=>console.log(e)));
                 layer.querySelectorAll('iframe').forEach(ifr => {
                     if (ifr.src.includes('youtube')) {
-                        ifr.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*');
+                        ifr.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*');
                     }
                 });
+                // 🚀 EKRAN GÜNCELLENİR GÜNCELLEMEZ WIDGETLARI ÇEK
+                refreshActiveWidgets();
             }
         }
     });
 
     slidesData = newData;
-    slideKeys = newKeys;
 
-    if (isFirstLoad && slideKeys.length > 0) {
+    if (isFirstLoad && myPlaylist.length > 0) {
         isFirstLoad = false;
         showNextSlide();
+    } else if (isFirstLoad) {
+        container.innerHTML = "<h1 style='color:white; text-align:center;'>Yayın Bekleniyor...</h1>";
     }
 }
 
@@ -303,111 +432,127 @@ if(Object.keys(slidesData).length > 0) {
     updateLayersGhost(slidesData);
 }
 
+function isPlaylistItemVisible(item) {
+    if (!item) return false;
+    const now = new Date();
+    const todayStr = now.toISOString().split('T')[0]; 
+    
+    if (item.startDate && todayStr < item.startDate) return false;
+    if (item.endDate && todayStr > item.endDate) return false;
+    
+    const currentDay = now.getDay(); 
+    if(item.days && item.days.length > 0 && !item.days.includes(currentDay)) return false;
+
+    const currentTime = now.getHours().toString().padStart(2,'0') + ":" + now.getMinutes().toString().padStart(2,'0');
+    if(item.startTime && item.endTime) {
+        if(currentTime < item.startTime || currentTime > item.endTime) return false;
+    }
+    return true;
+}
+
 function showNextSlide() {
-    if (slideKeys.length === 0) {
-        rotationTimer = setTimeout(showNextSlide, 2000);
+    clearTimeout(rotationTimer);
+    
+    if (myPlaylist.length === 0) {
+        container.innerHTML = "<h1 style='color:white; text-align:center;'>Bu Ekran İçin Yayın Akışı Yok</h1>";
+        rotationTimer = setTimeout(showNextSlide, 5000);
         return;
     }
 
-    let attempts = 0;
-    let nextIndex = (currentIndex + 1) % slideKeys.length;
+    if (container.querySelector('h1')) container.innerHTML = '';
 
-    while (attempts < slideKeys.length) {
-        const key = slideKeys[nextIndex];
-        if (isSlideVisible(key)) {
+    let attempts = 0;
+    let nextIndex = (currentIndex + 1) % myPlaylist.length;
+
+    while (attempts < myPlaylist.length) {
+        const item = myPlaylist[nextIndex];
+        if (isPlaylistItemVisible(item) && slidesData[item.slide]) {
             currentIndex = nextIndex;
-            applySlide(key);
+            applySlide(item);
             return;
         }
-        nextIndex = (nextIndex + 1) % slideKeys.length;
+        nextIndex = (nextIndex + 1) % myPlaylist.length;
         attempts++;
     }
 
-    rotationTimer = setTimeout(showNextSlide, 3000);
+    container.innerHTML = "<h1 style='color:white; text-align:center;'>Şu An Oynatılacak Slayt Yok</h1>";
+    rotationTimer = setTimeout(showNextSlide, 5000);
 }
 
-function applySlide(key) {
-    const config = settingsData[key] || { effect: 'fade', time: 5000 };
+function applySlide(playlistItem) {
+    const key = playlistItem.slide;
+    const effect = playlistItem.effect || 'fade';
+    const time = playlistItem.time || 5000;
+
+    const efDur = playlistItem.effectDur !== undefined ? playlistItem.effectDur : 1;
+    const efEase = playlistItem.effectEase || 'ease-in-out';
+    const efAngle = playlistItem.effectAngle !== undefined ? playlistItem.effectAngle : (effect === 'rotate' ? -90 : 90);
+    const efScale = playlistItem.effectScale !== undefined ? playlistItem.effectScale : 0.5;
 
     document.querySelectorAll('.slide-layer').forEach(layer => {
         if (layer.id !== 'layer-' + key && layer.classList.contains('active')) {
             layer.classList.remove('active');
-            const prevKey = layer.id.replace('layer-', '');
-
             setTimeout(() => {
                 layer.querySelectorAll('video').forEach(v => {
                     v.pause();
                     if (!v.src.includes('.m3u8') && !v.id.startsWith('v_')) v.currentTime = 0;
                 });
-                
                 layer.querySelectorAll('iframe').forEach(ifr => {
                     if (ifr.src.includes('youtube')) {
                         ifr.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*');
                         ifr.contentWindow.postMessage('{"event":"command","func":"seekTo","args":[0, true]}', '*');
                     }
                 });
-
-                if (pendingUpdates[prevKey]) {
-                    layer.innerHTML = pendingUpdates[prevKey];
-                    initMedia(layer);
-                    delete pendingUpdates[prevKey];
-                }
-                
-                if (pendingDeletes.includes(prevKey)) {
-                    layer.remove();
-                    pendingDeletes = pendingDeletes.filter(k => k !== prevKey);
-                }
-            }, 1200);
+            }, efDur * 1000 + 200); 
         }
     });
     
-    const targetLayer = document.getElementById('layer-' + key);
-    if(targetLayer) {
-        targetLayer.className = `slide-layer ${config.effect || 'fade'} active`;
-        void targetLayer.offsetWidth; 
-        
-        targetLayer.querySelectorAll('video').forEach(v => {
-            v.play().catch(e => console.log("Otomatik oynatma engeli", e));
-        });
-        
-        targetLayer.querySelectorAll('iframe').forEach(ifr => {
-            if (ifr.src.includes('youtube')) {
-                ifr.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*');
-            }
-        });
+    let targetLayer = document.getElementById('layer-' + key);
+    if (!targetLayer) {
+        targetLayer = document.createElement('div');
+        targetLayer.className = `slide-layer fade`; 
+        targetLayer.id = 'layer-' + key;
+        targetLayer.innerHTML = slidesData[key];
+        container.appendChild(targetLayer);
+        initMedia(targetLayer);
     }
 
+    targetLayer.style.setProperty('--ef-dur', efDur + 's');
+    targetLayer.style.setProperty('--ef-ease', efEase);
+    targetLayer.style.setProperty('--ef-angle', efAngle + 'deg');
+    targetLayer.style.setProperty('--ef-scale', efScale);
+
+    targetLayer.className = `slide-layer ${effect} active`;
+    void targetLayer.offsetWidth; 
+    
+    targetLayer.querySelectorAll('video').forEach(v => {
+        v.play().catch(e => console.log("Otomatik oynatma engeli", e));
+    });
+    
+    targetLayer.querySelectorAll('iframe').forEach(ifr => {
+        if (ifr.src.includes('youtube')) {
+            ifr.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*');
+        }
+    });
+
     updateClock(); 
-    clearTimeout(rotationTimer);
-    rotationTimer = setTimeout(showNextSlide, config.time || 5000);
+    refreshActiveWidgets(); // 🚀 SLAYT AÇILDIĞI AN WIDGETLARI (HABERLERİ) ÇEK!
+    
+    rotationTimer = setTimeout(showNextSlide, time);
 }
 
 function updateClock() {
-    // Tüm aktif slaytların içini derinlemesine tarar (SVG'ler dahil)
-    const dateTexts = document.querySelectorAll("#dateText, [id='dateText']");
-    const timeTexts = document.querySelectorAll("#timeText, [id='timeText']");
-    
-    if (dateTexts.length === 0 && timeTexts.length === 0) return;
-    
+    const dateText = document.getElementById("dateText");
+    const timeText = document.getElementById("timeText");
+    if (!dateText && !timeText) return;
     const now = new Date();
     const hours = now.getHours().toString().padStart(2, '0');
     const minutes = now.getMinutes().toString().padStart(2, '0');
     const seconds = now.getSeconds().toString().padStart(2, '0');
     const date = now.toLocaleDateString('tr-TR');
-    
-    // Ekranda kaç tane tarih kutusu varsa hepsine yaz
-    dateTexts.forEach(dt => {
-        dt.textContent = date;
-    });
-    
-    // Ekranda kaç tane saat kutusu varsa hepsine saniyeli yaz
-    timeTexts.forEach(tt => {
-        // İstersen saniyeyi buradan silebilirsin: hours + ":" + minutes
-        tt.textContent = hours + ":" + minutes + ":" + seconds; 
-    });
+    if (dateText) { dateText.textContent = date; dateText.setAttribute("text-anchor", "start"); }
+    if (timeText) { timeText.textContent = hours + ":" + minutes + ":" + seconds; timeText.setAttribute("text-anchor", "start"); }
 }
-
-// Saati saniyede bir güncelle
 setInterval(updateClock, 1000);
 
 function startInnerSliders() {
@@ -435,35 +580,15 @@ function startInnerSliders() {
 }
 startInnerSliders();
 
-// --- 🚀 SİSTEM GENELİ GERİ SAYIM MOTORU (SVG'ler için) ---
 const HEDEF_TARIH = new Date("2028-07-14T20:00:00");
-
 function updateGlobalCountdowns() {
     const activeLayer = document.querySelector('.slide-layer.active');
     if (!activeLayer) return;
-
-    const secEl = activeLayer.querySelector('#seconds');
-    const minEl = activeLayer.querySelector('#minutes');
-    const hourEl = activeLayer.querySelector('#hours');
-    const dayEl = activeLayer.querySelector('#days');
-    const monthEl = activeLayer.querySelector('#months');
-
+    const secEl = activeLayer.querySelector('#seconds'), minEl = activeLayer.querySelector('#minutes'), hourEl = activeLayer.querySelector('#hours'), dayEl = activeLayer.querySelector('#days'), monthEl = activeLayer.querySelector('#months');
     if (secEl || minEl || hourEl || dayEl || monthEl) {
-        const now = new Date();
-        let diff = HEDEF_TARIH - now;
-        if (diff < 0) diff = 0;
-
-        const seconds = Math.floor(diff / 1000) % 60;
-        const minutes = Math.floor(diff / 60000) % 60;
-        const hours = Math.floor(diff / 3600000) % 24;
-        const days = Math.floor(diff / 86400000) % 30;
-        const months = Math.floor(diff / (86400000 * 30));
-
-        if (monthEl) monthEl.textContent = String(months).padStart(2, "0");
-        if (dayEl) dayEl.textContent = String(days).padStart(2, "0");
-        if (hourEl) hourEl.textContent = String(hours).padStart(2, "0");
-        if (minEl) minEl.textContent = String(minutes).padStart(2, "0");
-        if (secEl) secEl.textContent = String(seconds).padStart(2, "0");
+        const now = new Date(); let diff = HEDEF_TARIH - now; if (diff < 0) diff = 0;
+        const seconds = Math.floor(diff / 1000) % 60, minutes = Math.floor(diff / 60000) % 60, hours = Math.floor(diff / 3600000) % 24, days = Math.floor(diff / 86400000) % 30, months = Math.floor(diff / (86400000 * 30));
+        if (monthEl) monthEl.textContent = String(months).padStart(2, "0"); if (dayEl) dayEl.textContent = String(days).padStart(2, "0"); if (hourEl) hourEl.textContent = String(hours).padStart(2, "0"); if (minEl) minEl.textContent = String(minutes).padStart(2, "0"); if (secEl) secEl.textContent = String(seconds).padStart(2, "0");
     }
 }
 setInterval(updateGlobalCountdowns, 1000);
