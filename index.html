@@ -21,8 +21,14 @@
         #app-container{display:flex; height:100%; width:100%; flex-direction:row; filter: blur(0px); transition: filter 0.3s;}
         
         #sidebar{width:480px;background:var(--panel);border-left:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;height:100%;z-index:100;position:relative}
-        .sidebar-scroll-area{flex-shrink:0;max-height:60%;overflow-y:auto;background:#111827;padding:15px;border-bottom:2px solid var(--border)}
-        #editor-fields{flex:1;min-height:0;overflow-y:auto;padding:20px;background:rgba(0,0,0,.2);padding-bottom:80px}
+        
+        /* 🚀 KRİTİK ÇÖZÜM: flex: 1 ve min-height: 0 eklendi. Artık KESİNLİKLE takılmaz ve kendi içinde kayar! */
+        .sidebar-scroll-area{flex: 1; min-height: 0; overflow-y:auto; background:#111827; padding:15px; padding-bottom:30px; border-bottom:2px solid var(--border)}
+        
+        /* 🚀 DÜZELTME: Alt ayar menüsünün ekranı çok kaplamaması için max-height 55% yapıldı! */
+        #editor-fields{flex: 0 0 auto; max-height: 55%; overflow-y:auto; padding:20px; background:rgba(0,0,0,.2); padding-bottom:30px !important;}
+        
+        #playlist-manager-wrapper { display: none !important; }
         
         #layers-wrapper{background:#0f172a;border-bottom:2px solid var(--border);flex-shrink:0;display:flex;flex-direction:column}
         #layers-wrapper[open]{height:35%} #layers-wrapper:not([open]){height:auto}
@@ -122,9 +128,7 @@
     
     <div style="display:flex; flex-direction:column; gap:10px; align-items:center;">
         <input type="email" id="email-input" placeholder="E-posta adresiniz" style="width:250px; padding:10px; border-radius:5px; border:none; outline:none; text-align:center;">
-        
         <input type="password" id="pin-input" placeholder="Şifreniz" style="width:250px; padding:10px; border-radius:5px; border:none; outline:none; text-align:center;" onkeypress="if(event.key === 'Enter') window.checkPin()">
-        
         <button class="action-btn active" onclick="window.checkPin()" style="width:250px; padding:10px; margin-top:10px; cursor:pointer;">GİRİŞ YAP</button>
     </div>
 </div>
@@ -193,14 +197,37 @@
                 <button onclick="window.saveData()" class="action-btn active" style="flex:2; font-size:12px;"><i class="ph ph-floppy-disk"></i> YAYINLA</button>
                 <button onclick="window.downloadSVG()" class="action-btn" style="flex:1; font-size:12px; background:#0ea5e9;" title="SVG Olarak İndir"><i class="ph ph-download-simple"></i> İNDİR</button>
             </div>
+            
             <div style="display:flex; gap:5px; margin-bottom: 10px;">
                 <button onclick="window.addNewSlide()" class="action-btn" style="flex:1; font-size:12px; background:#8b5cf6;" title="Yeni Slayt Ekle"><i class="ph ph-plus"></i> YENİ SLAYT</button>
+                <button onclick="window.renameSlide()" class="action-btn" style="flex:1; font-size:12px; background:#0ea5e9;" title="Slayt Adını Değiştir"><i class="ph ph-pencil-simple"></i> ADINI DEĞİŞTİR</button>
                 <button onclick="window.deleteSlide()" class="action-btn danger" style="flex:1; font-size:12px;" title="Seçili Slaytı Sil"><i class="ph ph-trash"></i> SİL</button>
             </div>
             
             <select id="file-selector" style="width:100%; padding:10px; background:#000; color:#fff; border-radius:8px; margin-bottom:10px; border:1px solid #334155; outline:none;" onchange="window.loadSlide()"></select>
             
-            <details style="margin-bottom: 10px;" open>
+            <details style="margin-bottom: 10px;" id="playlist-details">
+                <summary style="font-size:11px; font-weight:bold; color:#8b5cf6; cursor:pointer; margin-bottom:5px; display:flex; align-items:center; gap:6px;">
+                    <i class="ph ph-list-numbers" style="font-size:14px;"></i> EKRAN YAYIN AKIŞI (PLAYLIST)
+                </summary>
+                <div class="group-box" style="margin-top:5px; border-color:#8b5cf6;">
+                    <label style="color:#a78bfa; font-size:10px; margin-bottom:5px; display:block; font-weight:bold;">HEDEF TV VEYA ŞUBE SEÇİN:</label>
+                    <select id="playlist-target-select" onchange="window.changePlaylistTarget(this.value)" style="width:100%; background:#000; color:#fff; border:1px solid #334155; padding:8px; border-radius:6px; font-size:11px; margin-bottom:10px; outline:none;">
+                        <option value="TÜMÜ">🌍 TÜM EKRANLAR</option>
+                    </select>
+                    <button onclick="window.addCurrentSlideToPlaylist()" style="width:100%; background:#10b981; color:white; border:none; padding:8px; border-radius:6px; font-weight:bold; cursor:pointer; display:flex; justify-content:center; align-items:center; gap:5px; font-size:11px; margin-bottom:10px;">
+                        <i class="ph ph-plus-circle"></i> SLAYTI LİSTEYE EKLE
+                    </button>
+                    <div id="playlist-items" style="display:flex; flex-direction:column; gap:8px; max-height:45vh; overflow-y:auto; padding-right:4px;">
+                        <div style="text-align:center; color:#64748b; font-size:10px; padding:10px;">Yükleniyor...</div>
+                    </div>
+                    <button onclick="window.savePlaylistToFirebase()" style="width:100%; background:#3b82f6; color:white; border:none; padding:10px; border-radius:6px; font-weight:bold; cursor:pointer; margin-top:10px; font-size:12px;">
+                        <i class="ph ph-floppy-disk"></i> AKIŞI KAYDET VEYA YAYINLA
+                    </button>
+                </div>
+            </details>
+            
+            <details style="margin-bottom: 10px;">
                 <summary style="font-size:11px; font-weight:bold; color:#f59e0b; cursor:pointer; margin-bottom:5px; display:flex; align-items:center; gap:6px;"><i class="ph ph-clock" style="font-size:14px;"></i> AKILLI ZAMANLAMA & EFEKT</summary>
                 <div class="group-box" style="margin-top:5px;">
                     <div style="font-size:10px; color:#94a3b8; margin-bottom:10px; font-style:italic;">Bu slaytın ne zaman çıkacağını ve nasıl geçeceğini ayarlayın.</div>
@@ -251,7 +278,7 @@
             <details style="margin-bottom: 10px;">
                 <summary style="font-size:11px; font-weight:bold; color:#0ea5e9; cursor:pointer; margin-bottom:5px; display:flex; align-items:center; gap:6px;"><i class="ph ph-monitor-play" style="font-size:14px;"></i> AKTİF CİHAZLAR (TAKİP)</summary>
                 <div class="group-box" style="margin-top:5px; padding:0; background:transparent; border:none;">
-                    <div id="device-list">
+                    <div id="device-list" style="max-height: 45vh; overflow-y: auto; padding-right: 5px;">
                         <div style="font-size:11px; color:#64748b; text-align:center; margin-top:10px;">Bağlı cihaz bekleniyor...</div>
                     </div>
                 </div>
@@ -285,20 +312,25 @@
                         <button onclick="window.addWeather()" class="action-btn" style="background:#0ea5e9;"><i class="ph ph-cloud-sun"></i> HAVA DURUMU</button>
                         <button onclick="window.addCurrency()" class="action-btn" style="background:#16a34a;"><i class="ph ph-currency-circle-dollar"></i> DÖVİZ (CANLI)</button>
                     </div>
+                    <div class="action-row" style="margin-top:8px; margin-bottom:0;">
+                        <button onclick="window.addTickerBand()" class="action-btn" style="background:#d946ef; flex: 1;"><i class="ph ph-text-align-right"></i> MANUEL KAYAN YAZI (DUYURU)</button>
+                    </div>
                 </div>
             </details>
 
-            <details style="margin-bottom: 10px;" open id="auto-text-panel">
+            <details style="margin-bottom: 10px;" id="auto-text-panel">
                 <summary style="font-size:11px; font-weight:bold; color:#f472b6; cursor:pointer; margin-bottom:5px; display:flex; align-items:center; gap:6px;"><i class="ph ph-lightning" style="font-size:14px;"></i> HIZLI METİN YERLEŞTİRME (LİSTE)</summary>
                 <div class="group-box" style="margin-top:5px; margin-bottom:5px; padding: 12px; border: 1px solid var(--border);">
-                    <div id="auto-fields-list"></div>
+                    <div id="auto-fields-list" style="max-height: 45vh; overflow-y: auto; padding-right: 5px;"></div>
                 </div>
             </details>
 
-            <details style="margin-bottom: 5px;" open>
-                <summary style="font-size:11px; font-weight:bold; color:#06b6d4; cursor:pointer; margin-bottom:5px; display:flex; align-items:center; gap:6px;"><i class="ph ph-layers" style="font-size:14px;"></i> KATMANLAR</summary>
+            <details style="margin-bottom: 5px;">
+                <summary style="font-size:11px; font-weight:bold; color:#06b6d4; cursor:pointer; margin-bottom:5px; display:flex; align-items:center; gap:6px;">
+                    <i class="ph ph-stack" style="font-size:15px;"></i> KATMANLAR
+                </summary>
                 <div class="group-box" style="margin-top:5px; margin-bottom:5px; padding: 0; overflow: hidden; border: 1px solid var(--border);">
-                    <div id="layers-list" style="max-height: 200px; overflow-y: auto;"></div>
+                    <div id="layers-list" style="max-height: 45vh; overflow-y: auto;"></div>
                 </div>
             </details>
 
@@ -313,6 +345,22 @@
         </div>
     </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const sideDetails = document.querySelectorAll('.sidebar-scroll-area details');
+        sideDetails.forEach(targetDetail => {
+            targetDetail.addEventListener('click', (e) => {
+                if (e.target.closest('summary') && !targetDetail.open) {
+                    sideDetails.forEach(detail => {
+                        if (detail !== targetDetail) detail.removeAttribute('open');
+                    });
+                }
+            });
+        });
+    });
+</script>
+
 <script type="module" src="/src/main.js"></script>
 </body>
 </html>
