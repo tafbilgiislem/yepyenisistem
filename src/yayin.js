@@ -542,22 +542,34 @@ function applySlide(playlistItem) {
 }
 
 function updateClock() {
-    const dateText = document.getElementById("dateText");
-    const timeText = document.getElementById("timeText");
-    if (!dateText && !timeText) return;
+    // Tüm aktif slaytların içini derinlemesine tarar (SVG'ler dahil)
+    const dateTexts = document.querySelectorAll("#dateText, [id='dateText']");
+    const timeTexts = document.querySelectorAll("#timeText, [id='timeText']");
+    
+    if (dateTexts.length === 0 && timeTexts.length === 0) return;
+    
     const now = new Date();
     const hours = now.getHours().toString().padStart(2, '0');
     const minutes = now.getMinutes().toString().padStart(2, '0');
     const seconds = now.getSeconds().toString().padStart(2, '0');
     const date = now.toLocaleDateString('tr-TR');
-    if (dateText) { dateText.textContent = date; dateText.setAttribute("text-anchor", "start"); }
-    if (timeText) { timeText.textContent = hours + ":" + minutes + ":" + seconds; timeText.setAttribute("text-anchor", "start"); }
+    
+    // Ekranda kaç tane tarih kutusu varsa hepsine yaz
+    dateTexts.forEach(dt => {
+        dt.textContent = date;
+    });
+    
+    // Ekranda kaç tane saat kutusu varsa hepsine saniyeli yaz
+    timeTexts.forEach(tt => {
+        // İstersen saniyeyi buradan silebilirsin: hours + ":" + minutes
+        tt.textContent = hours + ":" + minutes + ":" + seconds; 
+    });
 }
 setInterval(updateClock, 1000);
 
 function startInnerSliders() {
     setInterval(() => {
-        const activeLayer = document.querySelector('.slide-layer.active');
+        const activeLayer = document.querySelector('.slide-layer.active');f
         if(!activeLayer) return;
         const images = activeLayer.querySelectorAll('image[data-image-list]');
         images.forEach(img => {
