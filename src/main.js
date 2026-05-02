@@ -1793,38 +1793,39 @@ window.savePlaylistToFirebase = async function() {
 };
 
 // --- GELİŞMİŞ CİHAZ KONTROL MERKEZİ ---
+// --- GELİŞMİŞ CİHAZ KONTROL MERKEZİ ---
 window.updateDeviceDashboard = function() {
-    const listEl = document.getElementById('device-list');
-    if (!listEl) return;
+    const listContainer = document.getElementById('device-list');
+    if(!listContainer) return; 
     
-    const cihazlar = window.aktifHedefler.cihazlar;
+    listContainer.innerHTML = '';
+    const now = Date.now();
     
-    // Eğer cihaz yoksa uyarı göster
-    if (!cihazlar || Object.keys(cihazlar).length === 0) {
-        listEl.innerHTML = '<div style="font-size:11px; color:#64748b; text-align:center; margin-top:10px;">Bağlı cihaz yok...</div>';
+    const cihazlarObj = window.aktifHedefler.cihazlar || {};
+    const deviceIds = Object.keys(cihazlarObj);
+    
+    // Eğer hiç cihaz yoksa
+    if (deviceIds.length === 0) {
+        listContainer.innerHTML = '<div style="font-size:12px; color:#64748b; text-align:center; padding:15px;"><i class="ph ph-plugs" style="font-size:24px; display:block; margin-bottom:5px; opacity:0.5;"></i>Yayına bağlı cihaz yok.</div>';
         return;
     }
 
-    const now = Date.now();
+    // 1. Orijinal nesneyi diziye (Array) çeviriyoruz ki sıralayabilelim
     let deviceArray = [];
+    deviceIds.forEach(id => {
+        deviceArray.push({ id: id, ...cihazlarObj[id] });
+    });
 
-    // 1. Gelen cihazları nesneden diziye (Array) çevir
-    for (let id in cihazlar) {
-        deviceArray.push({ id: id, ...cihazlar[id] });
-    }
-
-    // 2. 🚀 AKILLI SIRALAMA ALGORİTMASI: Aktifleri en üste, pasifleri en alta çek!
+    // 2. 🚀 AKILLI SIRALAMA (Aktif olanlar en üste, pasifler alta)
     deviceArray.sort((a, b) => {
-        // Cihazın son 15 saniye (15000ms) içinde sinyal verip vermediğine bakılır
-        const aIsOnline = (now - (a.lastSeen || 0)) < 15000;
-        const bIsOnline = (now - (b.lastSeen || 0)) < 15000;
+        // Cihaz 20 saniyeden (20000ms) yakın zamanda sinyal verdiyse aktiftir
+        const aIsOnline = !(!a.lastSeen || (now - a.lastSeen > 20000));
+        const bIsOnline = !(!b.lastSeen || (now - b.lastSeen > 20000));
         
-        // Eğer A aktif, B pasifse; A'yı listenin başına fırlat
-        if (aIsOnline && !bIsOnline) return -1; 
-        // Eğer B aktif, A pasifse; B'yi listenin başına fırlat
-        if (!aIsOnline && bIsOnline) return 1;  
+        if (aIsOnline && !bIsOnline) return -1; // A aktif, B koptuysa A üste
+        if (!aIsOnline && bIsOnline) return 1;  // B aktif, A koptuysa B üste
         
-        // İkisi de aynı durumdaysa, isimlerine göre A'dan Z'ye sırala
+        // İkisi de aynı durumdaysa isimlerine göre alfabetik diz
         const nameA = (a.name || a.id).toUpperCase();
         const nameB = (b.name || b.id).toUpperCase();
         if (nameA < nameB) return -1;
@@ -1832,42 +1833,35 @@ window.updateDeviceDashboard = function() {
         return 0;
     });
 
-    // 3. Sıralanmış listeyi HTML'e dönüştür ve ekrana bas
-    let html = '';
-    deviceArray.forEach(dev => {
-        const isOnline = (now - (dev.lastSeen || 0)) < 15000;
-        const statusColor = isOnline ? '#10b981' : '#ef4444'; // Aktifse Yeşil, Pasifse Kırmızı
-        const statusText = isOnline ? 'YAYINDA' : 'KOPTU';
-        const playing = dev.playing || 'BEKLENİYOR...';
-        const name = dev.name || dev.id;
-        const group = dev.group || 'GENEL';
+    // 3. Sıralanmış listeyi SENİN ORİJİNAL TASARIMIN VE BUTONLARINLA ekrana bas
+    deviceArray.forEach(c => {
+        const id = c.id;
+        const isOffline = !c.lastSeen || (now - c.lastSeen > 20000); 
+        const statusColor = isOffline ? '#ef4444' : '#10b981';
+        const statusText = isOffline ? 'KOPTU' : 'YAYINDA';
+        const currentPlaying = c.playing || 'Bekleniyor...';
 
-        html += `
-        <div style="background:#0f172a; padding:10px; border-radius:8px; margin-bottom:10px; border-left:4px solid ${statusColor};">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-                <div style="font-weight:bold; font-size:12px; color:white; display:flex; align-items:center; gap:5px;">
-                    <i class="ph ph-monitor-play" style="color:${statusColor};"></i> ${name}
-                </div>
-                <div style="font-size:10px; font-weight:bold; color:${statusColor}; background:rgba(0,0,0,0.3); padding:4px 8px; border-radius:4px;">
-                    ${statusText}
-                </div>
+        const card = document.createElement('div');
+        card.className = 'device-card';
+        card.style.cssText = `background:#0f172a; border:1px solid #1e293b; border-left:4px solid ${statusColor}; border-radius:8px; padding:12px; font-size:12px; margin-bottom:10px; transition:0.3s;`;
+        
+        card.innerHTML = `
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                <strong style="color:#f8fafc; font-size:14px;"><i class="ph ph-monitor-play" style="color:${statusColor};"></i> ${c.name || id}</strong>
+                <span style="background:${statusColor}20; color:${statusColor}; padding:3px 8px; border-radius:4px; font-weight:bold;">${statusText}</span>
             </div>
-            <div style="font-size:10px; color:#94a3b8; display:flex; align-items:center; gap:5px; margin-bottom:4px;">
-                <i class="ph ph-buildings"></i> Grup: <b style="color:#0ea5e9;">${group}</b>
+            <div style="color:#94a3b8; margin-bottom:4px;"><i class="ph ph-buildings"></i> Grup: <b style="color:#38bdf8;">${c.group || 'GENEL'}</b></div>
+            <div style="color:#94a3b8; margin-bottom:12px;"><i class="ph ph-film-strip"></i> Oynatılan: <b style="color:#f59e0b;">${currentPlaying}</b></div>
+            
+            <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                <button onclick="window.cmdDevice('${id}', 'ping')" style="flex:1; background:rgba(59,130,246,0.1); color:#3b82f6; border:1px solid #3b82f6; border-radius:4px; padding:4px; cursor:pointer; font-weight:bold;"><i class="ph ph-map-pin"></i> Bul</button>
+                <button onclick="window.cmdDevice('${id}', 'refresh')" style="flex:1; background:rgba(100,116,139,0.1); color:#94a3b8; border:1px solid #64748b; border-radius:4px; padding:4px; cursor:pointer; font-weight:bold;"><i class="ph ph-arrows-clockwise"></i> F5</button>
+                <button onclick="window.renameDevice('${id}', '${c.name || id}')" style="flex:1; background:rgba(14,165,233,0.1); color:#0ea5e9; border:1px solid #0ea5e9; border-radius:4px; padding:4px; cursor:pointer; font-weight:bold;"><i class="ph ph-pencil-simple"></i> İsim</button>
+                <button onclick="window.changeDeviceGroup('${id}', '${c.group || 'GENEL'}')" style="flex:1; background:rgba(139,92,246,0.1); color:#8b5cf6; border:1px solid #8b5cf6; border-radius:4px; padding:4px; cursor:pointer; font-weight:bold;"><i class="ph ph-users"></i> Grup</button>
             </div>
-            <div style="font-size:10px; color:#94a3b8; display:flex; align-items:center; gap:5px; margin-bottom:10px;">
-                <i class="ph ph-film-strip"></i> Oynatılan: <b style="color:#f59e0b;">${playing}</b>
-            </div>
-            <div style="display:flex; gap:5px;">
-                <button onclick="window.sendCommand('${dev.id}', 'ping')" style="flex:1; background:transparent; color:#3b82f6; border:1px solid #334155; border-radius:4px; padding:4px 0; font-size:10px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:4px; transition:0.2s;" onmouseover="this.style.borderColor='#3b82f6'; this.style.background='rgba(59,130,246,0.1)';" onmouseout="this.style.borderColor='#334155'; this.style.background='transparent';"><i class="ph ph-map-pin"></i> Bul</button>
-                <button onclick="window.sendCommand('${dev.id}', 'refresh')" style="flex:1; background:transparent; color:#94a3b8; border:1px solid #334155; border-radius:4px; padding:4px 0; font-size:10px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:4px; transition:0.2s;" onmouseover="this.style.borderColor='#94a3b8'; this.style.background='rgba(148,163,184,0.1)';" onmouseout="this.style.borderColor='#334155'; this.style.background='transparent';"><i class="ph ph-arrows-clockwise"></i> F5</button>
-                <button onclick="if(window.renameDevicePrompt) window.renameDevicePrompt('${dev.id}', '${name}'); else { const nn = prompt('Yeni cihaz adı:', '${name}'); if(nn) window.sendCommand('${dev.id}', 'rename', nn); }" style="flex:1; background:transparent; color:#0ea5e9; border:1px solid #334155; border-radius:4px; padding:4px 0; font-size:10px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:4px; transition:0.2s;" onmouseover="this.style.borderColor='#0ea5e9'; this.style.background='rgba(14,165,233,0.1)';" onmouseout="this.style.borderColor='#334155'; this.style.background='transparent';"><i class="ph ph-pencil-simple"></i> İsim</button>
-                <button onclick="if(window.changeDeviceGroupPrompt) window.changeDeviceGroupPrompt('${dev.id}', '${group}'); else { const ng = prompt('Yeni grup adı:', '${group}'); if(ng) window.sendCommand('${dev.id}', 'changeGroup', ng); }" style="flex:1; background:transparent; color:#a855f7; border:1px solid #334155; border-radius:4px; padding:4px 0; font-size:10px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:4px; transition:0.2s;" onmouseover="this.style.borderColor='#a855f7'; this.style.background='rgba(168,85,247,0.1)';" onmouseout="this.style.borderColor='#334155'; this.style.background='transparent';"><i class="ph ph-users"></i> Grup</button>
-            </div>
-        </div>`;
+        `;
+        listContainer.appendChild(card);
     });
-    
-    listEl.innerHTML = html;
 };
 
 window.cmdDevice = async function(id, cmdType) {
