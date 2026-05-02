@@ -512,8 +512,7 @@ window.updateTickerDisplay = function(el) {
     if (!el || !el.classList.contains('ticker-band')) return;
     let text = window.getD(el, 'ticker-text') || 'METİN GİRİNİZ...';
     
-    // 🚀 İŞTE FANTEZİ BURADA BAŞLIYOR: Özel renk etiketlerini HTML'e çevir!
-    // [color=red]Kelime[/color] formatını anında renkli koda dönüştürür
+    // 🎨 Renk kodlarını algılayan sistem (İzmir kırmızı vs.)
     text = text.replace(/\[color=([^\]]+)\](.*?)\[\/color\]/gi, '<span style="color:$1;">$2</span>');
 
     const speed = window.getD(el, 'ticker-speed') || '35';
@@ -523,9 +522,13 @@ window.updateTickerDisplay = function(el) {
     const fSize = window.getD(el, 'base-font-size') || '30';
     const fontFamily = window.getD(el, 'font-family') || 'sans-serif'; 
     const tickerTitle = window.getD(el, 'ticker-title') !== undefined ? window.getD(el, 'ticker-title') : 'DUYURU'; 
-    
-    // Kesintisiz dönmesi için metni kendi içinde çoğaltıyoruz
-    const paddedText = text + "        " + text + "        " + text;
+
+    // 🚀 KÖKTEN ÇÖZÜM: Metni çoğaltıp aralara şık bir ayraç ve boşluk atıyoruz
+    const spacer = "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;";
+    const textBlock = Array(5).fill(text).join(spacer + "•" + spacer) + spacer + "•" + spacer;
+
+    // Her kayan yazıya benzersiz animasyon adı (farklı hızların çakışmaması için)
+    const animName = 'marquee_' + el.id.replace(/[^a-zA-Z0-9]/g, '');
 
     const titleBlockHtml = tickerTitle.trim() !== '' ? `
         <div style="position:absolute; left:0; top:0; bottom:0; background:${bgColor}; padding:0 40px 0 20px; display:flex; align-items:center; justify-content:center; clip-path:polygon(0 0, 100% 0, calc(100% - 30px) 100%, 0 100%); z-index:10; border-right: 4px solid rgba(0,0,0,0.2);">
@@ -534,9 +537,20 @@ window.updateTickerDisplay = function(el) {
 
     el.innerHTML = `
     <div xmlns="http://www.w3.org/1999/xhtml" style="width:100%; height:100%; position:relative; overflow:hidden; background:${tickerBg}; border-top:3px solid #fff;">
-        <div style="position:absolute; inset:0; display:flex; align-items:center;">
-            <div class="ticker-scroller" style="white-space:nowrap; color:${txtColor}; font-size:${fSize}px; font-weight:800; font-family:${fontFamily}; text-transform:uppercase; animation: scrollNews ${speed}s linear infinite; padding-left:100vw; letter-spacing:1px;">${paddedText}</div>
+        
+        <style>
+            /* Matematiksel Kusursuz Döngü: Sadece %50'ye kadar kayar ve çaktırmadan başa atlar! */
+            @keyframes ${animName} {
+                0% { transform: translateX(0%); }
+                100% { transform: translateX(-50%); }
+            }
+        </style>
+
+        <div style="display:flex; width:max-content; height:100%; align-items:center; animation: ${animName} ${speed}s linear infinite;">
+            <div style="white-space:nowrap; color:${txtColor}; font-size:${fSize}px; font-weight:800; font-family:${fontFamily}; text-transform:uppercase; letter-spacing:1px;">${textBlock}</div>
+            <div style="white-space:nowrap; color:${txtColor}; font-size:${fSize}px; font-weight:800; font-family:${fontFamily}; text-transform:uppercase; letter-spacing:1px;">${textBlock}</div>
         </div>
+        
         ${titleBlockHtml}
     </div>`;
 };
